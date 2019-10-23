@@ -10,6 +10,7 @@ def main():
     envs = ArenaMultiAgentEnvs(
         env_name='Arena-Test-Discrete',
         num_envs=num_envs,
+        train_mode=False,
     )
     # ppo2.learn(
     #     network="mlp",
@@ -17,7 +18,8 @@ def main():
     #     total_timesteps=100000,
     #     lr=1e-3,
     # )
-    print(envs.reset())
+    obs = envs.reset()
+    k = 0
     while True:
         actions = []
         for i in range(num_envs):
@@ -25,8 +27,14 @@ def main():
                 envs.action_space.n, size=envs.number_agents)
             action = action.tolist()
             actions += [action]
-        envs.step(actions)
-        print('ss')
+        obs, reward, done, info = envs.step(actions)
+        print(np.shape(obs))
+        print(reward)
+        print(np.shape(done))
+        print(done)
+        print(info)
+        k += 1
+        print(k)
 
 
 if __name__ == '__main__':
