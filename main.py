@@ -2,50 +2,47 @@ import os
 import time
 import numpy as np
 
-from envs_layer import ArenaMultiAgentEnvs
+from envs_layer import ArenaEnvs
+from agents_layer import ArenaAgent
 
 
 def main():
     num_envs = 3
-    ma_envs = ArenaMultiAgentEnvs(
+    ma_envs = ArenaEnvs(
         env_name='Arena-Test-Discrete',
         num_envs=num_envs,
         train_mode=False,
     )
 
     # single-agent-like sync step
-
-    for agent_i in range(ma_envs.number_agents):
-        print('A{}: spaces {} {}'.format(
-            agent_i, ma_envs.sa_envs[agent_i].action_space, ma_envs.sa_envs[agent_i].observation_space))
+    agents = [
+        ArenaAgent(
+            action_space=ma_envs.sa_envs[agent_i].action_space,
+            observation_space=ma_envs.sa_envs[agent_i].observation_space,
+            num_envs=num_envs,
+            id=agent_i,
+        ) for agent_i in range(ma_envs.number_agents)
+    ]
 
     for agent_i in range(ma_envs.number_agents):
         ma_envs.sa_envs[agent_i].reset()
-        print('A{}: reset'.format(agent_i))
-    k = 0
+
     for agent_i in range(ma_envs.number_agents):
-        obs = ma_envs.sa_envs[agent_i].observe_after_reset()
-        print('A{}: observe_after_reset {} {}'.format(
-            agent_i, type(obs), np.shape(obs)))
+        obs = ma_envs.sa_envs[agent_i].get_observe_after_reset()
+        agents[agent_i].observe_after_reset(obs)
+
+    k = 0
     while True:
         for agent_i in range(ma_envs.number_agents):
-            actions = np.random.randint(
-                ma_envs.sa_envs[agent_i].action_space.n, size=(ma_envs.num_envs))
-            print('A{}: act {}'.format(agent_i, actions))
+            actions = agents[agent_i].act()
             ma_envs.sa_envs[agent_i].step(actions)
         ma_envs.step_sync()
-        print('All agents step sync'.format())
         for agent_i in range(ma_envs.number_agents):
-            obs, reward, done, info = ma_envs.sa_envs[agent_i].observe_after_step(
+            obs, reward, done, info = ma_envs.sa_envs[agent_i].get_observe_after_step(
             )
-            print('A{}: observe_after_step {} {} {} {} {} {}'.format(
-                agent_i,
-                type(obs), np.shape(obs),
-                type(reward), np.shape(reward),
-                type(done), np.shape(done),
-            ))
+            agents[agent_i].observe_after_step(obs, reward, done, info)
         k += 1
-        print('step at {}'.format(k))
+        print('========{}========='.format(k))
 
     # # multi-agent step
     # obs = ma_envs.reset()
