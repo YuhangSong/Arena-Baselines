@@ -37,6 +37,8 @@ def arena_make_unity_env(env_directory, num_env, visual, start_index=0):
             # arena-spec: multiagent=True
             env = UnityEnv(env_directory, rank, use_visual=use_visual,
                            uint8_visual=True, multiagent=True)
+            # arena-spec
+            env.set_train_mode(train_mode=True)
             # arena-spec: remove Monitor as it does not support multiagent
             # env = Monitor(env, logger.get_dir() and os.path.join(
             #     logger.get_dir(), str(rank)))
