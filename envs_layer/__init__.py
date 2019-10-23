@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 
 class ArenaMultiAgentEnvs(object):
@@ -37,30 +38,82 @@ class ArenaMultiAgentEnvs(object):
             self.observation_space = self.envs.observation_space
             self.number_agents = self.envs.number_agents
 
+        # single agent envs
+        self.sa_envs = [ArenaSingleAgentHolderEnvs(
+            action_space=self.action_space,
+            observation_space=self.observation_space,
+            master_multi_agent_envs=self,
+            id=id,
+        ) for id in range(self.number_agents)]
+
     def reset(self):
         """Resets the state of the environment and returns an initial observation.
         Returns: observation (numpy.ndarray): dtype: depends, shape: (self.num_envs, self.number_agents, h, w, c)
         """
-        return self.envs.reset()
+        self.observation = self.envs.reset()
+        return self.observation
 
     def step(self, actions):
-        """Run one timestep of the environment's dynamics. When end of
-        episode is reached, you are responsible for calling `reset()`
-        to reset this environment's state.
+        """Run one timestep of the environment's dynamics.
         Accepts an action and returns a tuple (observation, reward, done, info).
         Args:
-            action (list): [[action (int)]*self.number_agents]*self.num_envs
+            actions (numpy.ndarray) : dtype: int, shape: (self.num_envs, self.number_agents)
             Example to generate actions:
-                actions = []
-                for i in range(num_envs):
-                    action = np.random.randint(
-                        envs.action_space.n, size=envs.number_agents)
-                    action = action.tolist()
-                    actions += [action]
+                actions = np.random.randint(self.action_space.n, size=(self.num_envs, self.number_agents))
         Returns:
             observation (numpy.ndarray): agent's observation of the current environment, dtype: depends, shape: (self.num_envs, self.number_agents, h, w, c)
             reward (numpy.ndarray) : amount of reward returned after previous action, dtype: float, shape: (self.num_envs, self.number_agents)
             done (numpy.ndarray): whether the episode has ended, dtype: bool, shape: (self.num_envs, self.number_agents)
             info (dict): contains auxiliary diagnostic information, including BrainInfo.
         """
-        return self.envs.step(actions)
+        self.observation, self.reward, self.done, self.infos = self.envs.step(
+            actions.tolist())
+        return self.observation, self.reward, self.done, self.infos
+
+    def step_sync(self):
+        actions = [np.expand_dims(self.sa_envs[id].actions, axis=1)
+                   for id in range(self.number_agents)]
+        actions = np.concatenate(actions, axis=1)
+        self.step(actions)
+
+
+class ArenaSingleAgentHolderEnvs(object):
+    """docstring for ArenaSingleAgentHolderEnvs."""
+
+    def __init__(self, action_space, observation_space, master_multi_agent_envs, id):
+        super(ArenaSingleAgentHolderEnvs, self).__init__()
+        self.action_space = action_space
+        self.observation_space = observation_space
+        self.master_multi_agent_envs = master_multi_agent_envs
+        self.id = id
+
+    def reset(self):
+        """Resets the state of the environment. Reset will cause master_multi_agent_envs to reset.
+        """
+        return self.master_multi_agent_envs.reset()
+
+    def observe_after_reset(self):
+        """Observe after calling reset.
+        Returns: observation (numpy.ndarray): dtype: depends, shape: (self.num_envs, h, w, c)
+        """
+        return self.master_multi_agent_envs.observation[:, self.id]
+
+    def step(self, actions):
+        """Run one timestep of the environment's dynamics.
+        Accepts an action.
+        Args:
+            actions (numpy.ndarray) : dtype: int, shape: (self.num_envs)
+            Example to generate actions:
+                actions = np.random.randint(self.action_space.n, size=(self.num_envs))
+        """
+        self.actions = actions
+
+    def observe_after_step(self):
+        """Observe after calling master_multi_agent_envs.step_sync.
+        Returns:
+            observation (numpy.ndarray): agent's observation of the current environment, dtype: depends, shape: (self.num_envs, h, w, c)
+            reward (numpy.ndarray) : amount of reward returned after previous action, dtype: float, shape: (self.num_envs)
+            done (numpy.ndarray): whether the episode has ended, dtype: bool, shape: (self.num_envs)
+            info (dict): contains auxiliary diagnostic information, including BrainInfo.
+        """
+        return self.master_multi_agent_envs.observation[:, self.id], self.master_multi_agent_envs.reward[:, self.id], self.master_multi_agent_envs.done[:, self.id], self.master_multi_agent_envs.infos
