@@ -11,10 +11,11 @@ class ArenaMultiAgentEnvs(object):
         self.num_envs = num_envs
 
         if self.platform in 'Arena':
-            from .arena_envs.arena_driver import make_envs
-            self.envs = make_envs(
-                env_name=self.env_name,
-                num_envs=self.num_envs,
+            from .arena_envs import get_env_directory
+            from .arena_envs import arena_make_unity_env as make_unity_env
+            self.envs = make_unity_env(
+                env_directory=get_env_directory(self.env_name),
+                num_env=self.num_envs,
                 visual=True,
                 start_index=int(time.time()) % 65534,
             )
@@ -24,3 +25,6 @@ class ArenaMultiAgentEnvs(object):
 
     def reset(self):
         return self.envs.reset()
+
+    def step(self, actions):
+        return self.envs.step(actions)

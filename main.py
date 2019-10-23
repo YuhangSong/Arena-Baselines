@@ -22,7 +22,7 @@ def main():
         actions = []
         for i in range(num_envs):
             action = np.random.randint(
-                envs.action_space.n, size=envs.number_agents())
+                envs.action_space.n, size=envs.number_agents)
             action = action.tolist()
             actions += [action]
         envs.step(actions)
