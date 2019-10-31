@@ -12,9 +12,8 @@ def main():
     # may be present in the dict in each time step.
     print(env.reset())
     # {
-    #     "car_1": [[...]],
-    #     "car_2": [[...]],
-    #     "traffic_light_1": [[...]],
+    #     "P0": [[...]],
+    #     "P1": [[...]],
     # }
 
     while True:
@@ -23,11 +22,11 @@ def main():
 
         # Similarly, new_obs, rewards, dones, etc. also become dicts
         print(rewards)
-        # {"car_1": 3, "car_2": -1, "traffic_light_1": 0}
+        # {"P0": 3, "P1": -1}
 
         # Individual agents can early exit; env is done when "__all__" = True
         print(dones)
-        # {"car_2": True, "__all__": False}
+        # {"P0": True, "P1": False,, "__all__": True}
 
 
 if __name__ == '__main__':
