@@ -2,8 +2,8 @@ import time
 import numpy as np
 
 
-class ArenaAgent(object):
-    """docstring for ArenaAgent."""
+class ArenaSalAgent(object):
+    """docstring for ArenaSalAgent."""
 
     def __init__(
         self,
@@ -13,11 +13,11 @@ class ArenaAgent(object):
         id,
     ):
         """
-        ArenaAgent initialization
+        ArenaSalAgent initialization
         :param xx: xx.
         """
 
-        super(ArenaAgent, self).__init__()
+        super(ArenaSalAgent, self).__init__()
 
         self.action_space = action_space
         self.observation_space = observation_space

@@ -2,8 +2,8 @@ import time
 import numpy as np
 
 
-class ArenaEnvs(object):
-    """docstring for ArenaEnvs."""
+class ArenaSalEnvs(object):
+    """docstring for ArenaSalEnvs. (Arena Single-agent-like Envs)"""
 
     def __init__(
         self,
@@ -12,13 +12,13 @@ class ArenaEnvs(object):
         train_mode=True,
     ):
         """
-        ArenaEnvs initialization
+        ArenaSalEnvs initialization
         :param env_name: Name of the environment.
         :param num_envs: Worker number for environment.
         :param train_mode: Whether to run in training mode, speeding up the simulation, by default.
         """
 
-        super(ArenaEnvs, self).__init__()
+        super(ArenaSalEnvs, self).__init__()
         self.platform = env_name.split('-')[0]
         self.env_name = env_name.split(self.platform + '-')[1]
         self.num_envs = num_envs
@@ -39,7 +39,7 @@ class ArenaEnvs(object):
             self.number_agents = self.envs.number_agents
 
         # single agent envs
-        self.sa_envs = [ArenaSingleAgentHolderEnvs(
+        self.sa_envs = [ArenaSalSaHolder(
             action_space=self.action_space,
             observation_space=self.observation_space,
             master_multi_agent_envs=self,
@@ -78,11 +78,11 @@ class ArenaEnvs(object):
         self.step(actions)
 
 
-class ArenaSingleAgentHolderEnvs(object):
-    """docstring for ArenaSingleAgentHolderEnvs."""
+class ArenaSalSaHolder(object):
+    """docstring for ArenaSalSaHolder. (Arena Single-agent-like Single-agent Holder)"""
 
     def __init__(self, action_space, observation_space, master_multi_agent_envs, id):
-        super(ArenaSingleAgentHolderEnvs, self).__init__()
+        super(ArenaSalSaHolder, self).__init__()
         self.action_space = action_space
         self.observation_space = observation_space
         self.master_multi_agent_envs = master_multi_agent_envs
