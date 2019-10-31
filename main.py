@@ -10,7 +10,7 @@ This demonstrates running the following policies in competition:
     (4) LSTM policy with custom entropy loss
 """
 
-from envs_layer import ArenaRllibEnv, ArenaRllibEnv
+from envs_layer import ArenaRllibEnv
 import random
 from gym.spaces import Discrete
 

@@ -1,8 +1,6 @@
-from ray.rllib.env.multi_agent_env import MultiAgentEnv
+import numpy as np
 
-ROCK = 0
-PAPER = 1
-SCISSORS = 2
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 
 class ArenaRllibEnv(MultiAgentEnv):
@@ -10,47 +8,49 @@ class ArenaRllibEnv(MultiAgentEnv):
 
     The observation is simply the last opponent action."""
 
-    def __init__(self, _):
-        self.action_space = Discrete(3)
-        self.observation_space = Discrete(3)
-        self.player1 = "player1"
-        self.player2 = "player2"
-        self.last_move = None
-        self.num_moves = 0
+    def __init__(
+        self,
+        env_config={
+            'name': 'Test-Discrete',
+            'train_mode': False,
+        }
+    ):
+
+        self.env_config = env_config
+
+        from .arena_envs import UnityEnv, get_env_directory
+        self.env = UnityEnv(get_env_directory(self.env_config['name']), 0, use_visual=True,
+                            uint8_visual=True, multiagent=True)
+        self.env.set_train_mode(train_mode=self.env_config['train_mode'])
+
+        self.action_space = self.env.action_space
+        self.observation_space = self.env.observation_space
+
+        self.player_name_prefix = 'P'
 
     def reset(self):
-        self.last_move = (0, 0)
-        self.num_moves = 0
-        return {
-            self.player1: self.last_move[1],
-            self.player2: self.last_move[0],
-        }
+        return_ = {}
+        obs = self.env.reset()
+        for i in range(len(obs)):
+            return_['{}{}'.format(self.player_name_prefix, i)] = obs[i]
+        return return_
 
-    def step(self, action_dict):
-        move1 = action_dict[self.player1]
-        move2 = action_dict[self.player2]
-        self.last_move = (move1, move2)
-        obs = {
-            self.player1: self.last_move[1],
-            self.player2: self.last_move[0],
-        }
-        r1, r2 = {
-            (ROCK, ROCK): (0, 0),
-            (ROCK, PAPER): (-1, 1),
-            (ROCK, SCISSORS): (1, -1),
-            (PAPER, ROCK): (1, -1),
-            (PAPER, PAPER): (0, 0),
-            (PAPER, SCISSORS): (-1, 1),
-            (SCISSORS, ROCK): (-1, 1),
-            (SCISSORS, PAPER): (1, -1),
-            (SCISSORS, SCISSORS): (0, 0),
-        }[move1, move2]
-        rew = {
-            self.player1: r1,
-            self.player2: r2,
-        }
-        self.num_moves += 1
-        done = {
-            "__all__": self.num_moves >= 10,
-        }
-        return obs, rew, done, {}
+    def step(self, actions):
+
+        actions_ = []
+        for i in range(len(actions.keys())):
+            actions_ += [actions['{}{}'.format(self.player_name_prefix, i)]]
+
+        obs_, rewards_, dones_, infos_ = self.env.step(actions_)
+
+        obs = {}
+        rewards = {}
+        dones = {}
+        for i in range(len(obs_)):
+            obs['{}{}'.format(self.player_name_prefix, i)] = obs_[i]
+            rewards['{}{}'.format(self.player_name_prefix, i)] = rewards_[i]
+            dones['{}{}'.format(self.player_name_prefix, i)] = dones_[i]
+
+        dones['__all__'] = np.all(dones_)
+
+        return obs, rewards, dones, infos_
