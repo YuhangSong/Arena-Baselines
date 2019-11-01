@@ -46,7 +46,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         # xxx_ (gym_unity) to xxx (rllib)
         obs = {}
         for agent_i in range(self.number_agents):
-            obs["{}_{}".format(self.agent_id_prefix, agent_i)] = obs_[agent_i]
+            obs[self.get_agent_id(agent_i)] = obs_[agent_i]
 
         return obs
 
@@ -55,7 +55,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         # xxx (rllib) to xxx_ (gym_unity)
         actions_ = []
         for agent_i in range(self.number_agents):
-            agent_id = "{}_{}".format(self.agent_id_prefix, agent_i)
+            agent_id = self.get_agent_id(agent_i)
             actions_ += [actions[agent_id]]
 
         # step forward (gym_unity)
@@ -67,7 +67,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         dones = {}
         infos = {}
         for agent_i in range(self.number_agents):
-            agent_id = "{}_{}".format(self.agent_id_prefix, agent_i)
+            agent_id = self.get_agent_id(agent_i)
             obs[agent_id] = obs_[agent_i]
             rewards[agent_id] = rewards_[agent_i]
             dones[agent_id] = dones_[agent_i]
@@ -80,6 +80,15 @@ class ArenaRllibEnv(MultiAgentEnv):
 
     def close(self):
         self.env.close()
+
+    def get_agent_ids(self):
+        self.agent_ids = []
+        for agent_i in range(self.number_agents):
+            self.agent_ids += [self.get_agent_id(agent_i)]
+        return self.agent_ids
+
+    def get_agent_id(self, agent_i):
+        return "{}_{}".format(self.agent_id_prefix, agent_i)
 
 
 class ArenaUnityEnv(UnityEnv):
