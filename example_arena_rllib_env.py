@@ -10,7 +10,7 @@ def main():
 
     # Observations are a dict mapping agent names to their obs. Not all agents
     # may be present in the dict in each time step.
-    print(env.reset())
+    # print(env.reset())
     # {
     #     "P0": [[...]],
     #     "P1": [[...]],
