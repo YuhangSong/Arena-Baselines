@@ -10,22 +10,18 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 class ArenaRllibEnv(MultiAgentEnv):
     """Convert ArenaUnityEnv(gym_unity) to MultiAgentEnv (rllib)"""
 
-    def __init__(
-        self,
-        env_config={
-            'name': 'Test-Discrete',
-            'train_mode': True,
-        }
-    ):
+    def __init__(self, env_config):
 
-        self.env_config = env_config
+        self.env_id = env_config.get("env_id", None)
+        if self.env_id is None:
+            raise Exception("env_id in env_config has to be specified")
 
         while True:
             try:
                 # TODO: Individual game instance cannot get rank from rllib, so just try ranks
                 rank = random.randint(0, 65534)
                 self.env = ArenaUnityEnv(
-                    get_env_directory(self.env_config['name']),
+                    get_env_directory(self.env_id),
                     rank,
                     use_visual=True,
                     uint8_visual=False,
@@ -35,10 +31,13 @@ class ArenaRllibEnv(MultiAgentEnv):
             except Exception as e:
                 pass
 
-        self.env.set_train_mode(train_mode=self.env_config['train_mode'])
+        self.env.set_train_mode(train_mode=env_config.get("train_mode", True))
 
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
+        self.number_agents = self.env.number_agents
+
+        self.agent_id_prefix = "agent"
 
     def reset(self):
 
@@ -46,8 +45,8 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         # xxx_ (gym_unity) to xxx (rllib)
         obs = {}
-        for i in range(len(obs_)):
-            obs[i] = obs_[i]
+        for agent_i in range(self.number_agents):
+            obs["{}_{}".format(self.agent_id_prefix, agent_i)] = obs_[agent_i]
 
         return obs
 
@@ -55,8 +54,9 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         # xxx (rllib) to xxx_ (gym_unity)
         actions_ = []
-        for i in range(len(actions.keys())):
-            actions_ += [actions[i]]
+        for agent_i in range(self.number_agents):
+            agent_id = "{}_{}".format(self.agent_id_prefix, agent_i)
+            actions_ += [actions[agent_id]]
 
         # step forward (gym_unity)
         obs_, rewards_, dones_, infos_ = self.env.step(actions_)
@@ -66,14 +66,15 @@ class ArenaRllibEnv(MultiAgentEnv):
         rewards = {}
         dones = {}
         infos = {}
-        for i in range(len(obs_)):
-            obs[i] = obs_[i]
-            rewards[i] = rewards_[i]
-            dones[i] = dones_[i]
-            infos[i] = {}
+        for agent_i in range(self.number_agents):
+            agent_id = "{}_{}".format(self.agent_id_prefix, agent_i)
+            obs[agent_id] = obs_[agent_i]
+            rewards[agent_id] = rewards_[agent_i]
+            dones[agent_id] = dones_[agent_i]
+            infos[agent_id] = {}
 
         # done when all agents are done
-        dones['__all__'] = np.all(dones_)
+        dones["__all__"] = np.all(dones_)
 
         return obs, rewards, dones, infos
 
@@ -125,7 +126,7 @@ def get_env_directory(env_name):
     """
     return os.path.join(
         os.path.dirname(__file__),
-        'bin/{}-{}'.format(
+        "bin/{}-{}".format(
             env_name,
             platform.system(),
         )

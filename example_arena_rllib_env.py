@@ -1,6 +1,11 @@
-import os
-import time
-import numpy as np
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+"""Simple example of using ArenaRllibEnv, which is a interface that
+convert a arena environment to a MultiAgentEnv
+(see: https://ray.readthedocs.io/en/latest/rllib-env.html#multi-agent-and-hierarchical)
+interface by rllib.
+"""
 
 from envs_layer import ArenaRllibEnv
 
@@ -12,22 +17,22 @@ def main():
     # may be present in the dict in each time step.
     # print(env.reset())
     # {
-    #     "Player_0": [[...]],
-    #     "Player_1": [[...]],
+    #     "agent_0": [[...]],
+    #     "agent_1": [[...]],
     # }
 
     while True:
         # Actions should be provided for each agent that returned an observation.
         new_obs, rewards, dones, infos = env.step(
-            actions={"Player_0": 0, "Player_1": 5})
+            actions={"agent_0": 0, "agent_1": 5})
 
         # Similarly, new_obs, rewards, dones, etc. also become dicts
         print(rewards)
-        # {"Player_0": 3, "Player_1": -1}
+        # {"agent_0": 3, "agent_1": -1}
 
         # Individual agents can early exit; env is done when "__all__" = True
         print(dones)
-        # {"Player_0": True, "Player_1": False,, "__all__": True}
+        # {"agent_0": True, "agent_1": False,, "__all__": True}
 
 
 if __name__ == '__main__':
