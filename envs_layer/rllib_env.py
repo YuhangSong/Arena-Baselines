@@ -19,8 +19,15 @@ class ArenaRllibEnv(MultiAgentEnv):
         self.env_config = env_config
 
         from .arena_envs import UnityEnv, get_env_directory
-        self.env = UnityEnv(get_env_directory(self.env_config['name']), 0, use_visual=True,
-                            uint8_visual=True, multiagent=True)
+        rank = 0
+        while True:
+            try:
+                self.env = UnityEnv(get_env_directory(self.env_config['name']), rank, use_visual=True,
+                                    uint8_visual=True, multiagent=True)
+                break
+            except Exception as e:
+                rank += 1
+
         self.env.set_train_mode(train_mode=self.env_config['train_mode'])
 
         self.action_space = self.env.action_space
@@ -54,3 +61,6 @@ class ArenaRllibEnv(MultiAgentEnv):
         dones['__all__'] = np.all(dones_)
 
         return obs, rewards, dones, infos_
+
+    def close(self):
+        self.env.close()
