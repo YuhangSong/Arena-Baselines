@@ -22,10 +22,11 @@ tf = try_import_tf()
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--num-iters", type=int, default=20)
 parser.add_argument("--env-id", type=str, default="Test-Discrete")
+parser.add_argument("--policy-assignment", type=str, default="independent")
+parser.add_argument("--num-iters", type=int, default=20)
 
-policy_id_prefix = 'policy'
+policy_id_prefix = "policy"
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -57,10 +58,15 @@ if __name__ == "__main__":
 
     # create a map from agent_id to policy_id
     agent_id_to_policy_id = {}
-    for agent_i in range(number_agents):
-        agent_id = dummy_env.get_agent_id(agent_i)
-        policy_id = get_policy_id(agent_i)
-        agent_id_to_policy_id[agent_id] = policy_id
+
+    if args.policy_assignment in ["independent"]:
+        # independent learners, each agent is assigned with a independent policy
+        for agent_i in range(number_agents):
+            agent_id = dummy_env.get_agent_id(agent_i)
+            policy_id = get_policy_id(agent_i)
+            agent_id_to_policy_id[agent_id] = policy_id
+    else:
+        raise NotImplementedError
 
     # check if all agent_id are covered in agent_id_to_policy_id
     for agent_id in dummy_env.get_agent_ids():

@@ -1,0 +1,1 @@
+If you have a X-Server belongs to your account, you can just start multiple windows held by a TMUX session when you are on the machine's GUI desktop (in this way, the window has access to X-Server). After that, connect to this machine remotely and attach the session (windows) you started on the GUI desktop.
