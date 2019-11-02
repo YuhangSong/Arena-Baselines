@@ -24,7 +24,8 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--env-id", type=str,
                     default="Tennis-Sparse-2T1P-Discrete")
-parser.add_argument("--policy-assignment", type=str, default="independent")
+parser.add_argument("--policy-assignment", type=str, default="independent",
+                    help="independent (independent learners), self-play (one policy, only one agent is learning, the others donot explore)")
 parser.add_argument("--num-iters", type=int, default=1000)
 
 policy_id_prefix = "policy"
@@ -53,21 +54,37 @@ if __name__ == "__main__":
 
     # create config of policies
     policies = {}
-    for agent_i in range(number_agents):
-        policy_id = get_policy_id(agent_i)
-        policies[policy_id] = (None, obs_space, act_space, {})
+
+    if args.policy_assignment in ["independent"]:
+        # build number_agents policies
+        for agent_i in range(number_agents):
+            policy_id = get_policy_id(agent_i)
+            policies[policy_id] = (None, obs_space, act_space, {})
+    elif args.policy_assignment in ["self-play"]:
+        # build just one learning policy
+        policies["policy_learning_0"] = (None, obs_space, act_space, {})
+        # and all other policies are playing policy
+        for agent_i in range(1, number_agents):
+            policies["policy_playing_{}".format(agent_i)] = (
+                None, obs_space, act_space, {"custom_action_dist": "xxx"})
+    else:
+        raise NotImplementedError
 
     # create a map from agent_id to policy_id
     agent_id_to_policy_id = {}
 
-    if args.policy_assignment in ["independent"]:
-        # independent learners, each agent is assigned with a independent policy
-        for agent_i in range(number_agents):
-            agent_id = dummy_env.get_agent_id(agent_i)
+    for agent_i in range(number_agents):
+        agent_id = dummy_env.get_agent_id(agent_i)
+        if args.policy_assignment in ["independent"]:
+            # each agent is assigned with a independent policy
             policy_id = get_policy_id(agent_i)
             agent_id_to_policy_id[agent_id] = policy_id
-    else:
-        raise NotImplementedError
+        elif args.policy_assignment in ["self-play"]:
+            # all agents are assigned with the same policy
+            policy_id = get_policy_id(0)
+            agent_id_to_policy_id[agent_id] = policy_id
+        else:
+            raise NotImplementedError
 
     # check if all agent_id are covered in agent_id_to_policy_id
     for agent_id in dummy_env.get_agent_ids():
@@ -87,23 +104,5 @@ if __name__ == "__main__":
                     lambda agent_id: agent_id_to_policy_id[agent_id]
                 ),
             },
-            # === Execution ===
-            # Number of environments to evaluate vectorwise per worker.
-            "num_envs_per_worker": 10,
-
-            # === Resources ===
-            # Number of actors used for parallelism
-            "num_workers": 1,
-            # Number of GPUs to allocate to the trainer process. Note that not all
-            # algorithms can take advantage of trainer GPUs. This can be fractional
-            # (e.g., 0.3 GPUs).
-            "num_gpus": 1,
-            # Number of CPUs to allocate per worker.
-            "num_cpus_per_worker": 10,
-            # Number of GPUs to allocate per worker. This can be fractional.
-            "num_gpus_per_worker": 1,
-            # Number of CPUs to allocate for the trainer. Note: this only takes effect
-            # when running in Tune.
-            "num_cpus_for_driver": 2,
         },
     )
