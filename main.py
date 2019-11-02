@@ -22,9 +22,10 @@ tf = try_import_tf()
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--env-id", type=str, default="Test-Discrete")
+parser.add_argument("--env-id", type=str,
+                    default="Tennis-Sparse-2T1P-Discrete")
 parser.add_argument("--policy-assignment", type=str, default="independent")
-parser.add_argument("--num-iters", type=int, default=20)
+parser.add_argument("--num-iters", type=int, default=1000)
 
 policy_id_prefix = "policy"
 

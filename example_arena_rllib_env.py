@@ -11,7 +11,11 @@ from envs_layer import ArenaRllibEnv
 
 
 def main():
-    env = ArenaRllibEnv()
+
+    env_config = {
+        "env_id": "Tennis-Sparse-2T1P-Discrete",
+    }
+    env = ArenaRllibEnv(env_config)
 
     # Observations are a dict mapping agent names to their obs. Not all agents
     # may be present in the dict in each time step.
