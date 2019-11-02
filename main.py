@@ -87,5 +87,23 @@ if __name__ == "__main__":
                     lambda agent_id: agent_id_to_policy_id[agent_id]
                 ),
             },
+            # === Execution ===
+            # Number of environments to evaluate vectorwise per worker.
+            "num_envs_per_worker": 10,
+
+            # === Resources ===
+            # Number of actors used for parallelism
+            "num_workers": 1,
+            # Number of GPUs to allocate to the trainer process. Note that not all
+            # algorithms can take advantage of trainer GPUs. This can be fractional
+            # (e.g., 0.3 GPUs).
+            "num_gpus": 1,
+            # Number of CPUs to allocate per worker.
+            "num_cpus_per_worker": 10,
+            # Number of GPUs to allocate per worker. This can be fractional.
+            "num_gpus_per_worker": 1,
+            # Number of CPUs to allocate for the trainer. Note: this only takes effect
+            # when running in Tune.
+            "num_cpus_for_driver": 2,
         },
     )

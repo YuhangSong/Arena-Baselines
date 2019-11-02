@@ -32,8 +32,8 @@ contact us via slack if you want to have access to these features.
 
 ### Dependencies
 
-* [RLlib: Scalable Reinforcement Learning](https://ray.readthedocs.io/en/latest/rllib.html)
-* [gym_unity](https://github.com/Unity-Technologies/ml-agents/tree/master/gym-unity)
+* [rllib](https://ray.readthedocs.io/en/latest/rllib.html)
+* [gym-unity](https://github.com/Unity-Technologies/ml-agents/tree/master/gym-unity)
 
 To install above dependencies, run: (following commands could be outdated, if so, go to each link above)
 ```bash
@@ -132,3 +132,158 @@ Commands, replace GAME_NAME with above games:
 
 ```
 ```
+
+## Visualization
+
+**Curves:**
+The code log multiple curves to help analysis the training process, run:
+```
+source activate Arena && tensorboard --logdir=~/ray_results --port=8888
+```
+and visit ```http://localhost:4253``` for visualization with tensorboard.
+
+If your port is blocked, use natapp to forward a port:
+```
+./natapp --authtoken 237e94b5d173a7c3
+./natapp --authtoken 09d9c46fedceda3f
+```
+
+**Behaviors:**
+Set ```--mode vis_train```, so that
+* The game engine runs at a real time scale of 1 (when training, it runs 100 times as the real time scale).
+* The game runs only one thread.
+* The game renders at 1920*1080, where you can observe agents' observations as well as the top-down view of the global state. So you are expected to do this on a desktop with X-Server you can access, instead of [using a remote server](#setup-x-server).
+* All agents act deterministically without exploring.
+* Two video files (.avi and .gif) of the episode will be saved, so that you can post it on your project website. The orignal resolution is the same as that of your screen, which is 1920*1080 in our case, click on the gif video to see the high-resolution original file. See [here](#introduction).
+* A picture (.png) of the episode will be saved, so that you can use it as a visulizatino of your agents' behavior in your paper. The orignal resolution is the same as that of your screen, which is 1920*1080 in our case, click on the image to see the high-resolution original file.  See [here](#introduction).
+
+## More Baselines and Options (Keep Updating)
+
+### Self-play
+
+Above example commands runs a self-play with following options and features:
+
+* In different thread, the agent is taking different roles, so that the learning generalize better.
+* ```--reload-playing-agents-principle``` has three options
+  * ```recent``` playing agents are loaded with the most recent checkpoint.
+	* ```earliest``` playing agents are loaded with the oldest checkpoint. This option is mainly for debugging, since it removes the stochasticity of playing agent.
+  * ```uniform``` playing agents are loaded with the a random checkpoint sampled uniformly from all historical checkpoints.
+  * ```OpenAIFive``` To avoid strategy collapse, the agent trains 80% of its games against itself and the other 20% against its past selves. Thus, OpenAIFive is 0.8 probability to be recent, 0.2 probability to be uniform.
+
+### Population-based Training
+
+Population-based training is usefull when the game is none-transitive, which means there is no best agent, but there could be a best population.
+Population-based training will train a batch of agents instead of just one.
+Add argument ```--population-number 32``` to enable population base training, for example:
+This will result in training a population of ```32``` agents.
+
+## Benchmarks (Keep Updating)
+
+| Games | Visualization | Game Description | Agents Behavior |
+| ------------- | ------------- | ------------- | ------------- |
+| Servers: Wx0, Wx1, H4n, W4n, W2n, W5n |
+| ArenaCrawler-Example-v2-Continuous | <img src="./images/ArenaCrawler-Example-v2-Continuous.gif" align="middle" width="2000"/> |  | Server: W4n running. |
+| ArenaCrawlerMove-2T1P-v1-Continuous | <img src="./images/ArenaCrawlerMove-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | The two agents are competing with each other on reaching the target first. | The agents learn basic motion skills of moving towards the target. Also, note that the blue agent learns to stretch one of its arms when it gets close to the target. |
+| ArenaCrawlerRush-2T1P-v1-Continuous | <img src="./images/ArenaCrawlerRush-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | The two agents are competing with each other on reaching the target first. | Server: W2n running. |
+| ArenaCrawlerPush-2T1P-v1-Continuous | <img src="./images/ArenaCrawlerPush-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | The agents learn that the most efficient way to make the box reach the target point point is actually not by pushing it, but by kicking it. |
+| ArenaWalkerMove-2T1P-v1-Continuous | <img src="./images/ArenaWalkerMove-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | As shown. |
+| Crossroads-2T1P-v1-Continuous | <img src="./images/Crossroads-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | The agents simply learn to rush towards the goal. |
+| ArenaCrawlerPush-2T2P-v1-Continuous | <img src="./images/ArenaCrawlerPush-2T2P-v1-Continuous.gif" align="middle" width="2000"/> | | The agents in the same team learn to push together at the same time, so that the box is pushed forward most efficiently.|
+| Crossroads-2T2P-v1-Continuous | <img src="./images/Crossroads-2T2P-v1-Continuous.gif" align="middle" width="2000"/> | | The agents in the same team learn that agent with ID of 0 should go first, so that the agents in the same team would not produce trafic jam with each other. |
+| FighterNoTurn-2T1P-v1-Discrete | <img src="./images/FighterNoTurn-2T1P-v1-Discrete.png" align="middle" width="2000"/> | | As shown. |
+| FighterFull-2T1P-v1-Discrete | <img src="./images/FighterFull-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | As shown. |
+| Soccer-2T1P-v1-Discrete | <img src="./images/Soccer-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | As shown |
+| Soccer-2T2P-v1-Discrete | <img src="./images/Soccer-2T2P-v1-Discrete.gif" align="middle" width="2000"/> | | As shown. |
+| BlowBlow-2T1P-v1-Discrete | <img src="./images/BlowBlow-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | As shown. |
+| BlowBlow-2T2P-v1-Discrete | <img src="./images/BlowBlow-2T2P-v1-Discrete.gif" align="middle" width="2000"/> | | Not Working well, I think there should be some technique needed for credic assignment. |
+| Boomer-2T1P-v1-Discrete | <img src="./images/Boomer-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W5n running |
+| Gunner-2T1P-v1-Discrete | <img src="./images/Gunner-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W4n done |
+| Maze2x2Gunner-2T1P-v1-Discrete | <img src="./images/Maze2x2Gunner-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W4n done |
+| Maze3x3Gunner-2T1P-v1-Discrete | <img src="./images/Maze3x3Gunner-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W4n done |
+| Maze3x3Gunner-PenalizeTie-2T1P-v1-Discrete | <img src="./images/Maze3x3Gunner-PenalizeTie-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W4n running |
+| Barrier4x4Gunner-2T1P-v1-Discrete | <img src="./images/Barrier4x4Gunner-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: W4n waiting |
+| RunToGoal-2T1P-v1-Continuous | <img src="./images/RunToGoal-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | Learn to avoid. |
+| Sumo-2T1P-v1-Continuous | <img src="./images/Sumo-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | Server: xx running. |
+| Tennis-2T1P-v1-Discrete | <img src="./images/Tennis-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: Wx0 running |
+| Tank-FP-2T1P-v1-Discrete | <img src="./images/Tank-FP-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: Wx1 running |
+| YouShallNotPass-Dense-2T1P-v1-Continuous | <img src="./images/YouShallNotPass-Dense-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | Server: Wx0 running |
+| BlowBlow-Dense-2T2P-v1-Discrete | <img src="./images/BlowBlow-Dense-2T2P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: H4n running |
+
+## Common Problems
+
+#### Game threads still running
+
+Sometimes, the game threads do not exit properly after you kill the python thread.
+Run following command to print a banch of kill commmands.
+Then run the printed commands to kill all the game threads.
+```
+ps aux | grep -ie Linux.x86_64 | awk '{print "kill -9 " $2}'
+```
+
+#### Port still in use
+
+It takes some time for the port to release after you killed the python thread.
+If you make make sure that your game threads have been killed, you are perfectly fine to run python with a different ```--arena-start-index 33969```.
+Or just wait for a while till the system release the port.
+
+#### Copy models
+
+You may find it is useful to copy models from a remote server to your desktop, so that you can see training visualization of the game.
+For example,
+
+* The experiment you want to copy is: ```/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc```
+* The most recent agent id is: ```P0_agent_FRecent```
+* You are copying from a remote server: ```-P 30007 yuhangsong@fbafc1ae575e5123.natapp.cc```
+
+You can run following commands to copy necessary checkpoints:
+
+```
+/* Wx0 */
+mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+scp -r -P 33007 yuhangsong@ca56526248261483.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+
+/* Wx1 */
+mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+scp -r -P 30007 yuhangsong@fbafc1ae575e5123.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+
+/* W4n */
+mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+scp -r -P 7334 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+
+/* W2n */
+mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+scp -r -P 7330 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+
+/* W5n */
+mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+scp -r -P 7333 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
+```
+
+## Citation
+
+If you use Arena to conduct research, we ask that you cite the following paper as a reference:
+```
+@article{song2019arena,
+  title={Arena: A General Evaluation Platform and Building Toolkit for Multi-Agent Intelligence},
+  author={Song, Yuhang and Wang, Jianyi and Lukasiewicz, Thomas and Xu, Zhenghua and Xu, Mai and Ding, Zihan and Wu, Lianlong},
+  journal={arXiv preprint arXiv:1905.08085},
+  year={2019}
+}
+```
+as well as the engine behind Arena, without which the platform would be impossible to create
+```
+@article{juliani2018unity,
+  title={Unity: A general platform for intelligent agents},
+  author={Juliani, Arthur and Berges, Vincent-Pierre and Vckay, Esh and Gao, Yuan and Henry, Hunter and Mattar, Marwan and Lange, Danny},
+  journal={arXiv preprint arXiv:1809.02627},
+  year={2018}
+}
+```
+
+## License
+
+[Apache License 2.0](LICENSE)
+
+## Acknowledgement
+
+We give special thanks to the [Whiteson Research Lab](http://whirl.cs.ox.ac.uk/) and [Unity ML-Agents Team](https://unity3d.com/machine-learning/), with which the discussion shaped the vision of the project a lot.
