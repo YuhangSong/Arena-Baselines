@@ -27,6 +27,8 @@ parser.add_argument("--env-id", type=str,
 parser.add_argument("--policy-assignment", type=str, default="independent",
                     help="independent (independent learners), self-play (one policy, only one agent is learning, the others donot explore)")
 parser.add_argument("--num-iters", type=int, default=1000)
+parser.add_argument("--num-cpus-total", type=int, default=12)
+parser.add_argument("--num-gpus-total", type=int, default=2)
 
 policy_id_prefix = "policy"
 
@@ -104,5 +106,30 @@ if __name__ == "__main__":
                     lambda agent_id: agent_id_to_policy_id[agent_id]
                 ),
             },
+
+            # atari-ppo
+            "lambda": 0.95,
+            "kl_coeff": 0.5,
+            "clip_rewards": True,
+            "clip_param": 0.1,
+            "vf_clip_param": 10.0,
+            "entropy_coeff": 0.01,
+            "train_batch_size": 5000,
+            "sample_batch_size": 100,
+            "sgd_minibatch_size": 500,
+            "num_sgd_iter": 10,
+            "batch_mode": "truncate_episodes",
+            "observation_filter": "NoFilter",
+            "vf_share_layers": True,
+
+            # === Resources ===
+            # Number of GPUs to allocate to the trainer process. Note that not all
+            # algorithms can take advantage of trainer GPUs. This can be fractional
+            # (e.g., 0.3 GPUs).
+            "num_gpus": args.num_gpus_total,
+            # for arena_env scaling up with num_workers is tested to be better than
+            # scaling up with num_envs_per_worker,
+            # so set num_workers = args.num_cpus_total - 1 (1 for num_cpus_for_driver)
+            "num_workers": args.num_cpus_total - 1,
         },
     )
