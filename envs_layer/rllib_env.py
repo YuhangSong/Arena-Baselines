@@ -90,6 +90,12 @@ class ArenaRllibEnv(MultiAgentEnv):
     def get_agent_id(self, agent_i):
         return "{}_{}".format(self.agent_id_prefix, agent_i)
 
+    def get_agent_i(self, agent_id):
+        return int(agent_id.split(self.agent_id_prefix + "_")[1])
+
+    def get_agent_id_prefix(self):
+        return self.agent_id_prefix
+
 
 class ArenaUnityEnv(UnityEnv):
     """An override of UnityEnv from gym_unity.envs, to fix some of their bugs and add some supports.

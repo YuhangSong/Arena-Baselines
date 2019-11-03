@@ -9,6 +9,7 @@ from rllib to train an arena environment in ArenaRllibEnv.
 import argparse
 import random
 import time
+import copy
 
 import numpy as np
 
@@ -24,7 +25,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--env-id", type=str,
                     default="Tennis-Sparse-2T1P-Discrete")
-parser.add_argument("--policy-assignment", type=str, default="independent",
+parser.add_argument("--policy-assignment", type=str, default="self-play",
                     help="independent (independent learners), self-play (one policy, only one agent is learning, the others donot explore)")
 parser.add_argument("--num-iters", type=int, default=1000)
 parser.add_argument("--num-cpus-total", type=int, default=12)
@@ -58,56 +59,72 @@ if __name__ == "__main__":
     policies = {}
 
     if args.policy_assignment in ["independent"]:
-        # build number_agents policies
+
+        # build number_agents independent learning policies
         for agent_i in range(number_agents):
-            policy_id = get_policy_id(agent_i)
-            policies[policy_id] = (None, obs_space, act_space, {})
+            policies[get_policy_id(agent_i)] = (None, obs_space, act_space, {})
+
     elif args.policy_assignment in ["self-play"]:
+
         # build just one learning policy
-        policies["policy_learning_0"] = (None, obs_space, act_space, {})
-        # and all other policies are playing policy
+        policies[get_policy_id(0)] = (None, obs_space, act_space, {})
+
+        # build all other policies as playing policy
+
+        # build custom_action_dist to be playing mode dist (no exploration)
+        # TODO: support pytorch policy, currently only add support for tf_action_dist
+        if act_space.__class__.__name__ == "Discrete":
+
+            from agents_layer import DeterministicCategorical
+            custom_action_dist = DeterministicCategorical
+
+        elif act_space.__class__.__name__ == "Box":
+
+            from ray.rllib.models.tf.tf_action_dist import Deterministic
+            custom_action_dist = Deterministic
+
+        else:
+
+            raise NotImplementedError
+
+        # build all other policies as playing policy
         for agent_i in range(1, number_agents):
-            policies["policy_playing_{}".format(agent_i)] = (
-                None, obs_space, act_space, {"custom_action_dist": "xxx"})
+            policies[get_policy_id(agent_i)] = (
+                None, obs_space, act_space, {"custom_action_dist": custom_action_dist})
+
     else:
         raise NotImplementedError
 
     # create a map from agent_id to policy_id
-    agent_id_to_policy_id = {}
+    if args.policy_assignment in ["independent", "self-play"]:
 
-    for agent_i in range(number_agents):
-        agent_id = dummy_env.get_agent_id(agent_i)
-        if args.policy_assignment in ["independent"]:
-            # each agent is assigned with a independent policy
-            policy_id = get_policy_id(agent_i)
-            agent_id_to_policy_id[agent_id] = policy_id
-        elif args.policy_assignment in ["self-play"]:
-            # all agents are assigned with the same policy
-            policy_id = get_policy_id(0)
-            agent_id_to_policy_id[agent_id] = policy_id
-        else:
-            raise NotImplementedError
+        # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
+        agent_id_prefix = dummy_env.get_agent_id_prefix()
 
-    # check if all agent_id are covered in agent_id_to_policy_id
-    for agent_id in dummy_env.get_agent_ids():
-        if agent_id not in agent_id_to_policy_id.keys():
-            raise Exception("All agent_id has to be mentioned in agent_id_to_policy_id.keys(). \
-                agent_id of {} is not mentioned".format(agent_id))
+        def get_agent_i(agent_id):
+            return int(agent_id.split(agent_id_prefix + "_")[1])
+
+        def policy_mapping_fn_i2i(agent_id):
+            return get_policy_id(get_agent_i(agent_id))
+
+        # use policy_mapping_fn_i2i as policy_mapping_fn
+        policy_mapping_fn = policy_mapping_fn_i2i
+
+    else:
+        raise NotImplementedError
 
     tune.run(
         "PPO",
         stop={"training_iteration": args.num_iters},
         config={
-            "env": "arena_env",
+            "env": args.env_id if "NoFrameskip" in args.env_id else "arena_env",
             "env_config": env_config,
             "multiagent": {
-                "policies": policies,
-                "policy_mapping_fn": (
-                    lambda agent_id: agent_id_to_policy_id[agent_id]
-                ),
+                "policies": {} if "NoFrameskip" in args.env_id else policies,
+                "policy_mapping_fn": None if "NoFrameskip" in args.env_id else policy_mapping_fn,
             },
 
-            # atari-ppo
+            # use atari-ppo settings
             "lambda": 0.95,
             "kl_coeff": 0.5,
             "clip_rewards": True,
