@@ -45,8 +45,8 @@ pip install pip -U
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Create a virtual environment
-conda create -n Arena python=3.6.7 -y
-source activate Arena
+conda create -n Arena-Baselines python=3.6.7 -y
+source activate Arena-Baselines
 
 # Clone code
 mkdir Arena
@@ -78,7 +78,7 @@ Or you can follow [here](https://github.com/YuhangSong/Arena-Baselines/set-up-x-
 First, crate a TMUX session to maintain your process (more necessary if the machine is a server you connect via SSH), and enter virtual environment
 ```
 tmux new-session -s Arena
-source activate Arena
+source activate Arena-Baselines
 ```
 
 Then you can run with following command:
@@ -95,7 +95,7 @@ Replace GAME_ID with these games:
 **Curves:**
 The code log multiple curves to help analysis the training process, run:
 ```
-source activate Arena && tensorboard --logdir=~/ray_results --port=8888
+source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=8888
 ```
 and visit ```http://localhost:4253``` for visualization with tensorboard.
 
