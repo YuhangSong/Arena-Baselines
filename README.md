@@ -45,7 +45,7 @@ pip install pip -U
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Create a virtual environment
-conda create -n Arena-Baselines python=3.6.7 -y
+conda create -n Arena-Baselines python=3.6.5 -y
 source activate Arena-Baselines
 
 # Clone code
