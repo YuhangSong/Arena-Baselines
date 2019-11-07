@@ -16,7 +16,7 @@ pong-ppo:
         sample_batch_size: 20
         sgd_minibatch_size: 500
         num_sgd_iter: 10
-        num_workers: 32
+        num_workers: 11
         num_envs_per_worker: 5
         batch_mode: truncate_episodes
         observation_filter: NoFilter
