@@ -37,12 +37,15 @@ contact us via slack if you want to have access to these features.
 
 To install above dependencies, run: (following commands could be outdated, if so, go to each link above)
 ```bash
-# Only for users behind the Great Wall of China, no need for other users
+# Set conda source. Only for users behind the Great Wall of China, no need for other users
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
-pip install pip -U
+
+# Set pip source. Only for users behind the Great Wall of China, no need for other users
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+/* Reset pip source with: pip config set global.index-url https://pypi.org/simple  */
 
 # Create a virtual environment
 conda create -n Arena-Baselines python=3.6.5 -y
