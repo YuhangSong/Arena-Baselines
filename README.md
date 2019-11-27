@@ -37,33 +37,39 @@ contact us via slack if you want to have access to these features.
 
 To install above dependencies, run: (following commands could be outdated, if so, go to each link above)
 ```bash
-# Set conda source. Only for users behind the Great Wall of China, no need for other users
+/* Set conda source. Only for users behind the Great Wall of China, no need for other users */
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
 
-# Set pip source. Only for users behind the Great Wall of China, no need for other users
+/* Set pip source. Only for users behind the Great Wall of China, no need for other users */
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 /* Reset pip source with: pip config set global.index-url https://pypi.org/simple  */
 
-# Create a virtual environment
+/* Create a virtual environment */
 conda create -n Arena-Baselines python=3.6.5 -y
 source activate Arena-Baselines
 
-# Clone code
+/* clone code */
 mkdir Arena
 cd Arena
 git clone https://github.com/YuhangSong/Arena-Baselines.git
 cd Arena-Baselines
 
-# PyTorch
+/* PyTorch */
 pip install --upgrade torch torchvision
 
-# TensorFlow
-pip install --upgrade tensorflow-gpu
+/* TensorFlow GPU */
+pip install tensorflow-gpu==1.13.2
+/* Or TensorFlow CPU */
+pip install tensorflow==1.13.2
 
-# Other requirements
+/* Ray and RLlib*/
+pip install ray[rllib]==0.7.4
+pip install ray[debug]==0.7.4
+
+/* Other requirements */
 pip install -r requirements.txt
 ```
 
