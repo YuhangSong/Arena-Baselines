@@ -1,2 +1,2 @@
-ray[rllib]
-ray[debug]
+ray[rllib]==0.7.4
+ray[debug]==0.7.4
