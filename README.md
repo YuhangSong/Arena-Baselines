@@ -90,9 +90,9 @@ tmux new-session -s Arena
 source activate Arena-Baselines
 ```
 
-Test ray works with Pong
+Test your installation of environment with Pong
 ```
-rllib train -f ./arena-experiments/pong-ppo/pong-ppo-my-machine.yaml
+rllib train -f ./arena-experiments/test-installation-pong.yaml
 ```
 You should see reward goes up from -21, which means you installation works fine.
 
