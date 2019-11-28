@@ -94,7 +94,9 @@ Test your installation of environment with Pong
 ```
 python train.py -f ./arena-experiments/test-installation-pong.yaml
 ```
-You should see reward goes up from -21, which means you installation works fine.
+You should see reward goes up from -21 (as shown in the follow), which means you installation works fine.
+
+<img src="./images/test-installation-pong.png" align="middle" width="1000"/>
 
 Then you can run with following command:
 ```
