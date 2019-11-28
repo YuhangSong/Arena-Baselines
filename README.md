@@ -90,6 +90,12 @@ tmux new-session -s Arena
 source activate Arena-Baselines
 ```
 
+Test ray works with Pong
+```
+rllib train -f ./arena-experiments/pong-ppo/pong-ppo-my-machine.yaml
+```
+You should see reward goes up from -21, which means you installation works fine.
+
 Then you can run with following command:
 ```
 python main.py --env-id GAME_ID
@@ -104,7 +110,7 @@ Replace GAME_ID with these games:
 **Curves:**
 The code log multiple curves to help analysis the training process, run:
 ```
-source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=8888
+source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=9999
 ```
 and visit ```http://localhost:4253``` for visualization with tensorboard.
 
