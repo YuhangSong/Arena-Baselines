@@ -32,10 +32,7 @@ contact us via slack if you want to have access to these features.
 
 ### Dependencies
 
-* [rllib](https://ray.readthedocs.io/en/latest/rllib.html)
-* [gym-unity](https://github.com/Unity-Technologies/ml-agents/tree/master/gym-unity)
-
-To install above dependencies, run: (following commands could be outdated, if so, go to each link above)
+To install above dependencies, run: (we are using specific versions of the dependencies)
 ```bash
 /* Set conda source. Only for users behind the Great Wall of China, no need for other users */
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
@@ -62,8 +59,8 @@ pip install --upgrade torch torchvision
 
 /* TensorFlow GPU */
 pip install tensorflow-gpu==1.13.2
-/* Or TensorFlow CPU */
-pip install tensorflow==1.13.2
+/* Or TensorFlow CPU (if you installed above tensorflow-gpu, you do not need this one) */
+/* pip install tensorflow==1.13.2 */
 
 /* Ray and RLlib*/
 pip install ray[rllib]==0.7.4
