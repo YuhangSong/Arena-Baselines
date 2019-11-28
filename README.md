@@ -41,17 +41,17 @@ To install above dependencies, run: (following commands could be outdated, if so
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
+/* If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all */
 
 /* Set pip source. Only for users behind the Great Wall of China, no need for other users */
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-
-/* Reset pip source with: pip config set global.index-url https://pypi.org/simple  */
+/* If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple  */
 
 /* Create a virtual environment */
 conda create -n Arena-Baselines python=3.6.5 -y
 source activate Arena-Baselines
 
-/* clone code */
+/* Create dir and clone code */
 mkdir Arena
 cd Arena
 git clone https://github.com/YuhangSong/Arena-Baselines.git
@@ -92,7 +92,7 @@ source activate Arena-Baselines
 
 Test your installation of environment with Pong
 ```
-rllib train -f ./arena-experiments/test-installation-pong.yaml
+python train.py -f ./arena-experiments/test-installation-pong.yaml
 ```
 You should see reward goes up from -21, which means you installation works fine.
 
