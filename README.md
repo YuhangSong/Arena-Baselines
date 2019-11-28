@@ -95,6 +95,14 @@ You should see reward goes up from -21 (as shown in the follow), which means you
 
 <img src="./images/test-installation-pong.png" align="middle" width="1000"/>
 
+Now test an Arena environment
+```
+python train.py -f ./arena-experiments/test-arena.yaml
+```
+
+Arena configs:
+policy-assignment: independent (independent learners), self_play (one policy, only one agent is learning, the others donot explore)
+
 Then you can run with following command:
 ```
 python main.py --env-id GAME_ID
