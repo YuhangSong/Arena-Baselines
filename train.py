@@ -101,6 +101,14 @@ def create_parser(parser_creator=None):
         action="store_true",
         help="Whether to attempt to enable TF eager execution.")
     parser.add_argument(
+        "--queue-trials",
+        action="store_true",
+        help=(
+            "Whether to queue trials when the cluster does not currently have "
+            "enough resources to launch one. This should be set to True when "
+            "running on an autoscaling cluster to enable automatic scale-up."))
+
+    parser.add_argument(
         "--env", default=None, type=str, help="The gym environment to use.")
     parser.add_argument(
         "--env-id", default=None, type=str, help="Env id of arena-env, only applies when set --env=arena_env.")
@@ -113,21 +121,6 @@ def create_parser(parser_creator=None):
         action="store_false",
         help="Whether run in train mode, with faster and smaller resulotion.")
     parser.add_argument(
-        "--queue-trials",
-        action="store_true",
-        help=(
-            "Whether to queue trials when the cluster does not currently have "
-            "enough resources to launch one. This should be set to True when "
-            "running on an autoscaling cluster to enable automatic scale-up."))
-    parser.add_argument(
-        "--policy-assignment",
-        default="self_play",
-        type=str,
-        help=(
-            "multiagent only; how to assig policies to agents;options:"
-            "independent (independent learners)"
-            "self_play (one policy, only one agent is learning, the others donot explore)."))
-    parser.add_argument(
         "--obs-type",
         default="vector",
         type=str,
@@ -138,12 +131,22 @@ def create_parser(parser_creator=None):
             "visual_TP (third-person visual observation)"
             "obs1-obs2-... (combine multiple types of observations)"))
     parser.add_argument(
+        "--policy-assignment",
+        default="self_play",
+        type=str,
+        help=(
+            "multiagent only; how to assig policies to agents;options:"
+            "independent (independent learners)"
+            "self_play (one policy, only one agent is learning, the others donot explore)."))
+
+    parser.add_argument(
         "-f",
         "--config-file",
         default=None,
         type=str,
         help="If specified, use config options from this file. Note that this "
         "overrides any trial-specific options set via flags above.")
+
     return parser
 
 
