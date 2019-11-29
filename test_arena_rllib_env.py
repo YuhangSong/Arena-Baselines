@@ -18,6 +18,7 @@ def main():
         "env_id": "Tennis-Sparse-2T1P-Discrete",
         "is_shuffle_agents": True,
         "train_mode": False,
+        "obs_type": "vector",
     }
     env = ArenaRllibEnv(env_config)
     new_obs = nev.reset()
@@ -46,11 +47,13 @@ def main():
         ))
         # new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
 
-        temp = np.expand_dims(new_obs["agent_0"][:, :, 0], 0)
-        if episode_video is None:
-            episode_video = temp
-        else:
-            episode_video = np.concatenate((episode_video, temp))
+        # record visual obs as video
+        if "visual" in env_config["obs_type"]:
+            temp = np.expand_dims(new_obs["agent_0"][:, :, 0], 0)
+            if episode_video is None:
+                episode_video = temp
+            else:
+                episode_video = np.concatenate((episode_video, temp))
 
         # Actions should be provided for each agent that returned an observation.
         new_obs, rewards, dones, infos = env.step(
@@ -66,26 +69,30 @@ def main():
         print("infos: {}".format(infos))
 
         if dones["__all__"]:
-            # initialize video writer
-            fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-            fps = 15
-            video_filename = '../episode_video.avi'
-            video_size = (episode_video[key].size()[4],
-                          episode_video[key].size()[3])
-            video_writer = cv2.VideoWriter(
-                video_filename, fourcc, fps, video_size)
 
-            for frame_i in range(episode_video[key].size()[1]):
-                gray = episode_video[key].squeeze(
-                    0)[frame_i].squeeze(0).cpu().numpy().astype(np.uint8)
-                gray_3c = cv2.merge([gray, gray, gray])
-                # np.shape([3, H, W]), 0-255, np.uint8
-                video_writer.write(
-                    gray_3c
-                )
+            # record visual obs as video
+            if "visual" in env_config["obs_type"]:
+                # initialize video writer
+                fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+                fps = 15
+                video_filename = '../episode_video.avi'
+                video_size = (episode_video[key].size()[4],
+                              episode_video[key].size()[3])
+                video_writer = cv2.VideoWriter(
+                    video_filename, fourcc, fps, video_size)
 
-            video_writer.release()
-            episode_video = None
+                for frame_i in range(episode_video[key].size()[1]):
+                    gray = episode_video[key].squeeze(
+                        0)[frame_i].squeeze(0).cpu().numpy().astype(np.uint8)
+                    gray_3c = cv2.merge([gray, gray, gray])
+                    # np.shape([3, H, W]), 0-255, np.uint8
+                    video_writer.write(
+                        gray_3c
+                    )
+
+                video_writer.release()
+                episode_video = None
+
             input('episode end, keep going?')
             env.reset()
 

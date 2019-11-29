@@ -103,6 +103,16 @@ def create_parser(parser_creator=None):
     parser.add_argument(
         "--env", default=None, type=str, help="The gym environment to use.")
     parser.add_argument(
+        "--env-id", default=None, type=str, help="Env id of arena-env, only applies when set --env=arena_env.")
+    parser.add_argument(
+        "--is-shuffle-agents",
+        action="store_false",
+        help="Whether shuffle agents every episode.")
+    parser.add_argument(
+        "--train-mode",
+        action="store_false",
+        help="Whether run in train mode, with faster and smaller resulotion.")
+    parser.add_argument(
         "--queue-trials",
         action="store_true",
         help=(
@@ -117,6 +127,16 @@ def create_parser(parser_creator=None):
             "multiagent only; how to assig policies to agents;options:"
             "independent (independent learners)"
             "self_play (one policy, only one agent is learning, the others donot explore)."))
+    parser.add_argument(
+        "--obs-type",
+        default="vector",
+        type=str,
+        help=(
+            "type of the observation; options:"
+            "vector (low-dimensional vector observation)"
+            "visual_FP (first-person visual observation)"
+            "visual_TP (third-person visual observation)"
+            "obs1-obs2-... (combine multiple types of observations)"))
     parser.add_argument(
         "-f",
         "--config-file",
@@ -150,7 +170,13 @@ def run(args, parser):
                 "config": dict(
                     args.config,
                     env=args.env,
-                    policy_assignment=args.policy_assignment
+                    policy_assignment=args.policy_assignment,
+                    env_config=dict(
+                        env_id=args.env_id,
+                        is_shuffle_agents=args.is_shuffle_agents,
+                        train_mode=args.train_mode,
+                        obs_type=args.obs_type,
+                    )
                 ),
                 "restore": args.restore,
                 "num_samples": args.num_samples,
