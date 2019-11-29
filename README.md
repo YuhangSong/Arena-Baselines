@@ -138,14 +138,14 @@ Now train on an Arena game with:
 python train.py -f ./arena-experiments/test-arena.yaml
 ```
 
-Then you can run with following command:
-```
-python main.py --env-id GAME_ID
-```
+## Configs
 
-Replace GAME_ID with these games:
-
-* Tennis-Sparse-2T1P-Discrete
+Function ```create_parser``` in ```./train.py``` gives the detailed description of the configs.
+Note that we do not recommend passing configs via argparse, instead, use yaml file to config you experiment.
+An example is:
+```
+python train.py -f ./arena-experiments/test-arena.yaml
+```
 
 ## Visualization
 
