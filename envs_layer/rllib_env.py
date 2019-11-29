@@ -33,6 +33,9 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         self.env.set_train_mode(train_mode=env_config.get("train_mode", True))
 
+        self.is_shuffle_agents = env_config.get("is_shuffle_agents", False)
+        self.shift = 0
+
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
         self.number_agents = self.env.number_agents
@@ -41,7 +44,13 @@ class ArenaRllibEnv(MultiAgentEnv):
 
     def reset(self):
 
+        if self.is_shuffle_agents:
+            self.shift = np.random.randint(0, self.number_agents)
+
         obs_ = self.env.reset()
+
+        if self.is_shuffle_agents:
+            obs_ = self.roll_back(obs_)
 
         # xxx_ (gym_unity) to xxx (rllib)
         obs = {}
@@ -58,8 +67,16 @@ class ArenaRllibEnv(MultiAgentEnv):
             agent_id = self.get_agent_id(agent_i)
             actions_ += [actions[agent_id]]
 
+        if self.is_shuffle_agents:
+            actions_ = self.roll(actions_).tolist()
+
         # step forward (gym_unity)
         obs_, rewards_, dones_, infos_ = self.env.step(actions_)
+
+        if self.is_shuffle_agents:
+            obs_ = self.roll_back(obs_)
+            rewards_ = self.roll_back(rewards_)
+            dones_ = self.roll_back(dones_)
 
         # xxx_ (gym_unity) to xxx (rllib)
         obs = {}
@@ -77,6 +94,12 @@ class ArenaRllibEnv(MultiAgentEnv):
         dones["__all__"] = np.all(dones_)
 
         return obs, rewards, dones, infos
+
+    def roll(self, x):
+        return np.roll(x, self.shift, axis=0)
+
+    def roll_back(self, x):
+        return np.roll(x, -self.shift, axis=0)
 
     def close(self):
         self.env.close()

@@ -168,14 +168,7 @@ def run(args, parser):
             exp["config"]["eager"] = True
 
         # generate config for arena
-        if "Arena" in exp["env"]:
-            # example: Arena-Tennis-Sparse-2T1P-Discrete
-            # remove the prefix of Arena-, Tennis-Sparse-2T1P-Discrete is the env_id
-            exp["config"]["env_config"] = {
-                "env_id": exp["env"].split("Arena-")[1],
-            }
-            # env to be arena_env, as the entry point
-            exp["env"] = "arena_env"
+        if exp["env"] in ["arena_env"]:
 
             # create dummy_env to get parameters
             dummy_env = ArenaRllibEnv(exp["config"]["env_config"])

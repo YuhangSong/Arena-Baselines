@@ -126,7 +126,7 @@ You should see prints like following:
 And it keeps rolling.
 Meet some problems? Open an issue.
 
-Now train an Arena environment with:
+Now train on an Arena game with:
 ```
 python train.py -f ./arena-experiments/test-arena.yaml
 ```
