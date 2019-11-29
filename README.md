@@ -116,7 +116,7 @@ Meet some problems? Open an issue.
 
 Now test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
 ```
-python test_arena_rllib_env.py
+python test_arena_rllib_env.py -f ./arena-experiments/test-arena.yaml
 ```
 You should see prints like following:
 ```
