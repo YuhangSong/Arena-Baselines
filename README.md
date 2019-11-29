@@ -40,7 +40,7 @@ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/m
 conda config --set show_channel_urls yes
 /* If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all */
 
-/* Set pip source. Only for users behind the Great Wall of China, no need for other users */
+/* Set pip source. Only for users behind the Great Wall of China, no need for other users. */
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 /* If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple  */
 
@@ -56,9 +56,9 @@ cd Arena
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
 git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
-cd ml-agents
+/* cd ml-agents
 pip install -e .
-cd ..
+cd .. */
 cd gym-unity
 pip install -e .
 cd ..
@@ -116,12 +116,15 @@ python test_arena_rllib_env.py
 ```
 You should see prints like following:
 ```
-{'agent_0': 0.0, 'agent_1': 0.0}
-{'agent_0': False, 'agent_1': False, '__all__': False}
-{'agent_0': 0.0, 'agent_1': 0.0}
-{'agent_0': False, 'agent_1': False, '__all__': False}
-{'agent_0': 0.0, 'agent_1': 0.0}
-{'agent_0': False, 'agent_1': False, '__all__': False}
+new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
+rewards: {'agent_0': 0.0, 'agent_1': 0.0}
+dones: {'agent_0': False, 'agent_1': False, '__all__': False}
+infos: {'agent_0': {}, 'agent_1': {}}
+new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
+rewards: {'agent_0': 0.0, 'agent_1': 1.0}
+dones: {'agent_0': True, 'agent_1': True, '__all__': True}
+infos: {'agent_0': {}, 'agent_1': {}}
+episode end, keep going?
 ```
 And it keeps rolling.
 Meet some problems? Open an issue.

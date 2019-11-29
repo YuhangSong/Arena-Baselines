@@ -7,6 +7,8 @@ convert a arena environment to a MultiAgentEnv
 interface by rllib.
 """
 
+import numpy as np
+
 from envs_layer import ArenaRllibEnv
 
 
@@ -32,15 +34,24 @@ def main():
         new_obs, rewards, dones, infos = env.step(
             actions={"agent_0": 0, "agent_1": 5})
 
-        # Similarly, new_obs, rewards, dones, etc. also become dicts
-        print(rewards)
-        # {"agent_0": 3, "agent_1": -1}
+        new_obs_shapes = {}
+        for key in new_obs.keys():
+            new_obs_shapes[key] = np.shape(new_obs[key])
+
+        print("new_obs_shapes: {}".format(new_obs_shapes))
+        # new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
+
+        print("rewards: {}".format(rewards))
+        # rewards: {"agent_0": 3, "agent_1": -1}
 
         # Individual agents can early exit; env is done when "__all__" = True
-        print(dones)
-        # {"agent_0": True, "agent_1": False,, "__all__": True}
+        print("dones: {}".format(dones))
+        # dones: {"agent_0": True, "agent_1": False,, "__all__": True}
+
+        print("infos: {}".format(infos))
 
         if dones["__all__"]:
+            input('episode end, keep going?')
             env.reset()
 
 
