@@ -22,6 +22,9 @@ class ArenaRllibEnv(MultiAgentEnv):
         if "-" in self.obs_type:
             input('# TODO: multiple obs support')
 
+        if self.obs_type in ["visual_TP"]:
+            input('# TODO: visual_TP obs support')
+
         game_file_path = get_env_directory(self.env_id)
         if self.obs_type in ["vector"]:
             os.path.exists(game_file_path + '-Server')

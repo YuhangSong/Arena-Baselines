@@ -41,7 +41,7 @@ def create_parser(parser_creator=None):
         "--env-id", default=None, type=str, help="Env id of arena-env, only applies when set --env=arena_env.")
     parser.add_argument(
         "--is-shuffle-agents",
-        action="store_false",
+        action="store_true",
         help="Whether shuffle agents every episode.")
     parser.add_argument(
         "--train-mode",
@@ -49,7 +49,7 @@ def create_parser(parser_creator=None):
         help="Whether run in train mode, with faster and smaller resulotion.")
     parser.add_argument(
         "--obs-type",
-        default="vector",
+        default="visual_FP",
         type=str,
         help=(
             "type of the observation; options:"
@@ -59,7 +59,7 @@ def create_parser(parser_creator=None):
             "obs1-obs2-... (combine multiple types of observations)"))
     parser.add_argument(
         "--policy-assignment",
-        default="self_play",
+        default="independent",
         type=str,
         help=(
             "multiagent only; how to assig policies to agents;options:"
