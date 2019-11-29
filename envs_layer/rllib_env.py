@@ -16,14 +16,26 @@ class ArenaRllibEnv(MultiAgentEnv):
         if self.env_id is None:
             raise Exception("env_id in env_config has to be specified")
 
+        self.obs_type = env_config.get("obs_type", "vector")
+        if "-" in self.obs_type:
+            input('# TODO: multiple obs support')
+
         while True:
             try:
+                game_file_path = get_env_directory(self.env_id)
+                if self.obs_type in ["vector"]:
+                    os.path.exists(game_file_path + '-Server')
+                    game_file_path = game_file_path + '-Server'
+                else:
+                    print(
+                        "# WARNING: only vector observation is used, you can have a server build which runs faster")
+
                 # TODO: Individual game instance cannot get rank from rllib, so just try ranks
                 rank = random.randint(0, 65534)
                 self.env = ArenaUnityEnv(
-                    get_env_directory(self.env_id),
+                    game_file_path,
                     rank,
-                    use_visual=True,
+                    use_visual=False if self.obs_type in ["vector"] else True,
                     uint8_visual=False,
                     multiagent=True,
                 )

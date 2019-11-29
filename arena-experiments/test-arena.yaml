@@ -10,6 +10,7 @@ test-arena:
             env_id: Tennis-Sparse-2T1P-Discrete
             is_shuffle_agents: True
             train_mode: True
+            obs_type: vector
         policy_assignment: self_play
         lambda: 0.95
         kl_coeff: 0.5
