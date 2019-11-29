@@ -57,10 +57,9 @@ cd Arena
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
 git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
-# ml-agent is not needed, as the training is not based on ml-agent, instead, we are based on ray and rllib
-# cd ml-agents
-# pip install -e .
-# cd ..
+cd ml-agents
+pip install -e .
+cd ..
 cd gym-unity
 pip install -e .
 cd ..
