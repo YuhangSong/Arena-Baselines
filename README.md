@@ -45,7 +45,7 @@ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 /* If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple  */
 
 /* Create a virtual environment */
-conda create -n Arena-Baselines python=3.6.5 -y
+conda create -n Arena-Baselines python=3.6 -y
 source activate Arena-Baselines
 
 /* Create dir */
@@ -56,6 +56,7 @@ cd Arena
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
 git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
+/* ml-agent is not needed, as the training is not based on ml-agent, instead, we are based on ray and rllib */
 /* cd ml-agents
 pip install -e .
 cd .. */
