@@ -15,6 +15,7 @@ def main():
     env_config = {
         "env_id": "Tennis-Sparse-2T1P-Discrete",
         "is_shuffle_agents": True,
+        "train_mode": False,
     }
     env = ArenaRllibEnv(env_config)
 
