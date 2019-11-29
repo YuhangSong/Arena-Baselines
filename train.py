@@ -110,6 +110,14 @@ def create_parser(parser_creator=None):
             "enough resources to launch one. This should be set to True when "
             "running on an autoscaling cluster to enable automatic scale-up."))
     parser.add_argument(
+        "--policy-assignment",
+        default="self_play",
+        type=str,
+        help=(
+            "multiagent only; how to assig policies to agents;options:"
+            "independent (independent learners)"
+            "self_play (one policy, only one agent is learning, the others donot explore)."))
+    parser.add_argument(
         "-f",
         "--config-file",
         default=None,
@@ -121,6 +129,7 @@ def create_parser(parser_creator=None):
 
 def run(args, parser):
 
+    # get config as experiments
     if args.config_file:
         with open(args.config_file) as f:
             experiments = yaml.safe_load(f)
@@ -138,7 +147,11 @@ def run(args, parser):
                     args.resources_per_trial and
                     resources_to_json(args.resources_per_trial)),
                 "stop": args.stop,
-                "config": dict(args.config, env=args.env),
+                "config": dict(
+                    args.config,
+                    env=args.env,
+                    policy_assignment=args.policy_assignment
+                ),
                 "restore": args.restore,
                 "num_samples": args.num_samples,
                 "upload_dir": args.upload_dir,
@@ -154,13 +167,18 @@ def run(args, parser):
         if args.eager:
             exp["config"]["eager"] = True
 
+        # generate config for arena
         if "Arena" in exp["env"]:
-            exp["env_config"] = {
+            # example: Arena-Tennis-Sparse-2T1P-Discrete
+            # remove the prefix of Arena-, Tennis-Sparse-2T1P-Discrete is the env_id
+            exp["config"]["env_config"] = {
                 "env_id": exp["env"].split("Arena-")[1],
             }
+            # env to be arena_env, as the entry point
             exp["env"] = "arena_env"
 
-            dummy_env = ArenaRllibEnv(exp["env_config"])
+            # create dummy_env to get parameters
+            dummy_env = ArenaRllibEnv(exp["config"]["env_config"])
             number_agents = dummy_env.number_agents
 
             # For now, we do not support using different spaces across agents
@@ -177,18 +195,20 @@ def run(args, parser):
             # create config of policies
             policies = {}
 
-            if not exp.get("policy_assignment"):
+            # check if there is config of policy_assignment
+            if not exp.get("config", {}).get("policy_assignment"):
                 parser.error(
                     "the following arguments are required: --policy_assignment")
 
-            if exp["policy_assignment"] in ["independent"]:
+            # config according to policy_assignment
+            if exp["config"]["policy_assignment"] in ["independent"]:
 
                 # build number_agents independent learning policies
                 for agent_i in range(number_agents):
                     policies[get_policy_id(agent_i)] = (
                         None, obs_space, act_space, {})
 
-            elif exp["policy_assignment"] in ["self-play"]:
+            elif exp["config"]["policy_assignment"] in ["self_play"]:
 
                 # build just one learning policy
                 policies[get_policy_id(0)] = (None, obs_space, act_space, {})
@@ -220,7 +240,7 @@ def run(args, parser):
                 raise NotImplementedError
 
             # create a map from agent_id to policy_id
-            if exp["policy_assignment"] in ["independent", "self_play"]:
+            if exp["config"]["policy_assignment"] in ["independent", "self_play"]:
 
                 # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
                 agent_id_prefix = dummy_env.get_agent_id_prefix()
@@ -237,13 +257,15 @@ def run(args, parser):
             else:
                 raise NotImplementedError
 
-            exp["multiagent"] = {
+            exp["config"]["multiagent"] = {
                 "policies": policies,
-                "policy_mapping_fn": policy_mapping_fn,
+                "policy_mapping_fn": ray.tune.function(policy_mapping_fn),
             }
 
-        input(exp)
+            # del customized configs
+            del exp["config"]["policy_assignment"]
 
+    # config ray cluster
     if args.ray_num_nodes:
         cluster = Cluster()
         for _ in range(args.ray_num_nodes):
@@ -263,6 +285,7 @@ def run(args, parser):
             num_cpus=args.ray_num_cpus,
             num_gpus=args.ray_num_gpus)
 
+    # run
     run_experiments(
         experiments,
         scheduler=_make_scheduler(args),

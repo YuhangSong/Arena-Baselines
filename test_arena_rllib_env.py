@@ -38,6 +38,9 @@ def main():
         print(dones)
         # {"agent_0": True, "agent_1": False,, "__all__": True}
 
+        if dones["__all__"]:
+            env.reset()
+
 
 if __name__ == '__main__':
     main()

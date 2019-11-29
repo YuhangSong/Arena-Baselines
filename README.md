@@ -48,9 +48,23 @@ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 conda create -n Arena-Baselines python=3.6.5 -y
 source activate Arena-Baselines
 
-/* Create dir and clone code */
+/* Create dir */
 mkdir Arena
 cd Arena
+
+/* ML-Agents, only compatible with this checkpoint */
+git clone https://github.com/Unity-Technologies/ml-agents.git
+cd ml-agents
+git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
+cd ml-agents
+pip install -e .
+cd ..
+cd gym-unity
+pip install -e .
+cd ..
+cd ..
+
+/* clone code */
 git clone https://github.com/YuhangSong/Arena-Baselines.git
 cd Arena-Baselines
 
@@ -63,8 +77,7 @@ pip install tensorflow-gpu==1.13.2
 /* pip install tensorflow==1.13.2 */
 
 /* Ray and RLlib*/
-pip install ray[rllib]==0.7.4
-pip install ray[debug]==0.7.4
+pip install ray==0.7.4
 
 /* Other requirements */
 pip install -r requirements.txt
@@ -87,7 +100,7 @@ tmux new-session -s Arena
 source activate Arena-Baselines
 ```
 
-Test your installation of environment with Pong
+Test your installation of rllib learning environment with Pong (rllib breaks sometimes, so a test is needed before you go further)
 ```
 python train.py -f ./arena-experiments/test-installation-pong.yaml
 ```
@@ -95,13 +108,28 @@ You should see reward goes up from -21 (as shown in the follow), which means you
 
 <img src="./images/test-installation-pong.png" align="middle" width="1000"/>
 
-Now test an Arena environment
+Meet some problems? Open an issue.
+
+Now test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
+```
+python test_arena_rllib_env.py
+```
+You should see prints like following:
+```
+{'agent_0': 0.0, 'agent_1': 0.0}
+{'agent_0': False, 'agent_1': False, '__all__': False}
+{'agent_0': 0.0, 'agent_1': 0.0}
+{'agent_0': False, 'agent_1': False, '__all__': False}
+{'agent_0': 0.0, 'agent_1': 0.0}
+{'agent_0': False, 'agent_1': False, '__all__': False}
+```
+And it keeps rolling.
+Meet some problems? Open an issue.
+
+Now train an Arena environment with:
 ```
 python train.py -f ./arena-experiments/test-arena.yaml
 ```
-
-Arena configs:
-policy-assignment: independent (independent learners), self_play (one policy, only one agent is learning, the others donot explore)
 
 Then you can run with following command:
 ```
