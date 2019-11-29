@@ -34,54 +34,58 @@ contact us via slack if you want to have access to these features.
 
 To install above dependencies, run: (we are using specific versions of the dependencies)
 ```bash
-/* Set conda source. Only for users behind the Great Wall of China, no need for other users */
+# Set conda source. Only for users behind the Great Wall of China, no need for other users
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
-/* If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all */
+# If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all
 
-/* Set pip source. Only for users behind the Great Wall of China, no need for other users. */
+# Set pip source. Only for users behind the Great Wall of China, no need for other users.
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-/* If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple  */
+# If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple
 
-/* Create a virtual environment */
-conda create -n Arena-Baselines python=3.6 -y
+# Create a virtual environment
+conda remove --name Arena-Baselines --all
+conda create -n Arena-Baselines python=3.6.9 -y
 source activate Arena-Baselines
 
-/* Create dir */
+# Create dir
 mkdir Arena
 cd Arena
 
-/* ML-Agents, only compatible with this checkpoint */
+# ML-Agents, only compatible with this checkpoint
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
 git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
-/* ml-agent is not needed, as the training is not based on ml-agent, instead, we are based on ray and rllib */
-/* cd ml-agents
-pip install -e .
-cd .. */
+# ml-agent is not needed, as the training is not based on ml-agent, instead, we are based on ray and rllib
+# cd ml-agents
+# pip install -e .
+# cd ..
 cd gym-unity
 pip install -e .
 cd ..
 cd ..
 
-/* clone code */
+# clone code
 git clone https://github.com/YuhangSong/Arena-Baselines.git
 cd Arena-Baselines
 
-/* PyTorch */
+# PyTorch
 pip install --upgrade torch torchvision
 
-/* TensorFlow GPU */
+# TensorFlow GPU
 pip install tensorflow-gpu==1.13.2
-/* Or TensorFlow CPU (if you installed above tensorflow-gpu, you do not need this one) */
-/* pip install tensorflow==1.13.2 */
+# Or TensorFlow CPU (if you installed above tensorflow-gpu, you do not need this one)
+# pip install tensorflow==1.13.2
 
-/* Ray and RLlib*/
+# Ray and RLlib
+pip install ray[rllib]
+pip install ray[debug]
 pip install ray==0.7.4
 
-/* Other requirements */
+# Other requirements
 pip install -r requirements.txt
+
 ```
 
 If you run into following situations,
@@ -249,23 +253,23 @@ For example,
 You can run following commands to copy necessary checkpoints:
 
 ```
-/* Wx0 */
+# Wx0
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 33007 yuhangsong@ca56526248261483.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 
-/* Wx1 */
+# Wx1
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 30007 yuhangsong@fbafc1ae575e5123.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 
-/* W4n */
+# W4n
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 7334 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 
-/* W2n */
+# W2n
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 7330 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 
-/* W5n */
+# W5n
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 7333 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 ```
