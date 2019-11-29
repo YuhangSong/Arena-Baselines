@@ -45,7 +45,7 @@ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 # If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple
 
 # Create a virtual environment
-conda remove --name Arena-Baselines --all
+conda remove --name Arena-Baselines --all -y
 conda create -n Arena-Baselines python=3.6.9 -y
 source activate Arena-Baselines
 
