@@ -19,9 +19,15 @@ Arena-Baselines is fully based on [RLlib](https://ray.readthedocs.io/en/latest/r
 More resources can be found in [Arena Home](https://sites.google.com/view/arena-unity/).
 If you use this repository to conduct research, we kindly ask that you [cite the paper](#citation) as a reference.
 
+## Features
+
+* 10+ most popular deep multi-agent reinforcement learning baselines, including independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
+* 30+ benchmarked games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tanl, BlowBlow, FallFlat, and etc.
+* Multiple variants of each game with different team setups, social structures, actions spaces, observation spaces (first-person visual, third-person visual, vector or mixed), domain randomizations, and etc.
+
 ## Status: Release
 
-We are currently open to any suggestions or pull requests from the community to make Arena a better platform.
+We are currently open to any suggestions or pull requests from the community to make Arena better.
 To contribute to the project, [joint us in  Slack](https://join.slack.com/t/arena-ml/shared_invite/enQtNjc1NDE1MTY0MjU3LWMxMjZiMTYyNTE3OWIzM2QxZjU5YmI1NTM2YzYzZDZlNjY0NzllMDFlMjA3MGZiN2QxODA1NTJhZDkzOTI3Nzg), and check [To Do list in Trello](https://trello.com/b/zDiljShz).
 
 Part of the project is maintained in a [separated internal repo](https://github.com/YuhangSong/Arena-Baselines-Internal), where we are working on features including:
@@ -85,7 +91,12 @@ pip install ray==0.7.4
 # Other requirements
 pip install -r requirements.txt
 
+# ffmpeg is needed for monitor
+sudo apt-get install ffmpeg
 ```
+
+If you are using different versions of ray or tensorflow, finish [run tests](##run-tests) to make sure it works.
+Open up a pull request if you find newer versions that also works fine to complete the tests.
 
 If you run into following situations,
 
@@ -104,13 +115,15 @@ tmux new-session -s Arena
 source activate Arena-Baselines
 ```
 
+### Run tests
+
 Test your installation of rllib learning environment with Pong (rllib breaks sometimes, so a test is needed before you go further)
 ```
-python train.py -f ./arena-experiments/test-installation-pong.yaml
+python train.py -f ./arena-experiments/test-pong.yaml
 ```
-You should see reward goes up from -21 (as shown in the follow), which means you installation works fine.
+You should see reward goes up from -21 (as shown in the following), which means you installation works fine.
 
-<img src="./images/test-installation-pong.png" align="middle" width="1000"/>
+<img src="./images/test-pong.png" align="middle" width="1000"/>
 
 Meet some problems? Open an issue.
 
@@ -137,15 +150,75 @@ Now train on an Arena game with:
 ```
 python train.py -f ./arena-experiments/test-arena.yaml
 ```
+You should see the ```episode_len_mean``` goes up from 20 (as shown in the following), which means you installation works fine.
+
+<img src="./images/test-arena.png" align="middle" width="1000"/>
+
+### Reproduce/restore benchmarked environments
+
+#### [Tennis-Sparse-2T1P-{Discrete/Continuous}](https://youtu.be/)
+
+![Tennis](images/Tennis.png)
+
+* Set-up: Two-player game where agents control rackets to bounce ball over a
+  net.
+* Goal: The agents must not let the ball touch the ground of their own side.
+* Agents: The environment contains two agents with same Behavior Parameters.
+* Agent Reward Function:
+  * +0.0 To the agent whose ground is touched by the ball.
+  * +1.0 To the other agent.
+* Episode Terminate Condition:
+  * The ball touched the ground.
+* Behavior Parameters:
+  * Vector Observations:
+    * Lidar
+  * Vector Action space:
+    * Discrete: [General Player Discrete](##-general-player-discrete).
+    * Continuous: [General Player Continuous](##-general-player-continuous).
+  * Visual Observations:
+    * Visual_FP
+    * Visual_FP
+* Reset Parameters: Three
+    * angle: Angle of the racket from the vertical (Y) axis.
+      * Default: 55
+      * Recommended Minimum: 35
+      * Recommended Maximum: 65
+    * gravity: Magnitude of gravity
+      * Default: 9.81
+      * Recommended Minimum: 6
+      * Recommended Maximum: 20
+    * scale: Specifies the scale of the ball in the 3 dimensions (equal across the three dimensions)
+      * Default: 1
+      * Recommended Minimum: 0.2
+      * Recommended Maximum: 5
+* Benchmark Mean Reward: 2.5
+* Reproduce
+  * ```python train.py -f ./arena-experiments/test-arena.yaml```
+* restore
+  * ```python train.py --resume```
+
+### Environments not yet benchmarked
+
+* BlowBlow
+*
 
 ## Configs
 
 Function ```create_parser``` in ```./train.py``` gives the detailed description of the configs.
-Note that we do not recommend passing configs via argparse, instead, use yaml file to config you experiment.
-An example is:
-```
-python train.py -f ./arena-experiments/test-arena.yaml
-```
+Note that we do not recommend passing configs via argparse, instead, use yaml file to config you experiment, as what has been done in [run tests](##run-tests).
+In this way, you can make sure your experiments are reproducable.
+
+## Action Space
+
+### General Player Discrete
+
+* 0: Nope action
+* 1:
+
+### General Player Continuous
+
+* 0: Nope action
+* 1:
 
 ## Visualization
 

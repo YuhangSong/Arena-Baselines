@@ -6,11 +6,9 @@ from __future__ import print_function
 
 import argparse
 import yaml
-
+import utils
 import ray
 from ray.tests.cluster_utils import Cluster
-from ray.tune.config_parser import make_parser
-from ray.tune.result import DEFAULT_RESULTS_DIR
 from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
 
@@ -18,27 +16,19 @@ from envs_layer import ArenaRllibEnv
 
 policy_id_prefix = "policy"
 
-EXAMPLE_USAGE = """
-Training example via RLlib CLI:
-    rllib train --run DQN --env CartPole-v0
 
-Grid search example via RLlib CLI:
-    rllib train -f tuned_examples/cartpole-grid-search-example.yaml
-
-Grid search example via executable:
-    ./train.py -f tuned_examples/cartpole-grid-search-example.yaml
-
-Note that -f overrides all other trial-specific command-line options.
-"""
-
-
-def create_parser(parser_creator=None):
+def create_parser():
+    """Returns parser with additional arena configs.
+    """
 
     from ray.rllib.train import create_parser as create_parser
     parser = create_parser()
 
     parser.add_argument(
-        "--env-id", default=None, type=str, help="Env id of arena-env, only applies when set --env=arena_env.")
+        "--env-id",
+        default="Tennis-Sparse-2T1P-Discrete",
+        type=str,
+        help="Env id of arena-env, only applies when set --env=arena_env.")
     parser.add_argument(
         "--is-shuffle-agents",
         action="store_true",
@@ -62,7 +52,7 @@ def create_parser(parser_creator=None):
         default="independent",
         type=str,
         help=(
-            "multiagent only; how to assig policies to agents;options:"
+            "multiagent only; how to assign policies to agents; options:"
             "independent (independent learners)"
             "self_play (one policy, only one agent is learning, the others donot explore)."))
 
@@ -135,11 +125,6 @@ def run(args, parser):
 
             # create config of policies
             policies = {}
-
-            # check if there is config of policy_assignment
-            if not exp.get("config", {}).get("policy_assignment"):
-                parser.error(
-                    "the following arguments are required: --policy_assignment")
 
             # config according to policy_assignment
             if exp["config"]["policy_assignment"] in ["independent"]:

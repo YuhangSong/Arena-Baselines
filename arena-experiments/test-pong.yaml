@@ -2,21 +2,14 @@
 #
 # $ python train.py -f tuned_examples/pong-ppo.yaml
 #
-test-arena:
-    env: arena_env
+test-pong:
+    env: PongNoFrameskip-v4
     run: PPO
     checkpoint_freq: 20
     checkpoint_at_end: True
     config:
         # === Environment Settings ===
-        env_config:
-            env_id: Tennis-Sparse-2T1P-Discrete
-            is_shuffle_agents: False
-            train_mode: True
-            obs_type: visual_FP
         clip_rewards: True
-        # === Multi-agent Settings ===
-        policy_assignment: independent
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2
