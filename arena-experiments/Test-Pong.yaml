@@ -1,8 +1,4 @@
-# On a single GPU, this achieves maximum reward in ~15-20 minutes.
-#
-# $ python train.py -f tuned_examples/pong-ppo.yaml
-#
-test-pong:
+Test-Pong:
     env: PongNoFrameskip-v4
     run: PPO
     checkpoint_freq: 20
@@ -28,5 +24,5 @@ test-pong:
         sgd_minibatch_size: 500
         num_sgd_iter: 10
         vf_share_layers: True
-        # === Debug Settings ===
-        "monitor": False
+        # # === Debug Settings ===
+        # "monitor": True

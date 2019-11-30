@@ -9,11 +9,8 @@ interface by rllib.
 
 import yaml
 import cv2
-
+import arena
 import numpy as np
-
-from envs_layer import ArenaRllibEnv
-
 from train import create_parser
 
 
@@ -22,9 +19,17 @@ def run(args, parser):
     with open(args.config_file) as f:
         experiments = yaml.safe_load(f)
 
-    env_config = experiments["test-arena"]["config"]["env_config"]
+    env = arena.get_one_from_grid_search(
+        arena.remove_arena_env_prefix(
+            experiments["Benchmark-2T1P-Discrete"]["env"]
+        )
+    )
+    env_config = experiments["Benchmark-2T1P-Discrete"]["config"]["env_config"]
 
-    env = ArenaRllibEnv(env_config)
+    env = arena.ArenaRllibEnv(
+        env=env,
+        env_config=env_config,
+    )
 
     new_obs = env.reset()
 

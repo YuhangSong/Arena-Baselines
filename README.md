@@ -119,17 +119,17 @@ source activate Arena-Baselines
 
 Test your installation of rllib learning environment with Pong (rllib breaks sometimes, so a test is needed before you go further)
 ```
-python train.py -f ./arena-experiments/test-pong.yaml
+python train.py -f ./arena-experiments/Test-Pong.yaml
 ```
 You should see reward goes up from -21 (as shown in the following), which means you installation works fine.
 
-<img src="./images/test-pong.png" align="middle" width="1000"/>
+<img src="./images/Test-Pong.png" align="middle" width="1000"/>
 
 Meet some problems? Open an issue.
 
 Now test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
 ```
-python test_arena_rllib_env.py -f ./arena-experiments/test-arena.yaml
+python test_arena_rllib_env.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml
 ```
 You should see prints like following:
 ```
@@ -148,20 +148,30 @@ Meet some problems? Open an issue.
 
 Now train on an Arena game with:
 ```
-python train.py -f ./arena-experiments/test-arena.yaml
+python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml
 ```
 You should see the ```episode_len_mean``` goes up from 20 (as shown in the following), which means you installation works fine.
 
-<img src="./images/test-arena.png" align="middle" width="1000"/>
+<img src="./images/Benchmark-2T1P-Discrete.png" align="middle" width="1000"/>
 
-### Reproduce/restore benchmarked environments
+### Reproduce/resume benchmarked environments
 
-#### [Tennis-Sparse-2T1P-{Discrete/Continuous}](https://youtu.be/)
+To reproduce a training, run:
+```
+python train.py -f ./arena-experiments/CONFIG.yaml
+```
+
+* To resume/restore a training, append ```--resume``` to above command
+  * To log episode video, go to your log dir, find your recent experiment_state file, for example ```experiment_state-2019-11-30_23-17-55.json```. Change the line ```"monitor": false``` to ```"monitor": true```
+    * This will take effect until the next time you make changes in your recent (at that time) experiment_state file
+* To log episode video in a new training, simply add line ```monitor: True``` in your yaml. For example, see ```"monitor": True``` in ```./arena-experiments/Test-Pong.yaml```
+
+#### [Tennis](https://youtu.be/)
 
 ![Tennis](images/Tennis.png)
 
-* Set-up: Two-player game where agents control rackets to bounce ball over a
-  net.
+* Set-up: Two-player game where agents control rackets to bounce ball over a net.
+* Variants: Tennis-Sparse-2T1P-{Discrete,Continuous}
 * Goal: The agents must not let the ball touch the ground of their own side.
 * Agents: The environment contains two agents with same Behavior Parameters.
 * Agent Reward Function:
@@ -192,10 +202,10 @@ You should see the ```episode_len_mean``` goes up from 20 (as shown in the follo
       * Recommended Minimum: 0.2
       * Recommended Maximum: 5
 * Benchmark Mean Reward: 2.5
-* Reproduce
-  * ```python train.py -f ./arena-experiments/test-arena.yaml```
+* Config
+  * ```python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml```
 * restore
-  * ```python train.py --resume```
+  * ```python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml --resume```
 
 ### Environments not yet benchmarked
 

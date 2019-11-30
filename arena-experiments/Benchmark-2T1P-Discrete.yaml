@@ -1,16 +1,13 @@
-# On a single GPU, this achieves maximum reward in ~15-20 minutes.
-#
-# $ python train.py -f tuned_examples/pong-ppo.yaml
-#
-test-arena:
-    env: arena_env
+Benchmark-2T1P-Discrete:
+    env:
+        grid_search:
+            - Arena-Tennis-Sparse-2T1P-Discrete
     run: PPO
     checkpoint_freq: 20
     checkpoint_at_end: True
     config:
         # === Environment Settings ===
         env_config:
-            env_id: Tennis-Sparse-2T1P-Discrete
             is_shuffle_agents: False
             train_mode: True
             obs_type: visual_FP
@@ -35,5 +32,5 @@ test-arena:
         sgd_minibatch_size: 500
         num_sgd_iter: 10
         vf_share_layers: True
-        # === Debug Settings ===
-        "monitor": False
+        # # === Debug Settings ===
+        # "monitor": True

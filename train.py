@@ -12,9 +12,9 @@ from ray.tests.cluster_utils import Cluster
 from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
 
-from envs_layer import ArenaRllibEnv
+import arena
 
-policy_id_prefix = "policy"
+POLICY_ID_PREFIX = "policy"
 
 
 def create_parser():
@@ -24,11 +24,6 @@ def create_parser():
     from ray.rllib.train import create_parser as create_parser
     parser = create_parser()
 
-    parser.add_argument(
-        "--env-id",
-        default="Tennis-Sparse-2T1P-Discrete",
-        type=str,
-        help="Env id of arena-env, only applies when set --env=arena_env.")
     parser.add_argument(
         "--is-shuffle-agents",
         action="store_true",
@@ -67,6 +62,7 @@ def run(args, parser):
             experiments = yaml.safe_load(f)
 
     else:
+        input("# WARNING: it is recommended to use -f CONFIG.yaml, instead of passing args. Press enter to continue.")
         # Note: keep this in sync with tune/config_parser.py
         experiments = {
             args.experiment_name: {  # i.e. log to ~/ray_results/default
@@ -82,13 +78,12 @@ def run(args, parser):
                 "config": dict(
                     args.config,
                     env=args.env,
-                    policy_assignment=args.policy_assignment,
                     env_config=dict(
-                        env_id=args.env_id,
                         is_shuffle_agents=args.is_shuffle_agents,
                         train_mode=args.train_mode,
                         obs_type=args.obs_type,
-                    )
+                    ),
+                    policy_assignment=args.policy_assignment,
                 ),
                 "restore": args.restore,
                 "num_samples": args.num_samples,
@@ -106,10 +101,17 @@ def run(args, parser):
             exp["config"]["eager"] = True
 
         # generate config for arena
-        if exp["env"] in ["arena_env"]:
+        if arena.is_all_arena_env(exp["env"]):
 
             # create dummy_env to get parameters
-            dummy_env = ArenaRllibEnv(exp["config"]["env_config"])
+            dummy_env = arena.ArenaRllibEnv(
+                env=arena.get_one_from_grid_search(
+                    arena.remove_arena_env_prefix(
+                        exp["env"]
+                    )
+                ),
+                env_config=exp["config"]["env_config"],
+            )
             number_agents = dummy_env.number_agents
 
             # For now, we do not support using different spaces across agents
@@ -121,7 +123,7 @@ def run(args, parser):
             act_space = dummy_env.action_space
 
             def get_policy_id(policy_i):
-                return "{}_{}".format(policy_id_prefix, policy_i)
+                return "{}_{}".format(POLICY_ID_PREFIX, policy_i)
 
             # create config of policies
             policies = {}
@@ -188,7 +190,7 @@ def run(args, parser):
                 "policy_mapping_fn": ray.tune.function(policy_mapping_fn),
             }
 
-            # del customized configs
+            # del customized configs, as these configs have been reflected on other configs
             del exp["config"]["policy_assignment"]
 
     # config ray cluster

@@ -10,7 +10,8 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 
 class ArenaRllibEnv(MultiAgentEnv):
-    """Convert ArenaUnityEnv(gym_unity) to MultiAgentEnv (rllib)"""
+    """Convert ArenaUnityEnv(gym_unity) to MultiAgentEnv (rllib)
+    """
 
     def __init__(self, env, env_config):
 
@@ -141,7 +142,8 @@ class ArenaRllibEnv(MultiAgentEnv):
 
 class ArenaUnityEnv(UnityEnv):
     """An override of UnityEnv from gym_unity.envs, to fix some of their bugs and add some supports.
-    Search "arena-spec" for these places."""
+    Search "arena-spec" for these places.
+    """
 
     def _preprocess_multi(self, multiple_visual_obs):
         if self.uint8_visual:
