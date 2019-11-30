@@ -1,6 +1,8 @@
 import os
 import platform
 import random
+import time
+
 import numpy as np
 
 from gym_unity.envs import UnityEnv
@@ -20,16 +22,19 @@ class ArenaRllibEnv(MultiAgentEnv):
         if "-" in self.obs_type:
             input('# TODO: multiple obs support')
 
+        if self.obs_type in ["visual_TP"]:
+            input('# TODO: visual_TP obs support')
+
+        game_file_path = get_env_directory(self.env_id)
+        if self.obs_type in ["vector"]:
+            os.path.exists(game_file_path + '-Server')
+            game_file_path = game_file_path + '-Server'
+        else:
+            print(
+                "# WARNING: only vector observation is used, you can have a server build which runs faster")
+
         while True:
             try:
-                game_file_path = get_env_directory(self.env_id)
-                if self.obs_type in ["vector"]:
-                    os.path.exists(game_file_path + '-Server')
-                    game_file_path = game_file_path + '-Server'
-                else:
-                    print(
-                        "# WARNING: only vector observation is used, you can have a server build which runs faster")
-
                 # TODO: Individual game instance cannot get rank from rllib, so just try ranks
                 rank = random.randint(0, 65534)
                 self.env = ArenaUnityEnv(
