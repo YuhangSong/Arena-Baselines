@@ -32,5 +32,5 @@ Benchmark-2T1P-Discrete:
         sgd_minibatch_size: 500
         num_sgd_iter: 10
         vf_share_layers: True
-        # # === Debug Settings ===
-        # "monitor": True
+        # === Debug Settings ===
+        "monitor": True
