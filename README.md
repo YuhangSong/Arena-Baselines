@@ -1,4 +1,4 @@
-<img src="./images/Logo-Vert.png" align="middle" width="1000"/>
+<img src="./images/Cover-Landscape-Visual.png" align="middle" width="1000"/>
 
 ## Introduction
 
