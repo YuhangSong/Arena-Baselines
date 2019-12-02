@@ -79,9 +79,9 @@ cd Arena-Baselines
 pip install --upgrade torch torchvision
 
 # TensorFlow GPU
-pip install tensorflow-gpu==1.13.2
-# Or TensorFlow CPU (if you installed above tensorflow-gpu, you do not need this one)
-# pip install tensorflow==1.13.2
+pip install tensorflow==1.15
+# Or TensorFlow CPU
+# pip install tensorflow==1.15
 
 # Ray and RLlib
 pip install ray[rllib]
@@ -154,7 +154,7 @@ You should see the ```episode_len_mean``` goes up from 20 (as shown in the follo
 
 <img src="./images/Benchmark-2T1P-Discrete.png" align="middle" width="1000"/>
 
-### Reproduce/resume benchmarked environments
+### Reproduce/resume benchmarks
 
 To reproduce a training, run:
 ```
