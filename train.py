@@ -138,6 +138,8 @@ def run(args, parser):
 
             elif exp["config"]["policy_assignment"] in ["self_play"]:
 
+                input("# TODO: Not finished yet")
+
                 # build just one learning policy
                 policies[get_policy_id(0)] = (None, obs_space, act_space, {})
 
