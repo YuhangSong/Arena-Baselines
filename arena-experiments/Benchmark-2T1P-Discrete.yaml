@@ -16,7 +16,7 @@ Benchmark-2T1P-Discrete:
         policy_assignment: independent
         # === Settings for Rollout Worker processes ===
         num_workers: 10
-        num_envs_per_worker: 1
+        num_envs_per_worker: 2
         sample_batch_size: 100
         batch_mode: truncate_episodes
         observation_filter: NoFilter
