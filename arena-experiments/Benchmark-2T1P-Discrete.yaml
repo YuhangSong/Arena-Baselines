@@ -13,7 +13,7 @@ Benchmark-2T1P-Discrete:
             obs_type: visual_FP
         clip_rewards: True
         # === Multi-agent Settings ===
-        policy_assignment: independent
+        policy_assignment: self_play
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2
