@@ -79,9 +79,9 @@ cd Arena-Baselines
 pip install --upgrade torch torchvision
 
 # TensorFlow GPU
-pip install tensorflow==1.15
+pip install tensorflow-gpu==1.14
 # Or TensorFlow CPU
-# pip install tensorflow==1.15
+# pip install tensorflow==1.14
 
 # Ray and RLlib
 pip install ray[rllib]
@@ -133,20 +133,19 @@ python test_arena_rllib_env.py -f ./arena-experiments/Benchmark-2T1P-Discrete.ya
 ```
 You should see prints like following:
 ```
-new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
 rewards: {'agent_0': 0.0, 'agent_1': 0.0}
 dones: {'agent_0': False, 'agent_1': False, '__all__': False}
-infos: {'agent_0': {}, 'agent_1': {}}
-new_obs_shapes: {'agent_0': (84, 84, 1), 'agent_1': (84, 84, 1)}
+infos: {'agent_0': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f8278>}, 'agent_1': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f8278>}}
+new_obs_infos: {'agent_0': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274', 'agent_1': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274'}
 rewards: {'agent_0': 0.0, 'agent_1': 1.0}
 dones: {'agent_0': True, 'agent_1': True, '__all__': True}
-infos: {'agent_0': {}, 'agent_1': {}}
+infos: {'agent_0': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f80f0>}, 'agent_1': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f80f0>}}
 episode end, keep going?
 ```
-And it keeps rolling.
+Hit enter and it keeps rolling.
 Meet some problems? Open an issue.
 
-Now train on an Arena game with:
+Now train on an Arena game (reproduce one of our benchmark) with:
 ```
 python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml
 ```
