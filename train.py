@@ -97,18 +97,15 @@ def run(args, parser):
     # the default support of grid_search
     grid_experiments = {}
     for experiment_key in experiments.keys():
-        for env_item in arena.get_list_from_gridsearch(experiments[experiment_key]["env"]):
-            for policy_assignment_item in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["policy_assignment"]):
-                grid_experiment_key = "{}__env={}__policy_assignment={}".format(
-                    experiment_key,
-                    env_item,
-                    policy_assignment_item,
-                )
-                grid_experiments[grid_experiment_key] = copy.deepcopy(
-                    experiments[experiment_key]
-                )
-                grid_experiments[grid_experiment_key]["env"] = env_item
-                grid_experiments[grid_experiment_key]["config"]["policy_assignment"] = policy_assignment_item
+        for policy_assignment_item in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["policy_assignment"]):
+            grid_experiment_key = "{}__policy_assignment={}".format(
+                experiment_key,
+                policy_assignment_item,
+            )
+            grid_experiments[grid_experiment_key] = copy.deepcopy(
+                experiments[experiment_key]
+            )
+            grid_experiments[grid_experiment_key]["config"]["policy_assignment"] = policy_assignment_item
 
     experiments = grid_experiments
 
