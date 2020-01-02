@@ -275,8 +275,11 @@ def run(args, parser):
                 num_gpus=args.ray_num_gpus or 0,
                 object_store_memory=args.ray_object_store_memory,
                 memory=args.ray_memory,
-                redis_max_memory=args.ray_redis_max_memory)
-        ray.init(address=cluster.redis_address)
+                redis_max_memory=args.ray_redis_max_memory,
+            )
+        ray.init(
+            address=cluster.redis_address,
+        )
     else:
         ray.init(
             address=args.ray_address,
@@ -284,7 +287,8 @@ def run(args, parser):
             memory=args.ray_memory,
             redis_max_memory=args.ray_redis_max_memory,
             num_cpus=args.ray_num_cpus,
-            num_gpus=args.ray_num_gpus)
+            num_gpus=args.ray_num_gpus,
+        )
 
     # run
     run_experiments(
