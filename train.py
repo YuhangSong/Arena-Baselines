@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import arena
 import argparse
 import yaml
 import utils
@@ -12,7 +13,14 @@ from ray.tests.cluster_utils import Cluster
 from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
 
-import arena
+
+class Trainer(ray.rllib.agents.trainer.Trainer):
+    """Override Trainer so that it allow new configs."""
+    _allow_unknown_configs = True
+
+
+ray.rllib.agents.trainer.Trainer = Trainer
+
 
 POLICY_ID_PREFIX = "policy"
 SELFPLAY_POLICY_TO_TRAIN = 0
@@ -114,6 +122,7 @@ def run(args, parser):
                 env_config=exp["config"]["env_config"],
             )
             number_agents = dummy_env.number_agents
+            agent_id_prefix = str(dummy_env.get_agent_id_prefix())
 
             # For now, we do not support using different spaces across agents
             # (i.e., all agents have to share the same brain in Arena-BuildingToolkit)
@@ -127,124 +136,129 @@ def run(args, parser):
                 return "{}_{}".format(POLICY_ID_PREFIX, policy_i)
 
             # create config of policies according to policy_assignment
-            policies = None
+            def policies_fn(spec):
 
-            if exp["config"]["policy_assignment"] in ["independent"]:
+                policies = None
 
-                # build number_agents independent learning policies
-                policies = {}
-                for agent_i in range(number_agents):
-                    policies[get_policy_id(agent_i)] = (
-                        None, obs_space, act_space, {})
+                if spec.config.policy_assignment in ["independent"]:
 
-            elif exp["config"]["policy_assignment"] in ["self_play"]:
+                    policies = {}
 
-                print("# WARNING: Testing.....")
+                    # build number_agents independent learning policies
+                    for agent_i in range(number_agents):
+                        policies[get_policy_id(agent_i)] = (
+                            None, obs_space, act_space, {})
 
-                policies = {}
+                elif spec.config.policy_assignment in ["self_play"]:
 
-                # build just one learning policy
-                policies[get_policy_id(SELFPLAY_POLICY_TO_TRAIN)] = (
-                    None, obs_space, act_space, {}
-                )
+                    policies = {}
 
-                # build all other policies as playing policy
-
-                # build custom_action_dist to be playing mode dist (no exploration)
-                # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
-
-                if exp["run"] not in ["PPO"]:
-                    raise NotImplementedError
-
-                if act_space.__class__.__name__ == "Discrete":
-
-                    from ray.rllib.models.tf.tf_action_dist import Categorical
-                    from ray.rllib.utils.annotations import override
-
-                    class DeterministicCategorical(Categorical):
-                        """Deterministic version of categorical distribution for discrete action spaces."""
-
-                        @override(Categorical)
-                        def _build_sample_op(self):
-                            return tf.squeeze(tf.argmax(self.inputs, 1), axis=1)
-
-                    custom_action_dist = DeterministicCategorical
-
-                elif act_space.__class__.__name__ == "Box":
-
-                    from ray.rllib.models.tf.tf_action_dist import Deterministic
-                    custom_action_dist = Deterministic
-
-                else:
-
-                    raise NotImplementedError
-
-                # build all other policies as playing policy
-                for agent_i in range(1, number_agents):
-                    policies[get_policy_id(agent_i)] = (
-                        None, obs_space, act_space, {
-                            "custom_action_dist": custom_action_dist
-                        }
+                    # build just one learning policy
+                    policies[get_policy_id(SELFPLAY_POLICY_TO_TRAIN)] = (
+                        None, obs_space, act_space, {}
                     )
 
-            else:
-                raise NotImplementedError
+                    # build all other policies as playing policy
+
+                    # build custom_action_dist to be playing mode dist (no exploration)
+                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+
+                    if exp["run"] not in ["PPO"]:
+                        raise NotImplementedError
+
+                    if act_space.__class__.__name__ == "Discrete":
+
+                        from ray.rllib.models.tf.tf_action_dist import Categorical
+                        from ray.rllib.utils.annotations import override
+
+                        class DeterministicCategorical(Categorical):
+                            """Deterministic version of categorical distribution for discrete action spaces."""
+
+                            @override(Categorical)
+                            def _build_sample_op(self):
+                                return tf.squeeze(tf.argmax(self.inputs, 1), axis=1)
+
+                        custom_action_dist = DeterministicCategorical
+
+                    elif act_space.__class__.__name__ == "Box":
+
+                        from ray.rllib.models.tf.tf_action_dist import Deterministic
+                        custom_action_dist = Deterministic
+
+                    else:
+
+                        raise NotImplementedError
+
+                    # build all other policies as playing policy
+                    for agent_i in range(1, number_agents):
+                        policies[get_policy_id(agent_i)] = (
+                            None, obs_space, act_space, {
+                                "custom_action_dist": custom_action_dist
+                            }
+                        )
+
+                else:
+                    raise NotImplementedError
+
+                return policies
 
             # create policy_mapping_fn (a map from agent_id to policy_id) according to policy_assignment
-            policy_mapping_fn = None
+            def policy_mapping_fn(spec):
 
-            if exp["config"]["policy_assignment"] in ["independent", "self_play"]:
+                if spec.config.policy_assignment in ["independent", "self_play"]:
 
-                # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
-                agent_id_prefix = dummy_env.get_agent_id_prefix()
+                    def get_agent_i(agent_id):
+                        return int(agent_id.split(agent_id_prefix + "_")[1])
 
-                def get_agent_i(agent_id):
-                    return int(agent_id.split(agent_id_prefix + "_")[1])
+                    # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
+                    def policy_mapping_fn_i2i(agent_id):
+                        return get_policy_id(get_agent_i(agent_id))
 
-                def policy_mapping_fn_i2i(agent_id):
-                    return get_policy_id(get_agent_i(agent_id))
+                    # use policy_mapping_fn_i2i as policy_mapping_fn
+                    return policy_mapping_fn_i2i
 
-                # use policy_mapping_fn_i2i as policy_mapping_fn
-                policy_mapping_fn = policy_mapping_fn_i2i
-
-            else:
-                raise NotImplementedError
+                else:
+                    raise NotImplementedError
 
             # create policies_to_train according to policy_assignment
-            policies_to_train = None
+            def policies_to_train_fn(spec):
 
-            if exp["config"]["policy_assignment"] in ["independent"]:
+                policies_to_train = None
 
-                # for independent policy_assignment, all policies are trained
-                policies_to_train = list(policies.keys())
+                if spec.config.policy_assignment in ["independent"]:
 
-            elif exp["config"]["policy_assignment"] in ["self_play"]:
+                    # for independent policy_assignment, all policies are trained
+                    policies_to_train = list(policies.keys())
 
-                # for self_play policy_assignment, only get_policy_id(0) are trained
-                policies_to_train = [get_policy_id(SELFPLAY_POLICY_TO_TRAIN)]
+                elif spec.config.policy_assignment in ["self_play"]:
 
-                input("# TODO: load learning agent")
+                    # for self_play policy_assignment, only get_policy_id(0) are trained
+                    policies_to_train = [
+                        get_policy_id(SELFPLAY_POLICY_TO_TRAIN)]
 
-            else:
-                raise NotImplementedError
+                else:
+                    raise NotImplementedError
+
+                return policies_to_train
 
             # generate multiagent part of the config
             exp["config"]["multiagent"] = {}
 
-            if policies is not None:
-                exp["config"]["multiagent"]["policies"] = policies
+            exp["config"]["multiagent"]["policies"] = ray.tune.function(
+                policies_fn
+            )
 
-            if policy_mapping_fn is not None:
-                exp["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-                    policy_mapping_fn
-                )
+            exp["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+                policy_mapping_fn
+            )
 
-            if policies_to_train is not None:
-                exp["config"]["multiagent"]["policies_to_train"] = policies_to_train
+            exp["config"]["multiagent"]["policies_to_train"] = ray.tune.function(
+                policies_to_train_fn
+            )
 
             # del customized configs, as these configs have been reflected on other configs
-            del exp["config"]["policy_assignment"]
+            # del exp["config"]["policy_assignment"]
 
     # config ray cluster
     if args.ray_num_nodes:
