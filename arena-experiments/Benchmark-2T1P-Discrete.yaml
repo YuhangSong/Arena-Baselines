@@ -8,7 +8,7 @@ Benchmark-2T1P-Discrete:
     config:
         # === Environment Settings ===
         env_config:
-            is_shuffle_agents: False
+            is_shuffle_agents: True
             train_mode: True
             obs_type: visual_FP
         clip_rewards: True

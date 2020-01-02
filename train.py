@@ -148,15 +148,19 @@ def run(args, parser):
             def get_policy_id(policy_i):
                 return "{}_{}".format(POLICY_ID_PREFIX, policy_i)
 
-            # create config of policies according to policy_assignment
-            policies = None
-
+            # create
+            # policies: config of policies
+            # learning_policy_ids: a list of policy ids of which the policy is trained
+            # playing_policy_ids: a list of policy ids of which the policy is not trained
             if exp["config"]["policy_assignment"] in ["independent"]:
 
                 # build number_agents independent learning policies
                 policies = {}
+                learning_policy_ids = []
                 for agent_i in range(number_agents):
-                    policies[get_policy_id(agent_i)] = (
+                    key_ = get_policy_id(agent_i)
+                    learning_policy_ids += [key_]
+                    policies[key_] = (
                         None, obs_space, act_space, {})
 
             elif exp["config"]["policy_assignment"] in ["self_play"]:
@@ -164,7 +168,9 @@ def run(args, parser):
                 policies = {}
 
                 # build just one learning policy
-                policies[get_policy_id(SELFPLAY_POLICY_TO_TRAIN)] = (
+                key_ = get_policy_id(SELFPLAY_POLICY_TO_TRAIN)
+                learning_policy_ids = [key_]
+                policies[key_] = (
                     None, obs_space, act_space, {}
                 )
 
@@ -201,8 +207,11 @@ def run(args, parser):
                     raise NotImplementedError
 
                 # build all other policies as playing policy
+                playing_policy_ids = []
                 for agent_i in range(1, number_agents):
-                    policies[get_policy_id(agent_i)] = (
+                    key_ = get_policy_id(agent_i)
+                    playing_policy_ids += [key_]
+                    policies[key_] = (
                         None, obs_space, act_space, {
                             "custom_action_dist": custom_action_dist
                         }
@@ -211,9 +220,8 @@ def run(args, parser):
             else:
                 raise NotImplementedError
 
-            # create policy_mapping_fn (a map from agent_id to policy_id) according to policy_assignment
-            policy_mapping_fn = None
-
+            # create
+            # policy_mapping_fn: a map from agent_id to policy_id
             if exp["config"]["policy_assignment"] in ["independent", "self_play"]:
 
                 # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
@@ -226,37 +234,49 @@ def run(args, parser):
             else:
                 raise NotImplementedError
 
-            # create policies_to_train according to policy_assignment
-            policies_to_train = None
-
+            # create
+            # on_train_result: a function called after each trained iteration
             if exp["config"]["policy_assignment"] in ["independent"]:
 
-                # for independent policy_assignment, all policies are trained
-                policies_to_train = list(policies.keys())
+                on_train_result = None
 
             elif exp["config"]["policy_assignment"] in ["self_play"]:
 
-                # for self_play policy_assignment, only get_policy_id(0) are trained
-                policies_to_train = [get_policy_id(SELFPLAY_POLICY_TO_TRAIN)]
+                if len(learning_policy_ids) != 1:
+                    raise Exception(
+                        "In self_play, there can be one and only one learning policy")
 
-                input("# TODO: load learning agent")
-
+                def on_train_result(info):
+                    for playing_policy_id in playing_policy_ids:
+                        info["trainer"].get_policy(playing_policy_id).set_weights(
+                            info["trainer"].get_policy(
+                                learning_policy_ids[0]
+                            ).get_weights()
+                        )
             else:
                 raise NotImplementedError
 
             # generate multiagent part of the config
-            exp["config"]["multiagent"] = {}
+            if "multiagent" in exp["config"].keys():
+                input("# WARNING: Override")
 
-            if policies is not None:
-                exp["config"]["multiagent"]["policies"] = policies
-
-            if policy_mapping_fn is not None:
-                exp["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+            exp["config"]["multiagent"] = {
+                "policies": policies,
+                "policy_mapping_fn": ray.tune.function(
                     policy_mapping_fn
-                )
+                ),
+                "policies_to_train": learning_policy_ids,
+            }
 
-            if policies_to_train is not None:
-                exp["config"]["multiagent"]["policies_to_train"] = policies_to_train
+            # generate callbacks part of the config
+            if "callbacks" in exp["config"].keys():
+                input("# WARNING: Override")
+
+            exp["config"]["callbacks"] = {
+                "on_train_result": ray.tune.function(
+                    on_train_result
+                ),
+            }
 
             # del customized configs, as these configs have been reflected on other configs
             del exp["config"]["policy_assignment"]
