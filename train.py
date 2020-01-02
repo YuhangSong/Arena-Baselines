@@ -119,7 +119,7 @@ def run(args, parser):
             exp["config"]["eager"] = True
 
         # generate config for arena
-        if arena.is_arena_env(exp["env"]):
+        if arena.is_all_arena_env(exp["env"]):
 
             # create dummy_env to get parameters/setting of env
             dummy_env = arena.ArenaRllibEnv(
