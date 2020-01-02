@@ -29,7 +29,10 @@ def create_parser():
     parser.add_argument(
         "--is-shuffle-agents",
         action="store_true",
-        help="Whether shuffle agents every episode.")
+        help=(
+            "Whether shuffle agents every episode. "
+            "This helps the trained policies to have better generalization ability."
+        ))
     parser.add_argument(
         "--train-mode",
         action="store_false",
@@ -39,19 +42,21 @@ def create_parser():
         default="visual_FP",
         type=str,
         help=(
-            "type of the observation; options:"
-            "vector (low-dimensional vector observation)"
-            "visual_FP (first-person visual observation)"
-            "visual_TP (third-person visual observation)"
-            "obs1-obs2-... (combine multiple types of observations)"))
+            "type of the observation; options: "
+            "vector (low-dimensional vector observation); "
+            "visual_FP (first-person visual observation); "
+            "visual_TP (third-person visual observation); "
+            "obs1-obs2-... (combine multiple types of observations); "
+        ))
     parser.add_argument(
         "--policy-assignment",
         default="independent",
         type=str,
         help=(
-            "multiagent only; how to assign policies to agents; options:"
-            "independent (independent learners)"
-            "self_play (only one agent is learning, the others [1] donot explore or [2] update, but they keep [3] sync weights from the learning policy)."))
+            "multiagent only; how to assign policies to agents; options: "
+            "independent (independent learners); "
+            "self_play (only one agent is learning, the others [1] donot explore or [2] update, but they keep [3] sync weights from the learning policy).; "
+        ))
 
     return parser
 
