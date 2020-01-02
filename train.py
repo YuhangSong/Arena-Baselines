@@ -161,8 +161,6 @@ def run(args, parser):
 
             elif exp["config"]["policy_assignment"] in ["self_play"]:
 
-                print("# WARNING: Testing.....")
-
                 policies = {}
 
                 # build just one learning policy
