@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import argparse
 import yaml
+import copy
 import utils
 import ray
 from ray.tests.cluster_utils import Cluster
@@ -92,6 +93,25 @@ def run(args, parser):
             }
         }
 
+    # expand experiments with grid_search, this is implemented to override
+    # the default support of grid_search
+    grid_experiments = {}
+    for experiment_key in experiments.keys():
+        for env_item in arena.get_list_from_gridsearch(experiments[experiment_key]["env"]):
+            for policy_assignment_item in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["policy_assignment"]):
+                grid_experiment_key = "{}__env={}__policy_assignment={}".format(
+                    experiment_key,
+                    env_item,
+                    policy_assignment_item,
+                )
+                grid_experiments[grid_experiment_key] = copy.deepcopy(
+                    experiments[experiment_key]
+                )
+                grid_experiments[grid_experiment_key]["env"] = env_item
+                grid_experiments[grid_experiment_key]["config"]["policy_assignment"] = policy_assignment_item
+
+    experiments = grid_experiments
+
     for exp in experiments.values():
 
         if not exp.get("run"):
@@ -102,9 +122,9 @@ def run(args, parser):
             exp["config"]["eager"] = True
 
         # generate config for arena
-        if arena.is_all_arena_env(exp["env"]):
+        if arena.is_arena_env(exp["env"]):
 
-            # create dummy_env to get parameters
+            # create dummy_env to get parameters/setting of env
             dummy_env = arena.ArenaRllibEnv(
                 env=arena.get_one_from_grid_search(
                     arena.remove_arena_env_prefix(
@@ -114,6 +134,11 @@ def run(args, parser):
                 env_config=exp["config"]["env_config"],
             )
             number_agents = dummy_env.number_agents
+
+            agent_id_prefix = dummy_env.get_agent_id_prefix()
+
+            def get_agent_i(agent_id):
+                return int(agent_id.split(agent_id_prefix + "_")[1])
 
             # For now, we do not support using different spaces across agents
             # (i.e., all agents have to share the same brain in Arena-BuildingToolkit)
@@ -197,11 +222,6 @@ def run(args, parser):
             if exp["config"]["policy_assignment"] in ["independent", "self_play"]:
 
                 # create policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
-                agent_id_prefix = dummy_env.get_agent_id_prefix()
-
-                def get_agent_i(agent_id):
-                    return int(agent_id.split(agent_id_prefix + "_")[1])
-
                 def policy_mapping_fn_i2i(agent_id):
                     return get_policy_id(get_agent_i(agent_id))
 

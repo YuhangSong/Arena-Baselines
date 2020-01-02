@@ -5,6 +5,13 @@ from ray.tune.registry import register_env
 ARENA_ENV_PREFIX = 'Arena-'
 
 
+def get_list_from_gridsearch(config):
+    if is_grid_search(config):
+        return config["grid_search"]
+    else:
+        return [config]
+
+
 def get_one_from_grid_search(config, index=0):
     """Get one of the configs in a config that is a grid_search.
     If it is not a grid_search, return it as it is.
