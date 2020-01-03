@@ -283,8 +283,8 @@ def run(args, parser):
                 ),
             }
 
-            # del customized configs, as these configs have been reflected on other configs
-            del exp["config"]["policy_assignment"]
+        # del customized configs, as these configs have been reflected on other configs
+        del exp["config"]["policy_assignment"]
 
     # config ray cluster
     if args.ray_num_nodes:

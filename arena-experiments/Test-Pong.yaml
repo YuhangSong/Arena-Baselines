@@ -6,6 +6,8 @@ Test-Pong:
     config:
         # === Environment Settings ===
         clip_rewards: True
+        # === Multi-agent Settings ===
+        policy_assignment: None
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2
