@@ -8,9 +8,9 @@ Test-Pong:
         clip_rewards: True
         # === Multi-agent Settings ===
         iterations_per_reload: 1
-        policy_assignment: 1
+        num_learning_policies: 1
         selfplay_recent_prob: 0.8
-        num_populaton: 1
+        size_population: 1
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2

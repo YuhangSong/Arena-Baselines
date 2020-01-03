@@ -20,6 +20,7 @@ class ArenaRllibEnv(MultiAgentEnv):
             raise Exception("env in has to be specified")
 
         self.obs_type = env_config.get("obs_type", "visual_FP")
+
         if "-" in self.obs_type:
             input('# TODO: multiple obs support')
 
@@ -27,12 +28,19 @@ class ArenaRllibEnv(MultiAgentEnv):
             input('# TODO: visual_TP obs support')
 
         game_file_path = get_env_directory(self.env)
+
         if self.obs_type in ["vector"]:
-            os.path.exists(game_file_path + '-Server')
-            game_file_path = game_file_path + '-Server'
-        else:
-            print(
-                "# WARNING: only vector observation is used, you can have a server build which runs faster")
+
+            if os.path.exists(game_file_path + '-Server'):
+                game_file_path = game_file_path + '-Server'
+                input(
+                    "# WARNING: Using server build"
+                )
+
+            else:
+                input(
+                    "# WARNING: only vector observation is used, you can have a server build which runs faster"
+                )
 
         while True:
             try:

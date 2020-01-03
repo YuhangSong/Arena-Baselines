@@ -19,16 +19,15 @@ Benchmark-2T1P-Discrete:
         num_learning_policies:
             grid_search:
                 - 1
-                - all
         selfplay_recent_prob:
             grid_search:
                 - 0.8
-        num_populaton:
+        size_population:
             grid_search:
                 - 1
         # === Settings for Rollout Worker processes ===
-        num_workers: 1
-        num_envs_per_worker: 1
+        num_workers: 10
+        num_envs_per_worker: 2
         sample_batch_size: 100
         batch_mode: truncate_episodes
         observation_filter: NoFilter
