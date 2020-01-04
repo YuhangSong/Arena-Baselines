@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import arena
 import argparse
 import yaml
 import copy
@@ -20,6 +19,10 @@ import ray
 from ray.tests.cluster_utils import Cluster
 from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
+from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
+
+import arena
+from arena import DeterministicCategorical
 
 
 class Trainer(ray.rllib.agents.trainer.Trainer):
@@ -30,8 +33,6 @@ class Trainer(ray.rllib.agents.trainer.Trainer):
 ray.rllib.agents.trainer.Trainer = Trainer
 
 # logger = logging.getLogger(__name__)
-
-POLICY_ID_PREFIX = "policy"
 
 
 def create_parser():
@@ -164,41 +165,51 @@ def run(args, parser):
 
         for env in arena.get_list_from_gridsearch(experiments[experiment_key]["env"]):
 
-            experiments[experiment_key]["env"] = str(env)
+            experiments[experiment_key]["env"] = str(
+                env
+            )
 
             if arena.is_arena_env(env):
                 # create dummy_env to get parameters/setting of env
                 dummy_env = arena.ArenaRllibEnv(
                     env=arena.remove_arena_env_prefix(
-                        experiments[experiment_key]["env"]),
+                        experiments[experiment_key]["env"]
+                    ),
                     env_config=experiments[experiment_key]["config"]["env_config"],
                 )
 
                 experiments[experiment_key]["config"]["num_agents"] = int(
-                    dummy_env.number_agents)
-                experiments[experiment_key]["config"]["agent_id_prefix"] = str(
-                    dummy_env.get_agent_id_prefix())
+                    dummy_env.number_agents
+                )
 
                 # For now, we do not support using different spaces across agents
                 # (i.e., all agents have to share the same brain in Arena-BuildingToolkit)
                 # This is because we want to consider the transfer/sharing weight between agents.
                 # If you do have completely different agents in game, one harmless work around is
                 # to use the same brain, but define different meaning of the action in Arena-BuildingToolkit
-                experiments[experiment_key]["config"]["obs_space"] = dummy_env.observation_space
-                experiments[experiment_key]["config"]["act_space"] = dummy_env.action_space
+                experiments[experiment_key]["config"]["obs_space"] = copy.deepcopy(
+                    dummy_env.observation_space
+                )
+                experiments[experiment_key]["config"]["act_space"] = copy.deepcopy(
+                    dummy_env.action_space
+                )
 
             for iterations_per_reload in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["iterations_per_reload"]):
 
                 experiments[experiment_key]["config"]["iterations_per_reload"] = int(
-                    iterations_per_reload)
+                    iterations_per_reload
+                )
 
                 for num_learning_policies in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["num_learning_policies"]):
 
                     if num_learning_policies == "all":
-                        experiments[experiment_key]["config"]["num_learning_policies"] = experiments[experiment_key]["config"]["num_agents"]
+                        experiments[experiment_key]["config"]["num_learning_policies"] = int(
+                            experiments[experiment_key]["config"]["num_agents"]
+                        )
                     else:
                         experiments[experiment_key]["config"]["num_learning_policies"] = int(
-                            num_learning_policies)
+                            num_learning_policies
+                        )
 
                     if arena.is_arena_env(env):
 
@@ -216,20 +227,23 @@ def run(args, parser):
                         is_selfplay = False
 
                     experiments[experiment_key]["config"]["is_selfplay"] = bool(
-                        is_selfplay)
+                        is_selfplay
+                    )
 
-                    for selfplay_recent_prob in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["selfplay_recent_prob"], is_selfplay):
+                    for selfplay_recent_prob in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["selfplay_recent_prob"], experiments[experiment_key]["config"]["is_selfplay"]):
 
                         if selfplay_recent_prob is None:
                             experiments[experiment_key]["config"]["selfplay_recent_prob"] = None
                         else:
                             experiments[experiment_key]["config"]["selfplay_recent_prob"] = float(
-                                selfplay_recent_prob)
+                                selfplay_recent_prob
+                            )
 
                         for size_population in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["size_population"]):
 
                             experiments[experiment_key]["config"]["size_population"] = int(
-                                size_population)
+                                size_population
+                            )
 
                             grid_experiment_key = "{}_ipr={}_nlp={}_srp={}_sp={}".format(
                                 experiment_key,
@@ -245,27 +259,17 @@ def run(args, parser):
 
                             if not grid_experiments[grid_experiment_key].get("run"):
                                 parser.error(
-                                    "The following arguments are required: --run")
+                                    "The following arguments are required: --run"
+                                )
                             if not grid_experiments[grid_experiment_key].get("env") and not grid_experiments[grid_experiment_key].get("config", {}).get("env"):
                                 parser.error(
-                                    "The following arguments are required: --env")
+                                    "The following arguments are required: --env"
+                                )
                             if args.eager:
                                 grid_experiments[grid_experiment_key]["config"]["eager"] = True
 
                             # generate config for arena
                             if arena.is_arena_env(grid_experiments[grid_experiment_key]["env"]):
-
-                                def get_agent_i(agent_id):
-                                    # get agent_i from agent_id
-                                    return int(agent_id.split(grid_experiments[grid_experiment_key]["config"]["agent_id_prefix"] + "_")[1])
-
-                                def get_policy_id(policy_i):
-                                    # get policy_id from policy_i
-                                    return "{}_{}".format(POLICY_ID_PREFIX, policy_i)
-
-                                # a policy_mapping_fn that maps agent i to policy i, so called policy_mapping_fn_i2i
-                                def policy_mapping_fn_i2i(agent_id):
-                                    return get_policy_id(get_agent_i(agent_id))
 
                                 # policies: config of policies
                                 grid_experiments[grid_experiment_key]["config"]["multiagent"] = {
@@ -281,9 +285,10 @@ def run(args, parser):
 
                                 # create configs of learning policies
                                 for agent_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
-                                    key_ = get_policy_id(agent_i)
+                                    key_ = arena.get_policy_id(agent_i)
                                     grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
-                                        key_]
+                                        key_
+                                    ]
                                     grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
                                         None,
                                         grid_experiments[grid_experiment_key]["config"]["obs_space"],
@@ -291,40 +296,17 @@ def run(args, parser):
                                         {}
                                     )
 
-                                # create configs of playing policies
-
-                                # build custom_action_dist to be playing mode dist (no exploration)
-                                # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                                # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                                del agent_i
 
                                 if grid_experiments[grid_experiment_key]["run"] not in ["PPO"]:
+                                    # build custom_action_dist to be playing mode dist (no exploration)
+                                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
                                     raise NotImplementedError
 
-                                if grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__ == "Discrete":
-
-                                    from ray.rllib.models.tf.tf_action_dist import Categorical
-                                    from ray.rllib.utils.annotations import override
-
-                                    class DeterministicCategorical(Categorical):
-                                        """Deterministic version of categorical distribution for discrete action spaces."""
-
-                                        @override(Categorical)
-                                        def _build_sample_op(self):
-                                            return tf.squeeze(tf.argmax(self.inputs, 1), axis=1)
-
-                                    custom_action_dist = DeterministicCategorical
-
-                                elif grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__ == "Box":
-
-                                    from ray.rllib.models.tf.tf_action_dist import Deterministic
-                                    custom_action_dist = Deterministic
-
-                                else:
-
-                                    raise NotImplementedError
-
+                                # create configs of playing policies
                                 for agent_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
-                                    key_ = get_policy_id(agent_i)
+                                    key_ = arena.get_policy_id(agent_i)
                                     grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
                                         key_]
                                     grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
@@ -332,31 +314,38 @@ def run(args, parser):
                                         grid_experiments[grid_experiment_key]["config"]["obs_space"],
                                         grid_experiments[grid_experiment_key]["config"]["act_space"],
                                         {
-                                            "custom_action_dist": custom_action_dist
+                                            "custom_action_dist": {
+                                                "Discrete": DeterministicCategorical,
+                                                "Box": DeterministiContinuous
+                                            }[
+                                                grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
+                                            ]
                                         }
                                     )
 
                                 # policy_mapping_fn: a map from agent_id to policy_id
                                 # use policy_mapping_fn_i2i as policy_mapping_fn
                                 grid_experiments[grid_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-                                    policy_mapping_fn_i2i
+                                    arena.policy_mapping_fn_i2i
                                 )
 
                                 # on_train_result: a function called after each trained iteration
                                 def on_train_result(info):
 
-                                    if info["result"]["training_iteration"] % iterations_per_reload == 0:
+                                    if info["result"]["training_iteration"] % info["trainer"].config["iterations_per_reload"] == 0:
 
                                         print(
                                             "Save learning policy and reload all policies."
                                         )
 
                                         def get_checkpoint_path(population_i=None, iteration_i=None):
+                                            """Get checkpoint_path from population_i and iteration_i.
+                                            """
 
                                             # if population_i is None, generate one
                                             if population_i is None:
                                                 population_i = np.random.randint(
-                                                    size_population
+                                                    info["trainer"].config["size_population"]
                                                 )
 
                                             # if iteration_i is None, use info["trainer"].iteration, i.e., the latest iteration
@@ -374,7 +363,7 @@ def run(args, parser):
                                             return checkpoint_path, population_i, iteration_i
 
                                         # save learning policies
-                                        for policy_id in grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"]:
+                                        for policy_id in info["trainer"].config["learning_policy_ids"]:
 
                                             policy_i = info["trainer"].get_policy(
                                                 policy_id
@@ -398,8 +387,11 @@ def run(args, parser):
                                             if not os.path.exists(os.path.dirname(checkpoint_path)):
                                                 try:
                                                     os.makedirs(
-                                                        os.path.dirname(checkpoint_path))
-                                                except OSError as exc:  # Guard against race condition
+                                                        os.path.dirname(
+                                                            checkpoint_path)
+                                                    )
+                                                except OSError as exc:
+                                                    # Guard against race condition
                                                     if exc.errno != errno.EEXIST:
                                                         raise
 
@@ -424,11 +416,13 @@ def run(args, parser):
                                                     e,
                                                 ))
 
+                                        del policy_id
+
                                         def remove_iteration_i_in_checkpoint_path(checkpoint_path):
                                             return checkpoint_path.split("-i_")[0] + "-i_"
 
                                         # reload all policies
-                                        for policy_id in (grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] + grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"]):
+                                        for policy_id in (info["trainer"].config["learning_policy_ids"] + info["trainer"].config["playing_policy_ids"]):
 
                                             policy_i = info["trainer"].get_policy(
                                                 policy_id
@@ -438,7 +432,8 @@ def run(args, parser):
                                             checkpoint_path, population_i, iteration_i = get_checkpoint_path()
 
                                             checkpoint_path_without_iteration_i = remove_iteration_i_in_checkpoint_path(
-                                                checkpoint_path)
+                                                checkpoint_path
+                                            )
 
                                             # get possible_iterations
                                             possible_iterations = []
@@ -451,17 +446,21 @@ def run(args, parser):
                                                     )
                                                 ]
 
+                                            del file
+
                                             possible_iterations = np.asarray(
-                                                possible_iterations)
+                                                possible_iterations
+                                            )
                                             possible_iterations.sort()
 
-                                            if policy_id in grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"]:
+                                            if policy_id in info["trainer"].config["learning_policy_ids"]:
                                                 # for learning policy, it only reload to the recent checkpoint
                                                 load_recent_prob = 1.0
-                                            elif policy_id in grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"]:
+                                            elif policy_id in info["trainer"].config["playing_policy_ids"]:
                                                 # for playing policy, it reload according to selfplay_recent_prob
                                                 load_recent_prob = float(
-                                                    grid_experiments[grid_experiment_key]["config"]["selfplay_recent_prob"])
+                                                    info["trainer"].config["selfplay_recent_prob"]
+                                                )
                                             else:
                                                 raise NotImplementedError
 
@@ -495,12 +494,14 @@ def run(args, parser):
                                             try:
                                                 policy_i.set_weights(
                                                     pickle.load(
-                                                        open(checkpoint_path, "rb"))
+                                                        open(
+                                                            checkpoint_path, "rb")
+                                                    )
                                                 )
                                                 policy_i.population_i = population_i
                                                 print("Load {} policy {} in population {} at iteration {} succeed. A result of load_recent_prob={} with principle={}".format(
-                                                    "learning" if policy_id in grid_experiments[grid_experiment_key][
-                                                        "config"]["learning_policy_ids"] else "playing",
+                                                    "learning" if policy_id in info["trainer"].config[
+                                                        "learning_policy_ids"] else "playing",
                                                     policy_id,
                                                     population_i,
                                                     iteration_i,
@@ -509,12 +510,14 @@ def run(args, parser):
                                                 ))
                                             except Exception as e:
                                                 print("Load {} policy {} in population {} at iteration {} failed: {}".format(
-                                                    "learning" if policy_id in grid_experiments[grid_experiment_key][
-                                                        "config"]["learning_policy_ids"] else "playing",
+                                                    "learning" if policy_id in info["trainer"].config[
+                                                        "learning_policy_ids"] else "playing",
                                                     policy_id,
                                                     population_i,
                                                     iteration_i,
                                                 ))
+
+                                        del policy_id
 
                                 grid_experiments[grid_experiment_key]["config"]["callbacks"] = {
                                 }
@@ -526,10 +529,22 @@ def run(args, parser):
                                     grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"]
                                 )
 
+                        del size_population
+
+                    del selfplay_recent_prob
+
+                del num_learning_policies
+
+            del iterations_per_reload
+
+        del env
+
+    del experiment_key
+
     # config ray cluster
     if args.ray_num_nodes:
         cluster = Cluster()
-        for _ in range(args.ray_num_nodes):
+        for ray_node in range(args.ray_num_nodes):
             cluster.add_node(
                 num_cpus=args.ray_num_cpus or 1,
                 num_gpus=args.ray_num_gpus or 0,
@@ -537,6 +552,7 @@ def run(args, parser):
                 memory=args.ray_memory,
                 redis_max_memory=args.ray_redis_max_memory,
             )
+        del ray_node
         ray.init(
             address=cluster.redis_address,
         )
@@ -550,9 +566,16 @@ def run(args, parser):
             num_gpus=args.ray_num_gpus,
         )
 
+    experiments_to_run = copy.deepcopy(grid_experiments)
+
+    # delete grid_experiments and experiments so that the functions passed to tune
+    # via config cannot have access to them
+    del grid_experiments
+    del experiments
+
     # run experiments
     run_experiments(
-        grid_experiments,
+        experiments_to_run,
         scheduler=_make_scheduler(args),
         queue_trials=args.queue_trials,
         resume=args.resume,

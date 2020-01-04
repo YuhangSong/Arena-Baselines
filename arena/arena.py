@@ -8,6 +8,10 @@ import numpy as np
 from gym_unity.envs import UnityEnv
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
+ARENA_ENV_PREFIX = 'Arena-'
+AGENT_ID_PREFIX = "agent"
+POLICY_ID_PREFIX = "policy"
+
 
 class ArenaRllibEnv(MultiAgentEnv):
     """Convert ArenaUnityEnv(gym_unity) to MultiAgentEnv (rllib)
@@ -66,8 +70,6 @@ class ArenaRllibEnv(MultiAgentEnv):
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
         self.number_agents = self.env.number_agents
-
-        self.agent_id_prefix = "agent"
 
     def reset(self):
 
@@ -139,13 +141,13 @@ class ArenaRllibEnv(MultiAgentEnv):
         return self.agent_ids
 
     def get_agent_id(self, agent_i):
-        return "{}_{}".format(self.agent_id_prefix, agent_i)
+        return "{}_{}".format(AGENT_ID_PREFIX, agent_i)
 
     def get_agent_i(self, agent_id):
-        return int(agent_id.split(self.agent_id_prefix + "_")[1])
+        return int(agent_id.split(AGENT_ID_PREFIX + "_")[1])
 
     def get_agent_id_prefix(self):
-        return self.agent_id_prefix
+        return AGENT_ID_PREFIX
 
 
 class ArenaUnityEnv(UnityEnv):
