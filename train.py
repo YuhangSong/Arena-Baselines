@@ -93,7 +93,7 @@ def create_parser():
         ))
 
     parser.add_argument(
-        "--selfplay-recent-prob",
+        "--playing-policy-load-recent-prob",
         default=0.8,
         type=float,
         help=(
@@ -149,7 +149,7 @@ def run(args, parser):
                     ),
                     iterations_per_reload=args.iterations_per_reload,
                     num_learning_policies=args.num_learning_policies,
-                    selfplay_recent_prob=args.selfplay_recent_prob,
+                    playing_policy_load_recent_prob=args.playing_policy_load_recent_prob,
                     size_population=args.size_population,
                 ),
                 "restore": args.restore,
@@ -194,348 +194,295 @@ def run(args, parser):
                     dummy_env.action_space
                 )
 
-            for iterations_per_reload in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["iterations_per_reload"]):
+            for num_learning_policies in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["num_learning_policies"]):
 
-                experiments[experiment_key]["config"]["iterations_per_reload"] = int(
-                    iterations_per_reload
-                )
-
-                for num_learning_policies in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["num_learning_policies"]):
-
-                    if num_learning_policies == "all":
-                        experiments[experiment_key]["config"]["num_learning_policies"] = int(
-                            experiments[experiment_key]["config"]["num_agents"]
-                        )
-                    else:
-                        experiments[experiment_key]["config"]["num_learning_policies"] = int(
-                            num_learning_policies
-                        )
-
-                    if arena.is_arena_env(env):
-
-                        if experiments[experiment_key]["config"]["num_learning_policies"] < experiments[experiment_key]["config"]["num_agents"]:
-                            is_selfplay = True
-                        elif experiments[experiment_key]["config"]["num_learning_policies"] == experiments[experiment_key]["config"]["num_agents"]:
-                            is_selfplay = False
-                        else:
-                            raise Exception(
-                                "num_learning_policies can not be larger than num_agents."
-                            )
-
-                    else:
-
-                        is_selfplay = False
-
-                    experiments[experiment_key]["config"]["is_selfplay"] = bool(
-                        is_selfplay
+                if num_learning_policies == "all":
+                    experiments[experiment_key]["config"]["num_learning_policies"] = int(
+                        experiments[experiment_key]["config"]["num_agents"]
+                    )
+                else:
+                    experiments[experiment_key]["config"]["num_learning_policies"] = int(
+                        num_learning_policies
                     )
 
-                    for selfplay_recent_prob in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["selfplay_recent_prob"], experiments[experiment_key]["config"]["is_selfplay"]):
+                grid_experiment_key = "{}_num_learning_policies={}".format(
+                    experiment_key,
+                    experiments[experiment_key]["config"]["num_learning_policies"],
+                )
 
-                        if selfplay_recent_prob is None:
-                            experiments[experiment_key]["config"]["selfplay_recent_prob"] = None
-                        else:
-                            experiments[experiment_key]["config"]["selfplay_recent_prob"] = float(
-                                selfplay_recent_prob
-                            )
+                grid_experiments[grid_experiment_key] = copy.deepcopy(
+                    experiments[experiment_key]
+                )
 
-                        for size_population in arena.get_list_from_gridsearch(experiments[experiment_key]["config"]["size_population"]):
+                if not grid_experiments[grid_experiment_key].get("run"):
+                    parser.error(
+                        "The following arguments are required: --run"
+                    )
+                if not grid_experiments[grid_experiment_key].get("env") and not grid_experiments[grid_experiment_key].get("config", {}).get("env"):
+                    parser.error(
+                        "The following arguments are required: --env"
+                    )
+                if args.eager:
+                    grid_experiments[grid_experiment_key]["config"]["eager"] = True
 
-                            experiments[experiment_key]["config"]["size_population"] = int(
-                                size_population
-                            )
+                # generate config for arena
+                if arena.is_arena_env(grid_experiments[grid_experiment_key]["env"]):
 
-                            grid_experiment_key = "{}_ipr={}_nlp={}_srp={}_sp={}".format(
-                                experiment_key,
-                                experiments[experiment_key]["config"]["iterations_per_reload"],
-                                experiments[experiment_key]["config"]["num_learning_policies"],
-                                experiments[experiment_key]["config"]["selfplay_recent_prob"],
-                                experiments[experiment_key]["config"]["size_population"],
-                            )
+                    # policies: config of policies
+                    grid_experiments[grid_experiment_key]["config"]["multiagent"] = {
+                    }
+                    grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"] = {
+                    }
+                    # learning_policy_ids: a list of policy ids of which the policy is trained
+                    grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] = [
+                    ]
+                    # playing_policy_ids: a list of policy ids of which the policy is not trained
+                    grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] = [
+                    ]
 
-                            grid_experiments[grid_experiment_key] = copy.deepcopy(
-                                experiments[experiment_key]
-                            )
+                    # create configs of learning policies
+                    for learning_policy_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
+                        key_ = arena.get_policy_id(learning_policy_i)
+                        grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
+                            key_
+                        ]
+                        grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
+                            None,
+                            grid_experiments[grid_experiment_key]["config"]["obs_space"],
+                            grid_experiments[grid_experiment_key]["config"]["act_space"],
+                            {}
+                        )
 
-                            if not grid_experiments[grid_experiment_key].get("run"):
-                                parser.error(
-                                    "The following arguments are required: --run"
-                                )
-                            if not grid_experiments[grid_experiment_key].get("env") and not grid_experiments[grid_experiment_key].get("config", {}).get("env"):
-                                parser.error(
-                                    "The following arguments are required: --env"
-                                )
-                            if args.eager:
-                                grid_experiments[grid_experiment_key]["config"]["eager"] = True
+                    if grid_experiments[grid_experiment_key]["run"] not in ["PPO"]:
+                        # build custom_action_dist to be playing mode dist (no exploration)
+                        # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                        # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                        raise NotImplementedError
 
-                            # generate config for arena
-                            if arena.is_arena_env(grid_experiments[grid_experiment_key]["env"]):
-
-                                # policies: config of policies
-                                grid_experiments[grid_experiment_key]["config"]["multiagent"] = {
-                                }
-                                grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"] = {
-                                }
-                                # learning_policy_ids: a list of policy ids of which the policy is trained
-                                grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] = [
+                    # create configs of playing policies
+                    for playing_policy_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
+                        key_ = arena.get_policy_id(playing_policy_i)
+                        grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
+                            key_]
+                        grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
+                            None,
+                            grid_experiments[grid_experiment_key]["config"]["obs_space"],
+                            grid_experiments[grid_experiment_key]["config"]["act_space"],
+                            {
+                                "custom_action_dist": {
+                                    "Discrete": DeterministicCategorical,
+                                    "Box": DeterministiContinuous
+                                }[
+                                    grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
                                 ]
-                                # playing_policy_ids: a list of policy ids of which the policy is not trained
-                                grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] = [
-                                ]
+                            }
+                        )
 
-                                # create configs of learning policies
-                                for agent_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
-                                    key_ = arena.get_policy_id(agent_i)
-                                    grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
-                                        key_
-                                    ]
-                                    grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
-                                        None,
-                                        grid_experiments[grid_experiment_key]["config"]["obs_space"],
-                                        grid_experiments[grid_experiment_key]["config"]["act_space"],
-                                        {}
+                    # policy_mapping_fn: a map from agent_id to policy_id
+                    # use policy_mapping_fn_i2i as policy_mapping_fn
+                    grid_experiments[grid_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+                        arena.policy_mapping_fn_i2i
+                    )
+
+                    # on_train_result: a function called after each trained iteration
+                    def on_train_result(info):
+
+                        if info["result"]["training_iteration"] % info["trainer"].config["iterations_per_reload"] == 0:
+
+                            print(
+                                "Save learning policy and reload all policies."
+                            )
+
+                            def get_checkpoint_path(population_i=None, iteration_i=None):
+                                """Get checkpoint_path from population_i and iteration_i.
+                                """
+
+                                # if population_i is None, generate one
+                                if population_i is None:
+                                    population_i = np.random.randint(
+                                        info["trainer"].config["size_population"]
                                     )
 
-                                del agent_i
+                                # if iteration_i is None, use info["trainer"].iteration, i.e., the latest iteration
+                                if iteration_i is None:
+                                    iteration_i = info["trainer"].iteration
 
-                                if grid_experiments[grid_experiment_key]["run"] not in ["PPO"]:
-                                    # build custom_action_dist to be playing mode dist (no exploration)
-                                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                                checkpoint_path = os.path.join(
+                                    info["trainer"].logdir,
+                                    "learning_agent/p_{}-i_{}".format(
+                                        population_i,
+                                        iteration_i,
+                                    )
+                                )
+
+                                return checkpoint_path, population_i, iteration_i
+
+                            # save learning policies
+                            for policy_id in info["trainer"].config["learning_policy_ids"]:
+
+                                policy_i = info["trainer"].get_policy(
+                                    policy_id
+                                )
+
+                                # check if policy_i has population_i assigned
+                                if hasattr(policy_i, "population_i"):
+                                    # if so, get it
+                                    population_i = policy_i.population_i
+                                else:
+                                    # if not, set population_i to None
+                                    # it will later be assigned
+                                    population_i = None
+
+                                # get checkpoint_path
+                                checkpoint_path, population_i, iteration_i = get_checkpoint_path(
+                                    population_i=population_i
+                                )
+
+                                # check checkpoint_path exists, if not, create one
+                                if not os.path.exists(os.path.dirname(checkpoint_path)):
+                                    try:
+                                        os.makedirs(
+                                            os.path.dirname(
+                                                checkpoint_path)
+                                        )
+                                    except OSError as exc:
+                                        # Guard against race condition
+                                        if exc.errno != errno.EEXIST:
+                                            raise
+
+                                # save to checkpoint_path
+                                try:
+                                    pickle.dump(
+                                        info["trainer"].get_policy(
+                                            policy_id
+                                        ).get_weights(),
+                                        open(checkpoint_path, "wb")
+                                    )
+                                    print("Save learning policy {} in population {} at iteration {} succeed".format(
+                                        policy_id,
+                                        population_i,
+                                        iteration_i,
+                                    ))
+                                except Exception as e:
+                                    print("Save learning policy {} in population {} at iteration {} failed: {}".format(
+                                        policy_id,
+                                        population_i,
+                                        iteration_i,
+                                        e,
+                                    ))
+
+                            del policy_id
+
+                            def remove_iteration_i_in_checkpoint_path(checkpoint_path):
+                                return checkpoint_path.split("-i_")[0] + "-i_"
+
+                            # reload all policies
+                            for policy_id in (info["trainer"].config["learning_policy_ids"] + info["trainer"].config["playing_policy_ids"]):
+
+                                policy_i = info["trainer"].get_policy(
+                                    policy_id
+                                )
+
+                                # get checkpoint_path
+                                checkpoint_path, population_i, iteration_i = get_checkpoint_path()
+
+                                checkpoint_path_without_iteration_i = remove_iteration_i_in_checkpoint_path(
+                                    checkpoint_path
+                                )
+
+                                # get possible_iterations
+                                possible_iterations = []
+                                for file in glob.glob(checkpoint_path_without_iteration_i + "*"):
+                                    possible_iterations += [
+                                        int(
+                                            file.split(
+                                                checkpoint_path_without_iteration_i
+                                            )[1]
+                                        )
+                                    ]
+
+                                del file
+
+                                possible_iterations = np.asarray(
+                                    possible_iterations
+                                )
+                                possible_iterations.sort()
+
+                                if policy_id in info["trainer"].config["learning_policy_ids"]:
+                                    # for learning policy, it only reload to the recent checkpoint
+                                    load_recent_prob = 1.0
+                                elif policy_id in info["trainer"].config["playing_policy_ids"]:
+                                    # for playing policy, it reload according to playing_policy_load_recent_prob
+                                    load_recent_prob = info["trainer"].config["playing_policy_load_recent_prob"]
+                                else:
                                     raise NotImplementedError
 
-                                # create configs of playing policies
-                                for agent_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
-                                    key_ = arena.get_policy_id(agent_i)
-                                    grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
-                                        key_]
-                                    grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
-                                        None,
-                                        grid_experiments[grid_experiment_key]["config"]["obs_space"],
-                                        grid_experiments[grid_experiment_key]["config"]["act_space"],
-                                        {
-                                            "custom_action_dist": {
-                                                "Discrete": DeterministicCategorical,
-                                                "Box": DeterministiContinuous
-                                            }[
-                                                grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
-                                            ]
-                                        }
+                                principle = str(
+                                    np.random.choice(
+                                        ["recent", "uniform"],
+                                        replace=False,
+                                        p=[
+                                            load_recent_prob,
+                                            1.0 - load_recent_prob
+                                        ]
                                     )
-
-                                # policy_mapping_fn: a map from agent_id to policy_id
-                                # use policy_mapping_fn_i2i as policy_mapping_fn
-                                grid_experiments[grid_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-                                    arena.policy_mapping_fn_i2i
                                 )
 
-                                # on_train_result: a function called after each trained iteration
-                                def on_train_result(info):
+                                if principle in ["recent"]:
+                                    iteration_i = possible_iterations[-1]
+                                elif principle in ["uniform"]:
+                                    iteration_i = np.random.choice(
+                                        possible_iterations,
+                                        replace=False,
+                                    )
+                                else:
+                                    raise NotImplementedError
 
-                                    if info["result"]["training_iteration"] % info["trainer"].config["iterations_per_reload"] == 0:
+                                # get checkpoint_path, population_i is re-generated, iteration_i is specified
+                                checkpoint_path, population_i, iteration_i = get_checkpoint_path(
+                                    population_i=None,
+                                    iteration_i=iteration_i,
+                                )
 
-                                        print(
-                                            "Save learning policy and reload all policies."
+                                try:
+                                    policy_i.set_weights(
+                                        pickle.load(
+                                            open(
+                                                checkpoint_path, "rb")
                                         )
+                                    )
+                                    policy_i.population_i = population_i
+                                    print("Load {} policy {} in population {} at iteration {} succeed. A result of load_recent_prob={} with principle={}".format(
+                                        "learning" if policy_id in info["trainer"].config[
+                                            "learning_policy_ids"] else "playing",
+                                        policy_id,
+                                        population_i,
+                                        iteration_i,
+                                        load_recent_prob,
+                                        principle,
+                                    ))
+                                except Exception as e:
+                                    print("Load {} policy {} in population {} at iteration {} failed: {}".format(
+                                        "learning" if policy_id in info["trainer"].config[
+                                            "learning_policy_ids"] else "playing",
+                                        policy_id,
+                                        population_i,
+                                        iteration_i,
+                                    ))
 
-                                        def get_checkpoint_path(population_i=None, iteration_i=None):
-                                            """Get checkpoint_path from population_i and iteration_i.
-                                            """
+                            del policy_id
 
-                                            # if population_i is None, generate one
-                                            if population_i is None:
-                                                population_i = np.random.randint(
-                                                    info["trainer"].config["size_population"]
-                                                )
+                    grid_experiments[grid_experiment_key]["config"]["callbacks"] = {
+                    }
+                    grid_experiments[grid_experiment_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
+                        on_train_result
+                    )
 
-                                            # if iteration_i is None, use info["trainer"].iteration, i.e., the latest iteration
-                                            if iteration_i is None:
-                                                iteration_i = info["trainer"].iteration
+                    grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies_to_train"] = copy.deepcopy(
+                        grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"]
+                    )
 
-                                            checkpoint_path = os.path.join(
-                                                info["trainer"].logdir,
-                                                "learning_agent/p_{}-i_{}".format(
-                                                    population_i,
-                                                    iteration_i,
-                                                )
-                                            )
-
-                                            return checkpoint_path, population_i, iteration_i
-
-                                        # save learning policies
-                                        for policy_id in info["trainer"].config["learning_policy_ids"]:
-
-                                            policy_i = info["trainer"].get_policy(
-                                                policy_id
-                                            )
-
-                                            # check if policy_i has population_i assigned
-                                            if hasattr(policy_i, "population_i"):
-                                                # if so, get it
-                                                population_i = policy_i.population_i
-                                            else:
-                                                # if not, set population_i to None
-                                                # it will later be assigned
-                                                population_i = None
-
-                                            # get checkpoint_path
-                                            checkpoint_path, population_i, iteration_i = get_checkpoint_path(
-                                                population_i=population_i
-                                            )
-
-                                            # check checkpoint_path exists, if not, create one
-                                            if not os.path.exists(os.path.dirname(checkpoint_path)):
-                                                try:
-                                                    os.makedirs(
-                                                        os.path.dirname(
-                                                            checkpoint_path)
-                                                    )
-                                                except OSError as exc:
-                                                    # Guard against race condition
-                                                    if exc.errno != errno.EEXIST:
-                                                        raise
-
-                                            # save to checkpoint_path
-                                            try:
-                                                pickle.dump(
-                                                    info["trainer"].get_policy(
-                                                        policy_id
-                                                    ).get_weights(),
-                                                    open(checkpoint_path, "wb")
-                                                )
-                                                print("Save learning policy {} in population {} at iteration {} succeed".format(
-                                                    policy_id,
-                                                    population_i,
-                                                    iteration_i,
-                                                ))
-                                            except Exception as e:
-                                                print("Save learning policy {} in population {} at iteration {} failed: {}".format(
-                                                    policy_id,
-                                                    population_i,
-                                                    iteration_i,
-                                                    e,
-                                                ))
-
-                                        del policy_id
-
-                                        def remove_iteration_i_in_checkpoint_path(checkpoint_path):
-                                            return checkpoint_path.split("-i_")[0] + "-i_"
-
-                                        # reload all policies
-                                        for policy_id in (info["trainer"].config["learning_policy_ids"] + info["trainer"].config["playing_policy_ids"]):
-
-                                            policy_i = info["trainer"].get_policy(
-                                                policy_id
-                                            )
-
-                                            # get checkpoint_path
-                                            checkpoint_path, population_i, iteration_i = get_checkpoint_path()
-
-                                            checkpoint_path_without_iteration_i = remove_iteration_i_in_checkpoint_path(
-                                                checkpoint_path
-                                            )
-
-                                            # get possible_iterations
-                                            possible_iterations = []
-                                            for file in glob.glob(checkpoint_path_without_iteration_i + "*"):
-                                                possible_iterations += [
-                                                    int(
-                                                        file.split(
-                                                            checkpoint_path_without_iteration_i
-                                                        )[1]
-                                                    )
-                                                ]
-
-                                            del file
-
-                                            possible_iterations = np.asarray(
-                                                possible_iterations
-                                            )
-                                            possible_iterations.sort()
-
-                                            if policy_id in info["trainer"].config["learning_policy_ids"]:
-                                                # for learning policy, it only reload to the recent checkpoint
-                                                load_recent_prob = 1.0
-                                            elif policy_id in info["trainer"].config["playing_policy_ids"]:
-                                                # for playing policy, it reload according to selfplay_recent_prob
-                                                load_recent_prob = float(
-                                                    info["trainer"].config["selfplay_recent_prob"]
-                                                )
-                                            else:
-                                                raise NotImplementedError
-
-                                            principle = str(
-                                                np.random.choice(
-                                                    ["recent", "uniform"],
-                                                    replace=False,
-                                                    p=[
-                                                        load_recent_prob,
-                                                        1.0 - load_recent_prob
-                                                    ]
-                                                )
-                                            )
-
-                                            if principle in ["recent"]:
-                                                iteration_i = possible_iterations[-1]
-                                            elif principle in ["uniform"]:
-                                                iteration_i = np.random.choice(
-                                                    possible_iterations,
-                                                    replace=False,
-                                                )
-                                            else:
-                                                raise NotImplementedError
-
-                                            # get checkpoint_path, population_i is re-generated, iteration_i is specified
-                                            checkpoint_path, population_i, iteration_i = get_checkpoint_path(
-                                                population_i=None,
-                                                iteration_i=iteration_i,
-                                            )
-
-                                            try:
-                                                policy_i.set_weights(
-                                                    pickle.load(
-                                                        open(
-                                                            checkpoint_path, "rb")
-                                                    )
-                                                )
-                                                policy_i.population_i = population_i
-                                                print("Load {} policy {} in population {} at iteration {} succeed. A result of load_recent_prob={} with principle={}".format(
-                                                    "learning" if policy_id in info["trainer"].config[
-                                                        "learning_policy_ids"] else "playing",
-                                                    policy_id,
-                                                    population_i,
-                                                    iteration_i,
-                                                    load_recent_prob,
-                                                    principle,
-                                                ))
-                                            except Exception as e:
-                                                print("Load {} policy {} in population {} at iteration {} failed: {}".format(
-                                                    "learning" if policy_id in info["trainer"].config[
-                                                        "learning_policy_ids"] else "playing",
-                                                    policy_id,
-                                                    population_i,
-                                                    iteration_i,
-                                                ))
-
-                                        del policy_id
-
-                                grid_experiments[grid_experiment_key]["config"]["callbacks"] = {
-                                }
-                                grid_experiments[grid_experiment_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
-                                    on_train_result
-                                )
-
-                                grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies_to_train"] = copy.deepcopy(
-                                    grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"]
-                                )
-
-                        del size_population
-
-                    del selfplay_recent_prob
-
-                del num_learning_policies
-
-            del iterations_per_reload
+            del num_learning_policies
 
         del env
 
@@ -552,7 +499,6 @@ def run(args, parser):
                 memory=args.ray_memory,
                 redis_max_memory=args.ray_redis_max_memory,
             )
-        del ray_node
         ray.init(
             address=cluster.redis_address,
         )

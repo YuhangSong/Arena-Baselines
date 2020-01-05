@@ -20,12 +20,13 @@ Benchmark-2T1P-Discrete:
             grid_search:
                 - 1
                 - all
-        selfplay_recent_prob:
+        playing_policy_load_recent_prob:
             grid_search:
                 - 0.8
         size_population:
             grid_search:
                 - 1
+                - 16
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2

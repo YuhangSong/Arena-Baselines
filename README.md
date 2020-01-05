@@ -153,6 +153,20 @@ You should see the ```episode_len_mean``` goes up from 20 (as shown in the follo
 
 <img src="./images/Benchmark-2T1P-Discrete.png" align="middle" width="1000"/>
 
+## Visualization
+
+The code log multiple curves (as well as figures and other formats of data) to help analysis the training process, run:
+```
+source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=9999
+```
+and visit ```http://localhost:9999``` for visualization with tensorboard.
+
+If your port is blocked, use natapp to forward a port:
+```
+./natapp --authtoken 237e94b5d173a7c3
+./natapp --authtoken 09d9c46fedceda3f
+```
+
 ### Reproduce/resume benchmarks
 
 To reproduce a training, run:
@@ -228,21 +242,6 @@ In this way, you can make sure your experiments are reproducable.
 
 * 0: Nope action
 * 1:
-
-## Visualization
-
-**Curves:**
-The code log multiple curves to help analysis the training process, run:
-```
-source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=9999
-```
-and visit ```http://localhost:4253``` for visualization with tensorboard.
-
-If your port is blocked, use natapp to forward a port:
-```
-./natapp --authtoken 237e94b5d173a7c3
-./natapp --authtoken 09d9c46fedceda3f
-```
 
 **Behaviors:**
 Set ```--mode vis_train```, so that
