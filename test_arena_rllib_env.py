@@ -26,6 +26,11 @@ def run(args, parser):
     )
     env_config = experiments["Benchmark-2T1P-Discrete"]["config"]["env_config"]
 
+    print(env)
+    print(env_config)
+    # Tennis-Sparse-2T1P-Discrete
+    # {'is_shuffle_agents': True, 'train_mode': True, 'obs_type': 'visual_FP'}
+
     env = arena.ArenaRllibEnv(
         env=env,
         env_config=env_config,
