@@ -21,9 +21,25 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 ## Features
 
-* 10+ most popular deep multi-agent reinforcement learning baselines, including independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
-* 30+ benchmarked games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tanl, BlowBlow, FallFlat, and etc.
-* Multiple variants of each game with different team setups, social structures, actions spaces, observation spaces (first-person visual, third-person visual, vector or mixed), domain randomizations, and etc.
+### Baselines
+
+10+ most popular deep multi-agent reinforcement learning baselines, including: independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
+
+| **Baselines** | **Supported** | **Benchmarked** |
+| - | -  | - |
+| Independent Learners | :heavy_check_mark: | :x: |
+| Self-play | :heavy_check_mark: | :x: |
+| Population-based Training | :heavy_check_mark: | :x: |
+
+### Games
+
+30+ games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tanl, BlowBlow, FallFlat, and etc.
+There are also multiple variants of each game with different team setups, social structures, actions spaces, observation spaces (first-person visual, third-person visual, vector or mixed), domain randomizations, and etc.
+More documentation of games can be found [here](#games)
+
+| **Games** | **Supported** | **Benchmarked** |
+| - | - | - |
+| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :x: |
 
 ## Status: Release
 
@@ -179,71 +195,14 @@ python train.py -f ./arena-experiments/CONFIG.yaml
     * This will take effect until the next time you make changes in your recent (at that time) experiment_state file
 * To log episode video in a new training, simply add line ```monitor: True``` in your yaml. For example, see ```"monitor": True``` in ```./arena-experiments/Test-Pong.yaml```
 
-#### [Tennis](https://youtu.be/)
-
-![Tennis](images/Tennis.png)
-
-* Set-up: Two-player game where agents control rackets to bounce ball over a net.
-* Variants: Tennis-Sparse-2T1P-{Discrete,Continuous}
-* Goal: The agents must not let the ball touch the ground of their own side.
-* Agents: The environment contains two agents with same Behavior Parameters.
-* Agent Reward Function:
-  * +0.0 To the agent whose ground is touched by the ball.
-  * +1.0 To the other agent.
-* Episode Terminate Condition:
-  * The ball touched the ground.
-* Behavior Parameters:
-  * Vector Observations:
-    * Lidar
-  * Vector Action space:
-    * Discrete: [General Player Discrete](##-general-player-discrete).
-    * Continuous: [General Player Continuous](##-general-player-continuous).
-  * Visual Observations:
-    * Visual_FP
-    * Visual_FP
-* Reset Parameters: Three
-    * angle: Angle of the racket from the vertical (Y) axis.
-      * Default: 55
-      * Recommended Minimum: 35
-      * Recommended Maximum: 65
-    * gravity: Magnitude of gravity
-      * Default: 9.81
-      * Recommended Minimum: 6
-      * Recommended Maximum: 20
-    * scale: Specifies the scale of the ball in the 3 dimensions (equal across the three dimensions)
-      * Default: 1
-      * Recommended Minimum: 0.2
-      * Recommended Maximum: 5
-* Benchmark Mean Reward: 2.5
-* Config
-  * ```python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml```
-* restore
-  * ```python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml --resume```
-
-### Environments not yet benchmarked
-
-* BlowBlow
-*
-
-## Configs
+## Documentations
 
 Function ```create_parser``` in ```./train.py``` gives the detailed description of the configs.
+Read them to understand the configs.
 Note that we do not recommend passing configs via argparse, instead, use yaml file to config you experiment, as what has been done in [run tests](##run-tests).
 In this way, you can make sure your experiments are reproducable.
 
-## Action Space
-
-### General Player Discrete
-
-* 0: Nope action
-* 1:
-
-### General Player Continuous
-
-* 0: Nope action
-* 1:
-
-**Behaviors:**
+<!-- **Behaviors:**
 Set ```--mode vis_train```, so that
 * The game engine runs at a real time scale of 1 (when training, it runs 100 times as the real time scale).
 * The game runs only one thread.
@@ -302,7 +261,7 @@ This will result in training a population of ```32``` agents.
 | Tennis-2T1P-v1-Discrete | <img src="./images/Tennis-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: Wx0 running |
 | Tank-FP-2T1P-v1-Discrete | <img src="./images/Tank-FP-2T1P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: Wx1 running |
 | YouShallNotPass-Dense-2T1P-v1-Continuous | <img src="./images/YouShallNotPass-Dense-2T1P-v1-Continuous.gif" align="middle" width="2000"/> | | Server: Wx0 running |
-| BlowBlow-Dense-2T2P-v1-Discrete | <img src="./images/BlowBlow-Dense-2T2P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: H4n running |
+| BlowBlow-Dense-2T2P-v1-Discrete | <img src="./images/BlowBlow-Dense-2T2P-v1-Discrete.gif" align="middle" width="2000"/> | | Server: H4n running | -->
 
 ## Common Problems
 
@@ -315,13 +274,7 @@ Then run the printed commands to kill all the game threads.
 ps aux | grep -ie Linux.x86_64 | awk '{print "kill -9 " $2}'
 ```
 
-#### Port still in use
-
-It takes some time for the port to release after you killed the python thread.
-If you make make sure that your game threads have been killed, you are perfectly fine to run python with a different ```--arena-start-index 33969```.
-Or just wait for a while till the system release the port.
-
-#### Copy models
+<!-- #### Copy models
 
 You may find it is useful to copy models from a remote server to your desktop, so that you can see training visualization of the game.
 For example,
@@ -352,7 +305,7 @@ scp -r -P 7330 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tenni
 # W5n
 mkdir -p ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
 scp -r -P 7333 yuhangsong@s1.natapp.cc:/home/yuhangsong/Arena/results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/\{P0_agent_FRecent.pt,eval,checkpoints_reward_record.npy,P0_update_i.npy,event\*\} ../results/__en-Tennis-2T1P-v1-Discrete__ot-visual__nfs-4__rb-True__no-True__bn-True__nf-False__nk-False__ncc-False__gn-False__ti-ppo__pn-1__rpap-OpenAIFive__pad-True__a-vc/
-```
+``` -->
 
 ## Citation
 
