@@ -2,6 +2,7 @@ import os
 import platform
 import random
 import time
+import logging
 
 import numpy as np
 
@@ -11,6 +12,8 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 ARENA_ENV_PREFIX = 'Arena-'
 AGENT_ID_PREFIX = "agent"
 POLICY_ID_PREFIX = "policy"
+
+logger = logging.getLogger(__name__)
 
 
 class ArenaRllibEnv(MultiAgentEnv):
@@ -31,20 +34,34 @@ class ArenaRllibEnv(MultiAgentEnv):
         if self.obs_type in ["visual_TP"]:
             input('# TODO: visual_TP obs support')
 
-        game_file_path = get_env_directory(self.env)
+        game_file_path, extension_name = get_env_directory(self.env)
 
         if self.obs_type in ["vector"]:
 
             if os.path.exists(game_file_path + '-Server'):
                 game_file_path = game_file_path + '-Server'
-                input(
-                    "# WARNING: Using server build"
+                logger.info(
+                    "Using server build"
                 )
 
             else:
-                input(
-                    "# WARNING: only vector observation is used, you can have a server build which runs faster"
+                logger.info(
+                    "Only vector observation is used, you can have a server build which runs faster"
                 )
+
+        else:
+
+            logger.info(
+                "Using full build"
+            )
+
+        if not os.path.exists(game_file_path + extension_name):
+
+            error = "Game build {} does not exist".format(
+                game_file_path
+            )
+            logger.error(error)
+            raise Exception(error)
 
         while True:
             try:
@@ -199,4 +216,7 @@ def get_env_directory(env_name):
             env_name,
             platform.system(),
         )
-    )
+    ), {
+        "Linux": ".x86_64",
+        "Darwin": ".app",
+    }[platform.system()]

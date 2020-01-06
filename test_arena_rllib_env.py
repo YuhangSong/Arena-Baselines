@@ -9,9 +9,12 @@ interface by rllib.
 
 import yaml
 import cv2
+import logging
 import arena
 import numpy as np
 from train import create_parser
+
+logger = logging.getLogger(__name__)
 
 
 def run(args, parser):
@@ -26,9 +29,9 @@ def run(args, parser):
     )
     env_config = experiments["Benchmark-2T1P-Discrete"]["config"]["env_config"]
 
-    print(env)
-    print(env_config)
+    logger.info(env)
     # Tennis-Sparse-2T1P-Discrete
+    logger.info(env_config)
     # {'is_shuffle_agents': True, 'train_mode': True, 'obs_type': 'visual_FP'}
 
     env = arena.ArenaRllibEnv(
