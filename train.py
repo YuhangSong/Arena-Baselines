@@ -59,6 +59,7 @@ def create_parser():
             "Whether run Arena environments in train mode. "
             "In train mode, the Arena environments run in a faster clock and in smaller resulotion. "
         ))
+
     parser.add_argument(
         "--obs-type",
         default="visual_FP",
