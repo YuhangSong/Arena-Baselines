@@ -45,7 +45,7 @@ class ArenaRllibEnv(MultiAgentEnv):
                 )
 
             else:
-                logger.info(
+                logger.warning(
                     "Only vector observation is used, you can have a server build which runs faster"
                 )
 

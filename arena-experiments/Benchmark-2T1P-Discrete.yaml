@@ -27,6 +27,7 @@ Benchmark-2T1P-Discrete:
             grid_search:
                 - 1
                 - 16
+        share_layer_policies: None
         # === Settings for Rollout Worker processes ===
         num_workers: 10
         num_envs_per_worker: 2

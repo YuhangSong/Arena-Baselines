@@ -109,6 +109,15 @@ def create_parser():
             "In each reload, each one of all learning/player policies will be reloaded with one of the size_population policies randomly. "
         ))
 
+    parser.add_argument(
+        "--share-layer-policies",
+        default="None",
+        type=str,
+        help=(
+            "Specify the policies that share layers. "
+            "[a-b-c-..][x-y-z-...]... (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...)"
+        ))
+
     return parser
 
 
@@ -151,6 +160,7 @@ def run(args, parser):
                     num_learning_policies=args.num_learning_policies,
                     playing_policy_load_recent_prob=args.playing_policy_load_recent_prob,
                     size_population=args.size_population,
+                    share_layer_policies=args.share_layer_policies,
                 ),
                 "restore": args.restore,
                 "num_samples": args.num_samples,
@@ -242,16 +252,11 @@ def run(args, parser):
 
                     # create configs of learning policies
                     for learning_policy_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
-                        key_ = arena.get_policy_id(learning_policy_i)
+                        learning_policy_id = arena.get_policy_id(
+                            learning_policy_i)
                         grid_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
-                            key_
+                            learning_policy_id
                         ]
-                        grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
-                            None,
-                            grid_experiments[grid_experiment_key]["config"]["obs_space"],
-                            grid_experiments[grid_experiment_key]["config"]["act_space"],
-                            {}
-                        )
 
                     if grid_experiments[grid_experiment_key]["run"] not in ["PPO"]:
                         # build custom_action_dist to be playing mode dist (no exploration)
@@ -261,21 +266,32 @@ def run(args, parser):
 
                     # create configs of playing policies
                     for playing_policy_i in range(grid_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
-                        key_ = arena.get_policy_id(playing_policy_i)
+                        playing_policy_id = arena.get_policy_id(
+                            playing_policy_i)
                         grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
-                            key_]
-                        grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][key_] = (
+                            playing_policy_id
+                        ]
+
+                    # apply configs of all policies
+                    for policy_i in range(experiments[experiment_key]["config"]["num_agents"]):
+
+                        policy_id = arena.get_policy_id(policy_i)
+
+                        policy_config = {}
+
+                        if policy_id in grid_experiments[grid_experiment_key]["config"]["playing_policy_ids"]:
+                            policy_config["custom_action_dist"] = {
+                                "Discrete": DeterministicCategorical,
+                                "Box": DeterministiContinuous
+                            }[
+                                grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
+                            ]
+
+                        grid_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][policy_id] = (
                             None,
                             grid_experiments[grid_experiment_key]["config"]["obs_space"],
                             grid_experiments[grid_experiment_key]["config"]["act_space"],
-                            {
-                                "custom_action_dist": {
-                                    "Discrete": DeterministicCategorical,
-                                    "Box": DeterministiContinuous
-                                }[
-                                    grid_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
-                                ]
-                            }
+                            policy_config,
                         )
 
                     # policy_mapping_fn: a map from agent_id to policy_id
