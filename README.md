@@ -30,6 +30,7 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 | Independent Learners | :heavy_check_mark: | :x: |
 | Self-play | :heavy_check_mark: | :x: |
 | Population-based Training | :heavy_check_mark: | :x: |
+| Share Weights Between Arbitrary Agents | :heavy_check_mark: | :x: |
 
 ### Games
 
@@ -145,7 +146,7 @@ Meet some problems? Open an issue.
 
 Now test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
 ```
-python test_arena_rllib_env.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml
+python test_arena_rllib_env.py -f ./arena-experiments/Arena-Benchmark.yaml
 ```
 You should see prints like following:
 ```
@@ -161,15 +162,17 @@ episode end, keep going?
 Hit enter and it keeps rolling.
 Meet some problems? Open an issue.
 
-Now train on an Arena game (reproduce one of our benchmark) with:
+### Reproduce Arena-Benchmark
+
+Now train on Arena games (reproduce our Arena-Benchmark) with:
 ```
-python train.py -f ./arena-experiments/Benchmark-2T1P-Discrete.yaml
+python train.py -f ./arena-experiments/Arena-Benchmark.yaml
 ```
 You should see the ```episode_len_mean``` goes up from 20 (as shown in the following), which means you installation works fine.
 
-<img src="./images/Benchmark-2T1P-Discrete.png" align="middle" width="1000"/>
+<img src="./images/Arena-Benchmark.png" align="middle" width="1000"/>
 
-## Visualization
+### Visualization
 
 The code log multiple curves (as well as figures and other formats of data) to help analysis the training process, run:
 ```
@@ -185,12 +188,7 @@ If your port is blocked, use natapp to forward a port:
 
 ### Reproduce/resume benchmarks
 
-To reproduce a training, run:
-```
-python train.py -f ./arena-experiments/CONFIG.yaml
-```
-
-* To resume/restore a training, append ```--resume``` to above command
+* To resume/restore a training, append ```--resume``` to the above command in (Reproduce Arena-Benchmark)[##reproduce-arena-benchmark]
   * To log episode video, go to your log dir, find your recent experiment_state file, for example ```experiment_state-2019-11-30_23-17-55.json```. Change the line ```"monitor": false``` to ```"monitor": true```
     * This will take effect until the next time you make changes in your recent (at that time) experiment_state file
 * To log episode video in a new training, simply add line ```monitor: True``` in your yaml. For example, see ```"monitor": True``` in ```./arena-experiments/Test-Pong.yaml```

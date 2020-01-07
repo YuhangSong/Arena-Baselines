@@ -75,11 +75,12 @@ def create_parser():
 
     parser.add_argument(
         "--share-layer-policies",
-        default="None",
-        type=str,
+        default=None,
         help=(
-            "Specify the policies that share layers. "
-            "[a-b-c-..][x-y-z-...]... (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...)"
+            "Specify the policies that share layers. Options are as follows: "
+            "None; "
+            "team; "
+            "[[a,b,c,...],[x,y,z,...],...] (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...); "
         ))
 
     return parser

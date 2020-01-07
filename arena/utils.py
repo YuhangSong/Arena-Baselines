@@ -53,3 +53,10 @@ def list_subtract(x, y):
     """Substract list y from list x.
     """
     return [item for item in x if item not in y]
+
+
+def find_in_list_of_list(mylist, item):
+    for sub_list in mylist:
+        if item in sub_list:
+            return (mylist.index(sub_list), sub_list.index(item))
+    raise ValueError("'{}' is not in list".format(item))

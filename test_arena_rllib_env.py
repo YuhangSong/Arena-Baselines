@@ -12,7 +12,6 @@ import cv2
 import logging
 import arena
 import numpy as np
-from train import create_parser
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +23,10 @@ def run(args, parser):
 
     env = arena.get_one_from_grid_search(
         arena.remove_arena_env_prefix(
-            experiments["Benchmark-2T1P-Discrete"]["env"]
+            experiments["Arena-Benchmark"]["env"]
         )
     )
-    env_config = experiments["Benchmark-2T1P-Discrete"]["config"]["env_config"]
+    env_config = experiments["Arena-Benchmark"]["config"]["env_config"]
 
     logger.info(env)
     # Tennis-Sparse-2T1P-Discrete
@@ -74,7 +73,8 @@ def run(args, parser):
 
         # Actions should be provided for each agent that returned an observation.
         new_obs, rewards, dones, infos = env.step(
-            actions={"agent_0": 0, "agent_1": 7})
+            actions={"agent_0": 0, "agent_1": 7}
+        )
 
         print("rewards: {}".format(rewards))
         # rewards: {"agent_0": 3, "agent_1": -1}
@@ -114,6 +114,6 @@ def run(args, parser):
 
 
 if __name__ == "__main__":
-    parser = create_parser()
+    parser = arena.create_parser()
     args = parser.parse_args()
     run(args, parser)
