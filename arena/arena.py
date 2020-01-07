@@ -3,15 +3,29 @@ import platform
 import random
 import time
 import logging
+import copy
+import glob
+import pickle
 
 import numpy as np
 
 from gym_unity.envs import UnityEnv
+
+import ray
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
+from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
+
+from .models import DeterministicCategorical, ShareLayerPolicy
+from .utils import get_list_from_gridsearch, get_one_from_grid_search, is_grid_search
+from .utils import prepare_path, list_subtract
 
 ARENA_ENV_PREFIX = 'Arena-'
 AGENT_ID_PREFIX = "agent"
 POLICY_ID_PREFIX = "policy"
+
+CHECKPOINT_PATH_PREFIX = "learning_agent/"
+CHECKPOINT_PATH_POPULATION_PREFIX = "p_"
+CHECKPOINT_PATH_ITERATION_PREFIX = "i_"
 
 logger = logging.getLogger(__name__)
 
@@ -206,9 +220,75 @@ class ArenaUnityEnv(UnityEnv):
         return obs
 
 
+def get_policy_id(policy_i):
+    """Get policy_id from policy_i.
+    """
+    return "{}_{}".format(POLICY_ID_PREFIX, policy_i)
+
+
+def get_agent_i(agent_id):
+    """Get agent_i from agent_id.
+    """
+    return int(agent_id.split(AGENT_ID_PREFIX + "_")[1])
+
+
+def policy_mapping_fn_i2i(agent_id):
+    """A policy_mapping_fn that maps agent i to policy i.
+    """
+    return get_policy_id(get_agent_i(agent_id))
+
+
+def is_arena_env(each_env):
+    """Check if a env (string) is an arena env.
+    """
+    return each_env[:len(ARENA_ENV_PREFIX)] == ARENA_ENV_PREFIX
+
+
+def is_all_arena_env(env):
+    """Check if all env in a grid_search env are arena env.
+    If env is not a grid_search, return is_arena_env.
+    """
+    if is_grid_search(env):
+        for each_env in env["grid_search"]:
+            if not is_arena_env(each_env):
+                return False
+        return True
+    else:
+        return is_arena_env(env)
+
+
+def is_any_arena_env(env):
+    """Check if any env in a grid_search env is arena env.
+    If env is not a grid_search, return is_arena_env.
+    """
+    if is_grid_search(env):
+        for each_env in env["grid_search"]:
+            if is_arena_env(each_env):
+                return True
+        return False
+    else:
+        return is_arena_env(env)
+
+
+def remove_arena_env_prefix(env):
+    """Remove ARENA_ENV_PREFIX from a env (possibly a grid_search).
+    """
+    env = copy.deepcopy(env)
+    if is_grid_search(env):
+        if is_all_arena_env(env):
+            for i in range(len(env["grid_search"])):
+                env["grid_search"][i] = remove_arena_env_prefix(
+                    env["grid_search"][i]
+                )
+            return env
+        else:
+            raise NotImplementedError
+    else:
+        return env[len(ARENA_ENV_PREFIX):]
+
+
 def get_env_directory(env_name):
-    """get_env_directory:
-        get env path according to env_name
+    """Get env path according to env_name
     """
     return os.path.join(
         os.path.dirname(__file__),
@@ -220,3 +300,404 @@ def get_env_directory(env_name):
         "Linux": ".x86_64",
         "Darwin": ".app",
     }[platform.system()]
+
+
+def get_checkpoint_path(logdir, population_i, iteration_i):
+    """Get checkpoint_path from population_i and iteration_i.
+    """
+
+    checkpoint_path = os.path.join(
+        logdir,
+        "{}{}{}-{}{}".format(
+            CHECKPOINT_PATH_PREFIX,
+            CHECKPOINT_PATH_POPULATION_PREFIX,
+            population_i,
+            CHECKPOINT_PATH_ITERATION_PREFIX,
+            iteration_i,
+        )
+    )
+
+    return checkpoint_path
+
+
+def get_possible_populations(logdir):
+    """Get possible populations on the disk, sorted in order
+    """
+
+    possible_populations = []
+    checkpoint_path_search_prefix = os.path.join(
+        logdir,
+        "{}{}".format(
+            CHECKPOINT_PATH_PREFIX,
+            CHECKPOINT_PATH_POPULATION_PREFIX,
+        )
+    )
+    for file in glob.glob(checkpoint_path_search_prefix + "*"):
+        population_i = int(
+            file.split(
+                checkpoint_path_search_prefix
+            )[1].split("-")[0]
+        )
+        if population_i not in possible_populations:
+            possible_populations += [
+                population_i
+            ]
+    possible_populations = np.asarray(
+        possible_populations
+    )
+    possible_populations.sort()
+    return possible_populations
+
+
+def get_possible_iterations(logdir, population_i):
+    """Get possible iterations on the disk, sorted in order
+    """
+
+    possible_iterations = []
+    checkpoint_path_search_prefix = os.path.join(
+        logdir,
+        "{}{}{}-{}".format(
+            CHECKPOINT_PATH_PREFIX,
+            CHECKPOINT_PATH_POPULATION_PREFIX,
+            population_i,
+            CHECKPOINT_PATH_ITERATION_PREFIX,
+        )
+    )
+    for file in glob.glob(checkpoint_path_search_prefix + "*"):
+        possible_iterations += [
+            int(
+                file.split(
+                    checkpoint_path_search_prefix
+                )[1].split("-")[0]
+            )
+        ]
+    possible_iterations = np.asarray(
+        possible_iterations
+    )
+    possible_iterations.sort()
+    return possible_iterations
+
+
+def on_train_result(info):
+    """Function called after each trained iteration
+    """
+
+    if info["result"]["training_iteration"] % info["trainer"].config["iterations_per_reload"] == 0:
+
+        logger.info(
+            "Save learning policy and reload all policies."
+        )
+
+        # save learning policies
+        for policy_id in info["trainer"].config["learning_policy_ids"]:
+
+            policy = info["trainer"].get_policy(
+                policy_id
+            )
+
+            # check if policy has population_i assigned
+            if hasattr(policy, "population_i"):
+                # if so, get it
+                population_i = policy.population_i
+            else:
+                possible_populations = get_possible_populations(
+                    logdir=info["trainer"].logdir,
+                )
+                # if not, generate one from those have not been used
+                population_i = np.random.choice(
+                    list_subtract(
+                        range(
+                            info["trainer"].config["size_population"]
+                        ),
+                        possible_populations
+                    )
+                )
+
+            iteration_i = info["trainer"].iteration
+
+            # get checkpoint_path by population_i and recent iteration
+            checkpoint_path = get_checkpoint_path(
+                logdir=info["trainer"].logdir,
+                population_i=population_i,
+                iteration_i=iteration_i,
+            )
+
+            prepare_path(checkpoint_path)
+
+            save_message = "Save learning policy {} in population {} at iteration {}".format(
+                policy_id,
+                population_i,
+                iteration_i,
+            )
+
+            # save to checkpoint_path
+            try:
+                pickle.dump(
+                    info["trainer"].get_policy(
+                        policy_id
+                    ).get_weights(),
+                    open(
+                        checkpoint_path,
+                        "wb"
+                    )
+                )
+                logger.info("{} succeed".format(
+                    save_message,
+                ))
+            except Exception as e:
+                logger.warning("{} failed: {}".format(
+                    save_message,
+                    e,
+                ))
+
+        possible_populations = get_possible_populations(
+            logdir=info["trainer"].logdir,
+        )
+
+        # reload all policies
+        for policy_id in (info["trainer"].config["learning_policy_ids"] + info["trainer"].config["playing_policy_ids"]):
+
+            policy = info["trainer"].get_policy(
+                policy_id
+            )
+
+            population_i = np.random.choice(
+                range(info["trainer"].config["size_population"]),
+            )
+
+            load_message = "Load {} policy {} in population {}".format(
+                {
+                    True: "learning",
+                    False: "playing",
+                }[
+                    policy_id in info["trainer"].config["learning_policy_ids"]
+                ],
+                policy_id,
+                population_i,
+            )
+
+            if population_i in possible_populations:
+
+                # get possible_iterations
+                possible_iterations = get_possible_iterations(
+                    logdir=info["trainer"].logdir,
+                    population_i=population_i,
+                )
+
+                if policy_id in info["trainer"].config["learning_policy_ids"]:
+                    # for learning policy, it only reload to the recent checkpoint
+                    load_recent_prob = 1.0
+                elif policy_id in info["trainer"].config["playing_policy_ids"]:
+                    # for playing policy, it reload according to playing_policy_load_recent_prob
+                    load_recent_prob = info["trainer"].config["playing_policy_load_recent_prob"]
+                else:
+                    raise NotImplementedError
+
+                principle = str(
+                    np.random.choice(
+                        ["recent", "uniform"],
+                        replace=False,
+                        p=[
+                            load_recent_prob,
+                            1.0 - load_recent_prob
+                        ]
+                    )
+                )
+
+                if principle in ["recent"]:
+                    iteration_i = possible_iterations[-1]
+                elif principle in ["uniform"]:
+                    iteration_i = np.random.choice(
+                        possible_iterations,
+                        replace=False,
+                    )
+                else:
+                    raise NotImplementedError
+
+                # get checkpoint_path, population_i is re-generated, iteration_i is specified
+                checkpoint_path = get_checkpoint_path(
+                    logdir=info["trainer"].logdir,
+                    population_i=population_i,
+                    iteration_i=iteration_i,
+                )
+
+                load_message = "{} at iteration {}".format(
+                    load_message,
+                    iteration_i,
+                )
+
+                try:
+                    policy.set_weights(
+                        pickle.load(
+                            open(
+                                checkpoint_path,
+                                "rb"
+                            )
+                        )
+                    )
+                    policy.population_i = population_i
+                    logger.info("{} succeed. A result of load_recent_prob={} with principle={}".format(
+                        load_message,
+                        load_recent_prob,
+                        principle,
+                    ))
+                except Exception as e:
+                    logger.warning("{} failed: {}".format(
+                        load_message,
+                        e,
+                    ))
+
+            else:
+                # if population_i is not in possible_populations yet
+                logger.info("{} skipped, the population_i does not exist yet, creating branch (possible_populations are {})".format(
+                    load_message,
+                    possible_populations,
+                ))
+                policy.population_i = population_i
+
+
+def create_arena_experiments(experiments, args, parser):
+    """Create arena experiments from experiments
+    Expand experiments with grid_search, this is implemented to override the default support of grid_search for customized configs
+    """
+    arena_experiments = {}
+    for experiment_key in experiments.keys():
+
+        for env in get_list_from_gridsearch(experiments[experiment_key]["env"]):
+
+            experiments[experiment_key]["env"] = str(
+                env
+            )
+
+            if is_arena_env(env):
+                # create dummy_env to get parameters/setting of env
+                dummy_env = ArenaRllibEnv(
+                    env=remove_arena_env_prefix(
+                        experiments[experiment_key]["env"]
+                    ),
+                    env_config=experiments[experiment_key]["config"]["env_config"],
+                )
+
+                experiments[experiment_key]["config"]["num_agents"] = int(
+                    dummy_env.number_agents
+                )
+
+                # For now, we do not support using different spaces across agents
+                # (i.e., all agents have to share the same brain in Arena-BuildingToolkit)
+                # This is because we want to consider the transfer/sharing weight between agents.
+                # If you do have completely different agents in game, one harmless work around is
+                # to use the same brain, but define different meaning of the action in Arena-BuildingToolkit
+                experiments[experiment_key]["config"]["obs_space"] = copy.deepcopy(
+                    dummy_env.observation_space
+                )
+                experiments[experiment_key]["config"]["act_space"] = copy.deepcopy(
+                    dummy_env.action_space
+                )
+
+            for num_learning_policies in get_list_from_gridsearch(experiments[experiment_key]["config"]["num_learning_policies"]):
+
+                if num_learning_policies == "all":
+                    experiments[experiment_key]["config"]["num_learning_policies"] = int(
+                        experiments[experiment_key]["config"]["num_agents"]
+                    )
+                else:
+                    experiments[experiment_key]["config"]["num_learning_policies"] = int(
+                        num_learning_policies
+                    )
+
+                grid_experiment_key = "{}_num_learning_policies={}".format(
+                    experiment_key,
+                    experiments[experiment_key]["config"]["num_learning_policies"],
+                )
+
+                arena_experiments[grid_experiment_key] = copy.deepcopy(
+                    experiments[experiment_key]
+                )
+
+                if not arena_experiments[grid_experiment_key].get("run"):
+                    parser.error(
+                        "The following arguments are required: --run"
+                    )
+                if not arena_experiments[grid_experiment_key].get("env") and not arena_experiments[grid_experiment_key].get("config", {}).get("env"):
+                    parser.error(
+                        "The following arguments are required: --env"
+                    )
+                if args.eager:
+                    arena_experiments[grid_experiment_key]["config"]["eager"] = True
+
+                # generate config for arena
+                if is_arena_env(arena_experiments[grid_experiment_key]["env"]):
+
+                    # policies: config of policies
+                    arena_experiments[grid_experiment_key]["config"]["multiagent"] = {
+                    }
+                    arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies"] = {
+                    }
+                    # learning_policy_ids: a list of policy ids of which the policy is trained
+                    arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"] = [
+                    ]
+                    # playing_policy_ids: a list of policy ids of which the policy is not trained
+                    arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"] = [
+                    ]
+
+                    # create configs of learning policies
+                    for learning_policy_i in range(arena_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
+                        learning_policy_id = get_policy_id(
+                            learning_policy_i)
+                        arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
+                            learning_policy_id
+                        ]
+
+                    if arena_experiments[grid_experiment_key]["run"] not in ["PPO"]:
+                        # build custom_action_dist to be playing mode dist (no exploration)
+                        # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                        # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                        raise NotImplementedError
+
+                    # create configs of playing policies
+                    for playing_policy_i in range(arena_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
+                        playing_policy_id = get_policy_id(
+                            playing_policy_i)
+                        arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
+                            playing_policy_id
+                        ]
+
+                    # apply configs of all policies
+                    for policy_i in range(experiments[experiment_key]["config"]["num_agents"]):
+
+                        policy_id = get_policy_id(policy_i)
+
+                        policy_config = {}
+
+                        if policy_id in arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"]:
+                            policy_config["custom_action_dist"] = {
+                                "Discrete": DeterministicCategorical,
+                                "Box": DeterministiContinuous
+                            }[
+                                arena_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
+                            ]
+
+                        arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][policy_id] = (
+                            None,
+                            arena_experiments[grid_experiment_key]["config"]["obs_space"],
+                            arena_experiments[grid_experiment_key]["config"]["act_space"],
+                            policy_config,
+                        )
+
+                    # policy_mapping_fn: a map from agent_id to policy_id
+                    # use policy_mapping_fn_i2i as policy_mapping_fn
+                    arena_experiments[grid_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+                        policy_mapping_fn_i2i
+                    )
+
+                    arena_experiments[grid_experiment_key]["config"]["callbacks"] = {
+                    }
+                    arena_experiments[grid_experiment_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
+                        on_train_result
+                    )
+
+                    arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies_to_train"] = copy.deepcopy(
+                        arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"]
+                    )
+
+    return arena_experiments

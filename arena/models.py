@@ -1,7 +1,6 @@
 from ray.rllib.models.tf.tf_action_dist import Categorical
 from ray.rllib.utils.annotations import override
 from ray.rllib.models import Model, ModelCatalog
-from .arena import ARENA_ENV_PREFIX, AGENT_ID_PREFIX, POLICY_ID_PREFIX
 
 
 class DeterministicCategorical(Categorical):
