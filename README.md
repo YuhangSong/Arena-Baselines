@@ -27,10 +27,10 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 | **Baselines** | **Supported** | **Benchmarked** |
 | - | -  | - |
-| Independent Learners | :heavy_check_mark: | :x: |
-| Self-play | :heavy_check_mark: | :x: |
-| Population-based Training | :heavy_check_mark: | :x: |
-| Share Weights Between Arbitrary Agents | :heavy_check_mark: | :x: |
+| Independent Learners | :heavy_check_mark: | :heavy_check_mark: |
+| Self-play | :heavy_check_mark: | :heavy_check_mark: |
+| Population-based Training | :heavy_check_mark: | :heavy_check_mark: |
+| Share Weights Between Arbitrary Agents | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Games
 
@@ -40,7 +40,7 @@ More documentation of games can be found [here](#games)
 
 | **Games** | **Supported** | **Benchmarked** |
 | - | - | - |
-| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :x: |
+| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :heavy_check_mark: |
 
 ## Status: Release
 
