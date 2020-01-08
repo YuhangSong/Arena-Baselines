@@ -570,12 +570,14 @@ def create_arena_experiments(experiments, args, parser):
 
         for env in env_keys:
 
+            # check config, if invalid, skip
             if not is_arena_env(env):
                 logger.warn("env {} is not arena env, skipping".format(
                     env
                 ))
                 continue
 
+            # accept config
             experiments[experiment_key]["env"] = copy.deepcopy(
                 env
             )
@@ -610,20 +612,25 @@ def create_arena_experiments(experiments, args, parser):
 
             for num_learning_policies in num_learning_policies_keys:
 
+                # get other keys
                 num_learning_policies_other_keys = copy.deepcopy(
                     num_learning_policies_keys
-                ).remove(
+                )
+                num_learning_policies_other_keys.remove(
                     num_learning_policies
                 )
 
+                # override config
                 if num_learning_policies == "all":
                     num_learning_policies = int(
                         experiments[experiment_key]["config"]["num_agents"]
                     )
 
+                # if in other keys ofter override, skip this config
                 if num_learning_policies in num_learning_policies_other_keys:
                     continue
 
+                # accept the config
                 experiments[experiment_key]["config"]["num_learning_policies"] = copy.deepcopy(
                     num_learning_policies
                 )
@@ -634,12 +641,15 @@ def create_arena_experiments(experiments, args, parser):
 
                 for share_layer_policies in share_layer_policies_keys:
 
+                    # get other keys
                     share_layer_policies_other_keys = copy.deepcopy(
                         share_layer_policies_keys
-                    ).remove(
+                    )
+                    share_layer_policies_other_keys.remove(
                         share_layer_policies
                     )
 
+                    # override config
                     if isinstance(share_layer_policies, list):
                         if np.max(np.asarray(share_layer_policies)) >= experiments[experiment_key]["config"]["num_agents"]:
                             logger.warning(
@@ -653,15 +663,19 @@ def create_arena_experiments(experiments, args, parser):
                                 "# TODO: not supported yet. Override config.share_layer_policies to none."
                             )
                             share_layer_policies = "none"
+                        elif share_layer_policies == "none":
+                            pass
                         else:
                             raise NotImplementedError
 
                     else:
                         raise NotImplementedError
 
+                    # if in other keys ofter override, skip this config
                     if share_layer_policies in share_layer_policies_other_keys:
                         continue
 
+                    # accept the config
                     experiments[experiment_key]["config"]["share_layer_policies"] = copy.deepcopy(
                         share_layer_policies
                     )
