@@ -19,6 +19,7 @@ from .models import DeterministicCategorical
 from .utils import get_list_from_gridsearch, get_one_from_grid_search, is_grid_search
 from .utils import prepare_path
 from .utils import list_subtract, find_in_list_of_list
+from .utils import get_social_config
 
 ARENA_ENV_PREFIX = 'Arena-'
 AGENT_ID_PREFIX = "agent"
@@ -56,12 +57,12 @@ class ArenaRllibEnv(MultiAgentEnv):
             if os.path.exists(game_file_path + '-Server'):
                 game_file_path = game_file_path + '-Server'
                 logger.info(
-                    "Using server build"
+                    "Using server build."
                 )
 
             else:
                 logger.warning(
-                    "Only vector observation is used, you can have a server build which runs faster"
+                    "Only vector observation is used, you can have a server build which runs faster."
                 )
 
         else:
@@ -446,7 +447,7 @@ def on_train_result(info):
                     save_message,
                 ))
             except Exception as e:
-                logger.warning("{} failed: {}".format(
+                logger.warning("{} failed: {}.".format(
                     save_message,
                     e,
                 ))
@@ -543,7 +544,7 @@ def on_train_result(info):
                         principle,
                     ))
                 except Exception as e:
-                    logger.warning("{} failed: {}".format(
+                    logger.warning("{} failed: {}.".format(
                         load_message,
                         e,
                     ))
@@ -650,21 +651,55 @@ def create_arena_experiments(experiments, args, parser):
                     )
 
                     # override config
+                    overide_share_layer_policies_to_none_msg = "Overriding config.share_layer_policies to none."
+
                     if isinstance(share_layer_policies, list):
-                        if np.max(np.asarray(share_layer_policies)) >= experiments[experiment_key]["config"]["num_agents"]:
+
+                        # check if policy_i is valid
+                        max_policy_i_ = np.max(
+                            np.asarray(share_layer_policies)
+                        )
+                        min_policy_i_ = np.min(
+                            np.asarray(share_layer_policies)
+                        )
+
+                        if max_policy_i_ >= experiments[experiment_key]["config"]["num_agents"]:
                             logger.warning(
-                                "There are policy_i that exceeds num_agents in config.share_layer_policies. Disable config.share_layer_policies."
+                                "There are policy_i {} that exceeds num_agents in config.share_layer_policies. {}".format(
+                                    max_policy_i_,
+                                    overide_share_layer_policies_to_none_msg,
+                                )
+                            )
+                            share_layer_policies = "none"
+
+                        if min_policy_i_ < 0:
+                            logger.warning(
+                                "There are policy_i {} that is smaller than 0 in config.share_layer_policies. {}".format(
+                                    min_policy_i_,
+                                    overide_share_layer_policies_to_none_msg,
+                                )
                             )
                             share_layer_policies = "none"
 
                     elif isinstance(share_layer_policies, str):
+
                         if share_layer_policies == "team":
-                            logger.warning(
-                                "# TODO: not supported yet. Override config.share_layer_policies to none."
+
+                            if experiments[experiment_key]["config"]["env_config"]["is_shuffle_agents"]:
+                                logger.warning(
+                                    "If share_layer_policies==none, config.env_config.is_shuffle_agents needs to be False. Overriding config.env_config.is_shuffle_agents to False."
+                                )
+                                experiments[experiment_key]["config"]["env_config"]["is_shuffle_agents"] = True
+
+                            share_layer_policies = copy.deepcopy(
+                                get_social_config(
+                                    experiments[experiment_key]["env"]
+                                )
                             )
-                            share_layer_policies = "none"
+
                         elif share_layer_policies == "none":
                             pass
+
                         else:
                             raise NotImplementedError
 
@@ -749,7 +784,7 @@ def create_arena_experiments(experiments, args, parser):
 
                         if arena_experiments[grid_experiment_key]["config"]["playing_policy_load_recent_prob"] != "none":
                             logger.warning(
-                                "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding it to none."
+                                "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to none."
                             )
                             arena_experiments[grid_experiment_key]["config"]["playing_policy_load_recent_prob"] = "none"
 

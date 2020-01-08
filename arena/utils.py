@@ -1,5 +1,6 @@
 import copy
 import os
+import re
 
 
 def get_list_from_gridsearch(config, enable_config=True, default=None):
@@ -31,6 +32,25 @@ def is_grid_search(config):
     """Check of a config is a grid_search.
     """
     return isinstance(config, dict) and len(config.keys()) == 1 and list(config.keys())[0] == "grid_search"
+
+
+def get_social_config(env):
+
+    xTxP = env.split("-")[3]
+
+    T = int(xTxP.split("T")[0])
+    P = int(xTxP.split("T")[1].split("P")[0])
+
+    policy_i = 0
+    all_list = []
+    for t in range(T):
+        t_list = []
+        for p in range(P):
+            t_list += [copy.deepcopy(policy_i)]
+            policy_i += 1
+        all_list += [copy.deepcopy(t_list)]
+
+    return all_list
 
 
 def prepare_path(path):

@@ -30,7 +30,7 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 | Independent Learners | :heavy_check_mark: | :heavy_check_mark: |
 | Self-play | :heavy_check_mark: | :heavy_check_mark: |
 | Population-based Training | :heavy_check_mark: | :heavy_check_mark: |
-| Share Weights Between Arbitrary Agents | :heavy_check_mark: | :heavy_check_mark: |
+| Share Weights in Arbitrary Agents / Teams | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Games
 
@@ -41,6 +41,7 @@ More documentation of games can be found [here](#games)
 | **Games** | **Supported** | **Benchmarked** |
 | - | - | - |
 | Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :heavy_check_mark: |
+| Arena-Blowblow-Sparse-2T2P-Discrete | :heavy_check_mark: | :heavy_check_mark: |
 
 ## Status: Release
 
