@@ -78,7 +78,7 @@ def create_parser():
         default=None,
         help=(
             "Specify the policies that share layers. Options are as follows: "
-            "None; "
+            "none; "
             "team; "
             "[[a,b,c,...],[x,y,z,...],...] (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...); "
         ))
