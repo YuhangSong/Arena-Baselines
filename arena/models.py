@@ -21,13 +21,17 @@ class DeterministicCategorical(Categorical):
 
 class ShareLayerPolicy(Model):
     def _build_layers_v2(self, input_dict, num_outputs, options):
+
         policies_shared_scope = "shared_by_{}".format(
-            str(self.options["custom_options"]
-                ["shared_scope"]).replace(", ", ",")
+            str(
+                self.options["custom_options"]
+                ["shared_scope"]
+            ).replace(", ", ",")
         )
         logger.info("policies_shared_scope={}".format(
             policies_shared_scope
         ))
+
         with tf.variable_scope(
             tf.VariableScope(
                 tf.AUTO_REUSE,
@@ -36,15 +40,17 @@ class ShareLayerPolicy(Model):
             reuse=tf.AUTO_REUSE,
             auxiliary_name_scope=False
         ):
-            # these layer are in the policies_shared_scope
+            # layers here are shared across policies in policies_shared_scope
             last_layer = tf.layers.dense(
                 input_dict["obs"], 64, activation=tf.nn.relu, name="fc1")
 
-        # these layers are owned by each individual policy
+        # layers here are owned by each individual policy
         last_layer = tf.layers.dense(
             last_layer, 64, activation=tf.nn.relu, name="fc2")
         output = tf.layers.dense(
             last_layer, num_outputs, activation=None, name="fc_out")
+
+        # for defining more models, refer to https://github.com/ray-project/ray/tree/master/rllib/models/tf
 
         return output, last_layer
 

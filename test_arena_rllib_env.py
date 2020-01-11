@@ -13,6 +13,8 @@ import logging
 import arena
 import numpy as np
 
+np.set_printoptions(edgeitems=1)
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +30,12 @@ def run(args, parser):
     )
     env_config = experiments["Arena-Benchmark"]["config"]["env_config"]
 
+    env_config["obs_type"] = arena.get_one_from_grid_search(
+        env_config["obs_type"]
+    )
+
+    env_config["train_mode"] = False
+
     logger.info(env)
     # Tennis-Sparse-2T1P-Discrete
     logger.info(env_config)
@@ -38,79 +46,138 @@ def run(args, parser):
         env_config=env_config,
     )
 
-    new_obs = env.reset()
+    logger.info(env.observation_space)
+    logger.info(env.action_space)
 
-    if "visual" in env_config["obs_type"]:
-        episode_video = None
+    obs_rllib = env.reset()
+
+    logger.info("obs_rllib: {}".format(obs_rllib))
+
+    episode_video = {}
 
     while True:
 
-        new_obs_infos = {}
-        for key in new_obs.keys():
-            new_obs_infos[key] = "shape: {}; dtype: {}; min: {}; max: {}".format(
-                np.shape(new_obs[key]),
-                new_obs[key].dtype,
-                np.min(new_obs[key]),
-                np.max(new_obs[key]),
-            )
-
-        # Observations are a dict mapping agent names to their obs. Not all agents
-        # may be present in the dict in each time step.
-        print("new_obs_infos: {}".format(new_obs_infos))
-        # ew_obs_infos: {'agent_0': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274', 'agent_1': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274'}
-
-        # record visual obs as video
-        if "visual" in env_config["obs_type"]:
-            temp = (np.expand_dims(
-                new_obs["agent_0"][:, :, 0],
-                0
-            ) * 255.0
-            ).astype(np.uint8)
-            if episode_video is None:
-                episode_video = temp
-            else:
-                episode_video = np.concatenate((episode_video, temp))
-
         # Actions should be provided for each agent that returned an observation.
-        new_obs, rewards, dones, infos = env.step(
-            actions={"agent_0": 0, "agent_1": 7}
+        obs_rllib, rewards_rllib, dones_rllib, infos_rllib = env.step(
+            # actions={"agent_0": 0, "agent_1": 7}
+            actions_rllib={
+                "agent_0": 0,
+                "agent_1": 5,
+                "agent_2": 6,
+                "agent_3": 3,
+            }
         )
 
-        print("rewards: {}".format(rewards))
-        # rewards: {"agent_0": 3, "agent_1": -1}
+        logger.info("obs_rllib: {}".format(obs_rllib))
+        logger.info("rewards_rllib: {}".format(rewards_rllib))
+        logger.info("dones_rllib: {}".format(dones_rllib))
+        logger.info("infos_rllib: {}".format(infos_rllib))
 
-        # Individual agents can early exit; env is done when "__all__" = True
-        print("dones: {}".format(dones))
-        # dones: {"agent_0": True, "agent_1": False,, "__all__": True}
+        if dones_rllib["__all__"]:
 
-        print("infos: {}".format(infos))
+            for episode_video_key in episode_video.keys():
 
-        if dones["__all__"]:
-
-            # record visual obs as video
-            if "visual" in env_config["obs_type"]:
                 # initialize video writer
-                fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+                fourcc = cv2.VideoWriter_fourcc(
+                    'M', 'J', 'P', 'G'
+                )
                 fps = 15
-                video_filename = '../episode_video.avi'
-                video_size = (np.shape(episode_video)[2],
-                              np.shape(episode_video)[1])
+                video_filename = "../{}.avi".format(
+                    episode_video_key,
+                )
+                video_size = (
+                    np.shape(episode_video[episode_video_key])[2],
+                    np.shape(episode_video[episode_video_key])[1]
+                )
                 video_writer = cv2.VideoWriter(
-                    video_filename, fourcc, fps, video_size)
+                    video_filename, fourcc, fps, video_size
+                )
 
-                for frame_i in range(np.shape(episode_video)[0]):
-                    gray = episode_video[frame_i]
-                    gray_3c = cv2.merge([gray, gray, gray])
-                    # np.shape([3, H, W]), 0-255, np.uint8
+                for frame_i in range(np.shape(episode_video[episode_video_key])[0]):
                     video_writer.write(
-                        gray_3c
+                        episode_video[episode_video_key][frame_i]
                     )
 
                 video_writer.release()
-                episode_video = None
+
+            episode_video = {}
 
             input('episode end, keep going?')
-            env.reset()
+
+        else:
+
+            for agent_id in obs_rllib.keys():
+
+                obs_each_agent = obs_rllib[agent_id]
+
+                if isinstance(obs_each_agent, dict):
+
+                    obs_keys = obs_each_agent.keys()
+
+                else:
+
+                    obs_keys = ["default_own_obs"]
+
+                for obs_key in obs_keys:
+
+                    if isinstance(obs_each_agent, dict):
+                        obs_each_key = obs_each_agent[obs_key]
+                    else:
+                        obs_each_key = obs_each_agent
+
+                    obs_each_channel = {}
+
+                    if len(np.shape(obs_each_key)) == 1:
+
+                        # vector observation
+
+                        obs_each_channel["default_channel"] = arena.get_img_from_fig(
+                            arena.plot_feature(
+                                obs_each_key
+                            )
+                        )
+
+                    elif len(np.shape(obs_each_key)) == 3:
+
+                        # visual observation
+
+                        for channel_i in range(np.shape(obs_each_key)[2]):
+
+                            gray = obs_each_key[
+                                :, :, channel_i
+                            ]
+
+                            rgb = cv2.merge([gray, gray, gray])
+
+                            rgb = (rgb * 255.0).astype(np.uint8)
+
+                            obs_each_channel["{}_channel".format(
+                                channel_i
+                            )] = rgb
+
+                    else:
+
+                        raise NotImplementedError
+
+                    for channel_key in obs_each_channel.keys():
+
+                        temp = np.expand_dims(
+                            obs_each_channel[channel_key],
+                            0
+                        )
+
+                        episode_video_key = "agent_{}-obs_{}-channel-{}".format(
+                            agent_id,
+                            obs_key,
+                            channel_key,
+                        )
+
+                        if episode_video_key not in episode_video.keys():
+                            episode_video[episode_video_key] = temp
+                        else:
+                            episode_video[episode_video_key] = np.concatenate(
+                                (episode_video[episode_video_key], temp)
+                            )
 
 
 if __name__ == "__main__":

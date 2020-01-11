@@ -32,7 +32,16 @@ def create_parser():
             "vector (low-dimensional vector observation); "
             "visual_FP (first-person visual observation); "
             "visual_TP (third-person visual observation); "
-            "obs1-obs2-... (combine multiple types of observations); "
+            "obs1-obs2-... (combine multiple types of observations, not that you cannot combine visual and vector obs as it is not supported); "
+        ))
+
+    parser.add_argument(
+        "--is-multi-agent-obs",
+        action="store_true",
+        default=False,
+        help=(
+            "Whether run Arena environments with single observation space (False) or dict observation space (True). "
+            "The dict observation space contains own_obs, team_obs and all_obs"
         ))
 
     parser.add_argument(
@@ -83,6 +92,14 @@ def create_parser():
             "[[a,b,c,...],[x,y,z,...],...] (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...); "
         ))
 
+    parser.add_argument(
+        "--dummy",
+        action="store_true",
+        default=False,
+        help=(
+            "For debug, wheter run in dummy mode, which requires minimal resources. "
+        ))
+
     return parser
 
 
@@ -118,6 +135,7 @@ def create_experiments(args):
                 playing_policy_load_recent_prob=args.playing_policy_load_recent_prob,
                 size_population=args.size_population,
                 share_layer_policies=args.share_layer_policies,
+                is_multi_agent_obs=args.is_multi_agent_obs,
             ),
             "restore": args.restore,
             "num_samples": args.num_samples,

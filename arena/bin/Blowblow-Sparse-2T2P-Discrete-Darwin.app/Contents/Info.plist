@@ -10,7 +10,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>BlowBlow-Sparse-2T2P-Discrete-Darwin</string>
+	<string>Blowblow-Sparse-2T2P-Discrete-Darwin</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Unity Player version 2018.4.13f1 (497f083a43af). (c) 2019 Unity Technologies ApS. All rights reserved.</string>
 	<key>CFBundleIconFile</key>

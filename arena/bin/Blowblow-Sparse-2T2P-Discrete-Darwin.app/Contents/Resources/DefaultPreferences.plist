@@ -5,6 +5,6 @@
 <key>NSQuitAlwaysKeepsWindows</key>
 <false/>
 <key>Screenmanager Is Fullscreen mode</key>
-<string>True</string>
+<string>False</string>
 </dict>
 </plist>

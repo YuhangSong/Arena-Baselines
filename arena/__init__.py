@@ -9,6 +9,7 @@ from .arena import is_arena_env, is_all_arena_env, is_any_arena_env, remove_aren
 from .utils import get_list_from_gridsearch, get_one_from_grid_search, is_grid_search
 from .utils import prepare_path
 from .utils import find_in_list_of_list
+from .utils import plot_feature, get_img_from_fig
 
 from ray.tune.registry import register_env
 
