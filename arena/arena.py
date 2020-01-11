@@ -110,7 +110,9 @@ class ArenaRllibEnv(MultiAgentEnv):
                 )
                 break
             except Exception as e:
-                logger.warning("Start ArenaUnityEnv failed, retrying...")
+                logger.warning("Start ArenaUnityEnv failed {}, retrying...".format(
+                    e
+                ))
 
         self.env.set_train_mode(train_mode=env_config.get("train_mode", True))
 
