@@ -1,6 +1,7 @@
 Arena-Benchmark:
     env:
         grid_search:
+            # - PongNoFrameskip-v4
             - Arena-Tennis-Sparse-2T1P-Discrete
             # - Arena-Blowblow-Sparse-2T2P-Discrete
     run: PPO

@@ -3,10 +3,12 @@ import platform
 import random
 import time
 import logging
-import copy
 import glob
 import pickle
 import gym
+
+import copy
+from copy import deepcopy as dc
 
 import numpy as np
 
@@ -17,7 +19,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
 
 from .models import DeterministicCategorical
-from .utils import get_list_from_gridsearch, get_one_from_grid_search, is_grid_search
+from .utils import is_match_gridsearch, get_list_from_gridsearch, get_one_from_grid_search, is_grid_search
 from .utils import prepare_path
 from .utils import list_subtract, find_in_list_of_list, replace_in_tuple
 from .utils import get_social_config
@@ -122,7 +124,7 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         self.action_space = self.env.action_space
 
-        own_observation_space = copy.deepcopy(
+        own_observation_space = dc(
             self.env.observation_space
         )
 
@@ -420,7 +422,7 @@ def is_any_arena_env(env):
 def remove_arena_env_prefix(env):
     """Remove ARENA_ENV_PREFIX from a env (possibly a grid_search).
     """
-    env = copy.deepcopy(env)
+    env = dc(env)
     if is_grid_search(env):
         if is_all_arena_env(env):
             for i in range(len(env["grid_search"])):
@@ -704,13 +706,18 @@ def on_train_result(info):
 
 
 def create_arena_experiments(experiments, args, parser):
-    """Create arena experiments from experiments
+    """Create arena_experiments from experiments
     Expand experiments with grid_search, this is implemented to override the default support of grid_search for customized configs
     """
     arena_experiments = {}
+
     for experiment_key in experiments.keys():
 
         if args.dummy:
+            logger.info(
+                "Run in dummy mode. "
+                "Overriding configs."
+            )
             experiments[experiment_key]["config"]["num_gpus"] = 0
             experiments[experiment_key]["config"]["num_workers"] = 1
             experiments[experiment_key]["config"]["num_envs_per_worker"] = 1
@@ -718,294 +725,277 @@ def create_arena_experiments(experiments, args, parser):
             experiments[experiment_key]["config"]["train_batch_size"] = 100
             experiments[experiment_key]["config"]["sgd_minibatch_size"] = 100
 
-        env_keys = get_list_from_gridsearch(
-            experiments[experiment_key]["env"]
-        )
+        env_keys = dc(experiments[experiment_key]["env"])
+        env_keys = get_list_from_gridsearch(env_keys)
 
         for env in env_keys:
 
-            # check config, if invalid, skip
+            obs_type_keys = dc(
+                experiments[experiment_key]["config"]["env_config"]["obs_type"])
+            obs_type_keys = get_list_from_gridsearch(obs_type_keys)
+
             if not is_arena_env(env):
-                logger.warn("env {} is not arena env, skipping".format(
-                    env
-                ))
-                continue
-
-            # accept config
-            experiments[experiment_key]["env"] = copy.deepcopy(
-                env
-            )
-
-            obs_type_keys = get_list_from_gridsearch(
-                experiments[experiment_key]["config"]["env_config"]["obs_type"]
-            )
+                if is_match_gridsearch(obs_type_keys, "none"):
+                    logger.warning(
+                        "None-arena env does not support the config of obs_type. "
+                        "Overriding it to none."
+                    )
+                    obs_type_keys = ["none"]
 
             for obs_type in obs_type_keys:
 
-                # accept the config
-                experiments[experiment_key]["config"]["env_config"]["obs_type"] = copy.deepcopy(
-                    obs_type
-                )
+                if is_arena_env(env):
 
-                # create dummy_env to get parameters/setting of env
-                dummy_env = ArenaRllibEnv(
-                    env=remove_arena_env_prefix(
-                        experiments[experiment_key]["env"]
-                    ),
-                    env_config=experiments[experiment_key]["config"]["env_config"],
-                )
+                    # create dummy_env to get parameters/setting of env
+                    env_config = dc(
+                        experiments[experiment_key]["config"]["env_config"]
+                    )
+                    env_config["obs_type"] = obs_type
+                    dummy_env = ArenaRllibEnv(
+                        env=remove_arena_env_prefix(
+                            env
+                        ),
+                        env_config=env_config,
+                    )
 
-                experiments[experiment_key]["config"]["num_agents"] = copy.deepcopy(
-                    dummy_env.number_agents
-                )
+                    number_agents = dc(
+                        dummy_env.number_agents
+                    )
+                    obs_space = dc(
+                        dummy_env.observation_space
+                    )
+                    action_space = dc(
+                        dummy_env.action_space
+                    )
 
-                # For now, we do not support using different spaces across agents
-                # (i.e., all agents have to share the same brain in Arena-BuildingToolkit)
-                # This is because we want to consider the transfer/sharing weight between agents.
-                # If you do have completely different agents in game, one harmless work around is
-                # to use the same brain, but define different meaning of the action in Arena-BuildingToolkit
-                experiments[experiment_key]["config"]["obs_space"] = copy.deepcopy(
-                    dummy_env.observation_space
-                )
-                experiments[experiment_key]["config"]["act_space"] = copy.deepcopy(
-                    dummy_env.action_space
-                )
+                    dummy_env.close()
 
-                dummy_env.close()
+                else:
 
+                    number_agents = "none"
+                    obs_space = "none"
+                    action_space = "none"
+
+                num_learning_policies_keys = dc(
+                    experiments[experiment_key]["config"]["num_learning_policies"])
                 num_learning_policies_keys = get_list_from_gridsearch(
-                    experiments[experiment_key]["config"]["num_learning_policies"]
-                )
+                    num_learning_policies_keys)
+                if not is_arena_env(env):
+                    if is_match_gridsearch(num_learning_policies_keys, "none"):
+                        logger.warning(
+                            "None-arena env does not support the config of num_learning_policies. "
+                            "Overriding it to none."
+                        )
+                        num_learning_policies_keys = ["none"]
 
                 for num_learning_policies in num_learning_policies_keys:
 
                     # get other keys
-                    num_learning_policies_other_keys = copy.deepcopy(
-                        num_learning_policies_keys
-                    )
+                    num_learning_policies_other_keys = dc(
+                        num_learning_policies_keys)
                     num_learning_policies_other_keys.remove(
-                        num_learning_policies
-                    )
+                        num_learning_policies)
 
                     # override config
                     if num_learning_policies == "all":
-                        num_learning_policies = int(
-                            experiments[experiment_key]["config"]["num_agents"]
-                        )
+                        num_learning_policies = dc(number_agents)
 
                     # if in other keys ofter override, skip this config
                     if num_learning_policies in num_learning_policies_other_keys:
                         continue
 
-                    # accept the config
-                    experiments[experiment_key]["config"]["num_learning_policies"] = copy.deepcopy(
-                        num_learning_policies
-                    )
-
+                    share_layer_policies_keys = dc(
+                        experiments[experiment_key]["config"]["share_layer_policies"])
                     share_layer_policies_keys = get_list_from_gridsearch(
-                        experiments[experiment_key]["config"]["share_layer_policies"]
-                    )
+                        share_layer_policies_keys)
+                    if not is_arena_env(env):
+                        if is_match_gridsearch(share_layer_policies_keys, "none"):
+                            logger.warning(
+                                "None-arena env does not support the config of share_layer_policies. "
+                                "Overriding it to none."
+                            )
+                            share_layer_policies_keys = ["none"]
 
                     for share_layer_policies in share_layer_policies_keys:
 
                         # get other keys
-                        share_layer_policies_other_keys = copy.deepcopy(
-                            share_layer_policies_keys
-                        )
+                        share_layer_policies_other_keys = dc(
+                            share_layer_policies_keys)
                         share_layer_policies_other_keys.remove(
-                            share_layer_policies
+                            share_layer_policies)
+
+                        is_shuffle_agents = dc(
+                            experiments[experiment_key]["config"]["env_config"]["is_shuffle_agents"]
                         )
 
                         # override config
-                        overide_share_layer_policies_to_none_msg = "Overriding config.share_layer_policies to none."
-
-                        if isinstance(share_layer_policies, list):
-
-                            # check if policy_i is valid
-                            max_policy_i_ = np.max(
-                                np.asarray(share_layer_policies)
-                            )
-                            min_policy_i_ = np.min(
-                                np.asarray(share_layer_policies)
-                            )
-
-                            if max_policy_i_ >= experiments[experiment_key]["config"]["num_agents"]:
-                                logger.warning(
-                                    "There are policy_i {} that exceeds num_agents in config.share_layer_policies. {}".format(
-                                        max_policy_i_,
-                                        overide_share_layer_policies_to_none_msg,
-                                    )
-                                )
-                                share_layer_policies = "none"
-
-                            if min_policy_i_ < 0:
-                                logger.warning(
-                                    "There are policy_i {} that is smaller than 0 in config.share_layer_policies. {}".format(
-                                        min_policy_i_,
-                                        overide_share_layer_policies_to_none_msg,
-                                    )
-                                )
-                                share_layer_policies = "none"
-
-                        elif isinstance(share_layer_policies, str):
+                        if isinstance(share_layer_policies, str):
 
                             if share_layer_policies == "team":
 
-                                if experiments[experiment_key]["config"]["env_config"]["is_shuffle_agents"]:
+                                if is_shuffle_agents:
                                     logger.warning(
                                         "If share_layer_policies==none, config.env_config.is_shuffle_agents needs to be False. Overriding config.env_config.is_shuffle_agents to False."
                                     )
-                                    experiments[experiment_key]["config"]["env_config"]["is_shuffle_agents"] = True
+                                    is_shuffle_agents = False
 
-                                share_layer_policies = copy.deepcopy(
+                                share_layer_policies = dc(
                                     get_social_config(
-                                        experiments[experiment_key]["env"]
+                                        env
                                     )
                                 )
-
-                            elif share_layer_policies == "none":
-                                pass
-
-                            else:
-                                raise NotImplementedError
-
-                        else:
-                            raise NotImplementedError
 
                         # if in other keys ofter override, skip this config
                         if share_layer_policies in share_layer_policies_other_keys:
                             continue
 
-                        # accept the config
-                        experiments[experiment_key]["config"]["share_layer_policies"] = copy.deepcopy(
-                            share_layer_policies
-                        )
-
-                        grid_experiment_key = "{}_num_learning_policies={},share_layer_policies={}".format(
+                        arena_experiment_key = "{},e={},ot={},nlp={},slp={}".format(
                             experiment_key,
-                            experiments[experiment_key]["config"]["num_learning_policies"],
-                            experiments[experiment_key]["config"]["share_layer_policies"],
+                            env,
+                            obs_type,
+                            num_learning_policies,
+                            share_layer_policies,
                         )
 
-                        arena_experiments[grid_experiment_key] = copy.deepcopy(
+                        arena_experiments[arena_experiment_key] = dc(
                             experiments[experiment_key]
                         )
 
-                        if not arena_experiments[grid_experiment_key].get("run"):
-                            parser.error(
-                                "The following arguments are required: --run"
-                            )
-                        if not arena_experiments[grid_experiment_key].get("env") and not arena_experiments[grid_experiment_key].get("config", {}).get("env"):
-                            parser.error(
-                                "The following arguments are required: --env"
-                            )
+                        arena_experiments[arena_experiment_key]["config"]["env"] = dc(
+                            env
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["env_config"]["obs_type"] = dc(
+                            obs_type
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["number_agents"] = dc(
+                            number_agents
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["obs_space"] = dc(
+                            obs_space
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["act_space"] = dc(
+                            action_space
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["num_learning_policies"] = dc(
+                            num_learning_policies
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["env_config"]["is_shuffle_agents"] = dc(
+                            is_shuffle_agents
+                        )
+                        arena_experiments[arena_experiment_key]["config"]["share_layer_policies"] = dc(
+                            share_layer_policies
+                        )
+
                         if args.eager:
-                            arena_experiments[grid_experiment_key]["config"]["eager"] = True
+                            arena_experiments[arena_experiment_key]["config"]["eager"] = True
 
-                        # policies: config of policies
-                        arena_experiments[grid_experiment_key]["config"]["multiagent"] = {
-                        }
-                        arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies"] = {
-                        }
-                        # learning_policy_ids: a list of policy ids of which the policy is trained
-                        arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"] = [
-                        ]
-                        # playing_policy_ids: a list of policy ids of which the policy is not trained
-                        arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"] = [
-                        ]
+                        if is_arena_env(env):
 
-                        # create configs of learning policies
-                        for learning_policy_i in range(arena_experiments[grid_experiment_key]["config"]["num_learning_policies"]):
-                            learning_policy_id = get_policy_id(
-                                learning_policy_i
-                            )
-                            arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"] += [
-                                learning_policy_id
+                            # policies: config of policies
+                            arena_experiments[arena_experiment_key]["config"]["multiagent"] = {
+                            }
+                            arena_experiments[arena_experiment_key]["config"]["multiagent"]["policies"] = {
+                            }
+                            # learning_policy_ids: a list of policy ids of which the policy is trained
+                            arena_experiments[arena_experiment_key]["config"]["learning_policy_ids"] = [
+                            ]
+                            # playing_policy_ids: a list of policy ids of which the policy is not trained
+                            arena_experiments[arena_experiment_key]["config"]["playing_policy_ids"] = [
                             ]
 
-                        if arena_experiments[grid_experiment_key]["run"] not in ["PPO"]:
-                            # build custom_action_dist to be playing mode dist (no exploration)
-                            # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                            # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
-                            raise NotImplementedError
-
-                        # create configs of playing policies
-                        for playing_policy_i in range(arena_experiments[grid_experiment_key]["config"]["num_learning_policies"], experiments[experiment_key]["config"]["num_agents"]):
-                            playing_policy_id = get_policy_id(
-                                playing_policy_i
-                            )
-                            arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"] += [
-                                playing_policy_id
-                            ]
-
-                        if len(arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"]) > 0:
-
-                            if arena_experiments[grid_experiment_key]["config"]["env_config"]["is_shuffle_agents"] == False:
-                                logger.warning(
-                                    "There are playing policies, which keeps loading learning policies. This means you need to shuffle agents so that the learning policies can generalize to playing policies. Overriding config.env_config.is_shuffle_agents to True."
+                            # create configs of learning policies
+                            for learning_policy_i in range(arena_experiments[arena_experiment_key]["config"]["num_learning_policies"]):
+                                learning_policy_id = get_policy_id(
+                                    learning_policy_i
                                 )
-                                arena_experiments[grid_experiment_key]["config"]["env_config"]["is_shuffle_agents"] = True
-
-                        elif len(arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"]) == 0:
-
-                            if arena_experiments[grid_experiment_key]["config"]["playing_policy_load_recent_prob"] != "none":
-                                logger.warning(
-                                    "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to none."
-                                )
-                                arena_experiments[grid_experiment_key]["config"]["playing_policy_load_recent_prob"] = "none"
-
-                        else:
-                            raise ValueError
-
-                        # apply configs of all policies
-                        for policy_i in range(experiments[experiment_key]["config"]["num_agents"]):
-
-                            policy_id = get_policy_id(policy_i)
-
-                            policy_config = {}
-
-                            if policy_id in arena_experiments[grid_experiment_key]["config"]["playing_policy_ids"]:
-                                policy_config["custom_action_dist"] = {
-                                    "Discrete": DeterministicCategorical,
-                                    "Box": DeterministiContinuous
-                                }[
-                                    arena_experiments[grid_experiment_key]["config"]["act_space"].__class__.__name__
+                                arena_experiments[arena_experiment_key]["config"]["learning_policy_ids"] += [
+                                    learning_policy_id
                                 ]
 
-                            policy_config["model"] = {}
+                            if arena_experiments[arena_experiment_key]["run"] not in ["PPO"]:
+                                # build custom_action_dist to be playing mode dist (no exploration)
+                                # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                                # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                                raise NotImplementedError
 
-                            if experiments[experiment_key]["config"]["share_layer_policies"] != "none":
-                                policy_config["model"]["custom_model"] = "ShareLayerPolicy"
-                                policy_config["model"]["custom_options"] = {}
-                                policy_config["model"]["custom_options"]["shared_scope"] = copy.deepcopy(
-                                    experiments[experiment_key]["config"]["share_layer_policies"][
-                                        find_in_list_of_list(
-                                            experiments[experiment_key]["config"]["share_layer_policies"], policy_i
-                                        )[0]
+                            # create configs of playing policies
+                            for playing_policy_i in range(arena_experiments[arena_experiment_key]["config"]["num_learning_policies"], arena_experiments[arena_experiment_key]["config"]["number_agents"]):
+                                playing_policy_id = get_policy_id(
+                                    playing_policy_i
+                                )
+                                arena_experiments[arena_experiment_key]["config"]["playing_policy_ids"] += [
+                                    playing_policy_id
+                                ]
+
+                            if len(arena_experiments[arena_experiment_key]["config"]["playing_policy_ids"]) > 0:
+
+                                if arena_experiments[arena_experiment_key]["config"]["env_config"]["is_shuffle_agents"] == False:
+                                    logger.warning(
+                                        "There are playing policies, which keeps loading learning policies. This means you need to shuffle agents so that the learning policies can generalize to playing policies. Overriding config.env_config.is_shuffle_agents to True."
+                                    )
+                                    arena_experiments[arena_experiment_key]["config"]["env_config"]["is_shuffle_agents"] = True
+
+                            elif len(arena_experiments[arena_experiment_key]["config"]["playing_policy_ids"]) == 0:
+
+                                if arena_experiments[arena_experiment_key]["config"]["playing_policy_load_recent_prob"] != "none":
+                                    logger.warning(
+                                        "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to none."
+                                    )
+                                    arena_experiments[arena_experiment_key]["config"]["playing_policy_load_recent_prob"] = "none"
+
+                            else:
+                                raise ValueError
+
+                            # apply configs of all policies
+                            for policy_i in range(arena_experiments[arena_experiment_key]["config"]["number_agents"]):
+
+                                policy_id = get_policy_id(policy_i)
+
+                                policy_config = {}
+
+                                if policy_id in arena_experiments[arena_experiment_key]["config"]["playing_policy_ids"]:
+                                    policy_config["custom_action_dist"] = {
+                                        "Discrete": DeterministicCategorical,
+                                        "Box": DeterministiContinuous
+                                    }[
+                                        arena_experiments[arena_experiment_key]["config"]["act_space"].__class__.__name__
                                     ]
+
+                                policy_config["model"] = {}
+
+                                if arena_experiments[arena_experiment_key]["config"]["share_layer_policies"] != "none":
+                                    policy_config["model"]["custom_model"] = "ShareLayerPolicy"
+                                    policy_config["model"]["custom_options"] = {
+                                    }
+                                    policy_config["model"]["custom_options"]["shared_scope"] = dc(
+                                        arena_experiments[arena_experiment_key]["config"]["share_layer_policies"][
+                                            find_in_list_of_list(
+                                                arena_experiments[arena_experiment_key]["config"]["share_layer_policies"], policy_i
+                                            )[0]
+                                        ]
+                                    )
+
+                                arena_experiments[arena_experiment_key]["config"]["multiagent"]["policies"][policy_id] = (
+                                    None,
+                                    arena_experiments[arena_experiment_key]["config"]["obs_space"],
+                                    arena_experiments[arena_experiment_key]["config"]["act_space"],
+                                    dc(policy_config),
                                 )
 
-                            arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies"][policy_id] = (
-                                None,
-                                arena_experiments[grid_experiment_key]["config"]["obs_space"],
-                                arena_experiments[grid_experiment_key]["config"]["act_space"],
-                                copy.deepcopy(policy_config),
+                            # policy_mapping_fn: a map from agent_id to policy_id
+                            # use policy_mapping_fn_i2i as policy_mapping_fn
+                            arena_experiments[arena_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+                                policy_mapping_fn_i2i
                             )
 
-                        # policy_mapping_fn: a map from agent_id to policy_id
-                        # use policy_mapping_fn_i2i as policy_mapping_fn
-                        arena_experiments[grid_experiment_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-                            policy_mapping_fn_i2i
-                        )
+                            arena_experiments[arena_experiment_key]["config"]["callbacks"] = {
+                            }
+                            arena_experiments[arena_experiment_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
+                                on_train_result
+                            )
 
-                        arena_experiments[grid_experiment_key]["config"]["callbacks"] = {
-                        }
-                        arena_experiments[grid_experiment_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
-                            on_train_result
-                        )
-
-                        arena_experiments[grid_experiment_key]["config"]["multiagent"]["policies_to_train"] = copy.deepcopy(
-                            arena_experiments[grid_experiment_key]["config"]["learning_policy_ids"]
-                        )
+                            arena_experiments[arena_experiment_key]["config"]["multiagent"]["policies_to_train"] = dc(
+                                arena_experiments[arena_experiment_key]["config"]["learning_policy_ids"]
+                            )
 
     return arena_experiments

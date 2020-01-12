@@ -10,6 +10,22 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 
+def is_match_gridsearch(config, value):
+    """Check if a config match a value or
+    (if it is a gridsearch) if it contains only one value and the value matches
+    """
+    if is_grid_search(config):
+        if len(get_list_from_gridsearch(config)) == 1 and get_list_from_gridsearch(config)[0] == value:
+            return True
+        else:
+            return False
+    else:
+        if config == value:
+            return True
+        else:
+            return False
+
+
 def get_list_from_gridsearch(config, enable_config=True, default=None):
     """Get a list from a config that could be a grid_search.
     If it is a grid_search, return a list of the configs.

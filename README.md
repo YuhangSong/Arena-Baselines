@@ -135,9 +135,10 @@ source activate Arena-Baselines
 
 ### Run tests
 
-Test your installation of rllib learning environment with Pong (rllib breaks sometimes, so a test is needed before you go further)
+Test your installation of rllib learning environment with Pong (rllib breaks sometimes, so a test is needed before you go further).
+In ```./arena-experiments/Arena-Benchmark.yaml```, comment out other envs and leave ```PongNoFrameskip-v4``` there. Then, run:
 ```
-python train.py -f ./arena-experiments/Test-Pong.yaml
+python train.py -f ./arena-experiments/Arena-Benchmark.yaml
 ```
 You should see reward goes up from -21 (as shown in the following), which means you installation works fine.
 
@@ -145,19 +146,17 @@ You should see reward goes up from -21 (as shown in the following), which means 
 
 Meet some problems? Open an issue.
 
-Now test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
+Now, recover ```./arena-experiments/Arena-Benchmark.yaml``` you just modified.
+Test an Arena environment (Arena could have difficulties lunching due to different reasons, so a test is needed before you go further)
 ```
 python test_arena_rllib_env.py -f ./arena-experiments/Arena-Benchmark.yaml
 ```
 You should see prints like following:
 ```
-rewards: {'agent_0': 0.0, 'agent_1': 0.0}
-dones: {'agent_0': False, 'agent_1': False, '__all__': False}
-infos: {'agent_0': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f8278>}, 'agent_1': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f8278>}}
-new_obs_infos: {'agent_0': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274', 'agent_1': 'shape: (84, 84, 1); dtype: float64; min: 0.0; max: 0.9098039215686274'}
-rewards: {'agent_0': 0.0, 'agent_1': 1.0}
-dones: {'agent_0': True, 'agent_1': True, '__all__': True}
-infos: {'agent_0': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f80f0>}, 'agent_1': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f4e607f80f0>}}
+INFO:__main__:obs_rllib: {'agent_0': array([0.41156876, ... , 0.23122263]), 'agent_1': array([0.41156882, ... , 0.23122263])}
+INFO:__main__:rewards_rllib: {'agent_0': 0.0, 'agent_1': 1.0}
+INFO:__main__:dones_rllib: {'agent_0': True, 'agent_1': True, '__all__': True}
+INFO:__main__:infos_rllib: {'agent_0': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f179da92780>, 'shift': 1}, 'agent_1': {'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x7f179da92780>, 'shift': 1}}
 episode end, keep going?
 ```
 Hit enter and it keeps rolling.
@@ -272,6 +271,14 @@ Then run the printed commands to kill all the game threads.
 ```
 ps aux | grep -ie Linux.x86_64 | awk '{print "kill -9 " $2}'
 ```
+
+## Issues
+
+For now, we do not support using different spaces across agents
+(i.e., all agents have to share the same brain in Arena-BuildingToolkit)
+This is because we want to consider the transfer/sharing weight between agents.
+If you do have completely different agents in game, one harmless work around is
+to use the same brain, but define different meaning of the action in Arena-BuildingToolkit
 
 <!-- #### Copy models
 
