@@ -498,11 +498,11 @@ def create_arena_exps(exps, args, parser):
                                 arena_exp_key = "{},e={},ot={},mao={},nlp={},slp={},aco={}".format(
                                     exp_key,
                                     env,
-                                    sensors,
-                                    multi_agent_obs,
+                                    list_to_dict_str(sensors),
+                                    list_to_dict_str(multi_agent_obs),
                                     num_learning_policies,
                                     share_layer_policies,
-                                    actor_critic_obs,
+                                    list_to_dict_str(actor_critic_obs),
                                 )
 
                                 arena_exps[arena_exp_key] = dcopy(

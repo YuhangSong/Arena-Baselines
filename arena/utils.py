@@ -118,6 +118,15 @@ def list_subtract(x, y):
     return [item for item in x if item not in y]
 
 
+def list_to_dict_str(mylist):
+    outstr = ''
+    for i in range(len(mylist)):
+        outstr += mylist[i]
+        if i < (len(mylist) - 1):
+            outstr += "-"
+    return outstr
+
+
 def find_in_list_of_list(mylist, item):
     for sub_list in mylist:
         if item in sub_list:
