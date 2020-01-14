@@ -9,6 +9,13 @@ logger = logging.getLogger(__name__)
 
 class ArenaRllibEnv(MultiAgentEnv):
     """Convert ArenaUnityEnv(gym_unity) to MultiAgentEnv (rllib)
+
+        The action_space and observation_space are shared across agents.
+
+        The config of sensors and multi_agent_obs are two lists.
+        The observation_space is determined by each elements in them.
+        If len(sensors) * len(multi_agent_obs)>1, the observation_space would be a gym.spaces.Dict.
+        The keys will be multi_agent_ob-sensor.
     """
 
     """Following configurations need to be compatible with Arena-BuildingToolkit.
