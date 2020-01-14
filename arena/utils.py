@@ -118,42 +118,44 @@ def list_subtract(x, y):
     return [item for item in x if item not in y]
 
 
-def list_to_dict_str(mylist):
+def list_to_str(list_):
+    """Convert a list [a, b, ...] to a string "a-b-..."
+    """
     outstr = ''
-    for i in range(len(mylist)):
-        outstr += mylist[i]
-        if i < (len(mylist) - 1):
+    for i in range(len(list_)):
+        outstr += list_[i]
+        if i < (len(list_) - 1):
             outstr += "-"
     return outstr
 
 
-def find_in_list_of_list(mylist, item):
-    for sub_list in mylist:
+def find_in_list_of_list(list_, item):
+    for sub_list in list_:
         if item in sub_list:
-            return (mylist.index(sub_list), sub_list.index(item))
+            return (list_.index(sub_list), sub_list.index(item))
     raise ValueError("'{}' is not in list".format(item))
 
 
-def flatten_list(mylist):
+def flatten_list(list_):
     flat_list = []
-    for sublist in mylist:
+    for sublist in list_:
         for item in sublist:
             flat_list.append(item)
     return flat_list
 
 
-def try_reduce_list(mylist):
-    if len(mylist) == 1:
-        return mylist[0]
+def try_reduce_list(list_):
+    if len(list_) == 1:
+        return list_[0]
     else:
-        return mylist
+        return list_
 
 
-def try_reduce_dict(mydict):
-    if len(mydict.values()) == 1:
-        return list(mydict.values())[0]
+def try_reduce_dict(dict_):
+    if len(dict_.values()) == 1:
+        return list(dict_.values())[0]
     else:
-        return mydict
+        return dict_
 
 
 def replace_in_tuple(tup, index, value):

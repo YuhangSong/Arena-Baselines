@@ -12,10 +12,11 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         The action_space and observation_space are shared across agents.
 
-        The config of sensors and multi_agent_obs are two lists.
-        The observation_space is determined by each elements in them.
-        If len(sensors) * len(multi_agent_obs)>1, the observation_space would be a gym.spaces.Dict.
-        The keys will be multi_agent_ob-sensor.
+        The config sensors and multi_agent_obs are two lists.
+        The observation_space is determined by the joint value of them.
+        If len(sensors) * len(multi_agent_obs)>1, the observation_space would be a gym.spaces.Dict,
+        where the keys are multi_agent_ob-sensor, with multi_agent_ob and sensor being the element
+        in multi_agent_obs and sensors.
     """
 
     """Following configurations need to be compatible with Arena-BuildingToolkit.

@@ -76,6 +76,13 @@ def run(args, parser):
             num_gpus=args.ray_num_gpus,
         )
 
+    if len(arena_exps.keys()) > 1:
+        logger.warning(
+            "There are multiple experiments scheduled, ray==0.7.4 will run them one by one, instead of cocurrently. "
+            "However, recent ray can run them cocurrently. But the recent ray has failed our test (the rllib is broken)"
+            "This is mainly due to there are grid search used in configs that is not supported by original rllib. "
+        )
+
     run_experiments(
         arena_exps,
         scheduler=_make_scheduler(args),
