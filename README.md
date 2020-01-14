@@ -30,7 +30,9 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 | Independent Learners | :heavy_check_mark: | :heavy_check_mark: |
 | Self-play | :heavy_check_mark: | :heavy_check_mark: |
 | Population-based Training | :heavy_check_mark: | :heavy_check_mark: |
-| Share Weights in Arbitrary Agents / Teams | :heavy_check_mark: | :heavy_check_mark: |
+| Share Weights: between Arbitrary Agents / Teams | :heavy_check_mark: | :heavy_check_mark: |
+| Sharing observations: own, team_absolute, team_relative, all_absolute, all_relative | :heavy_check_mark: | :heavy_check_mark: |
+| Multiple sensors: first-person visual, second-person visual, vector (lidar), or any combinations | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Games
 

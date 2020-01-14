@@ -24,8 +24,8 @@ def create_parser():
         ))
 
     parser.add_argument(
-        "--obs-type",
-        default="visual_FP",
+        "--sensors",
+        default="vector",
         type=str,
         help=(
             "Type of the observation. Options are as follows: "
@@ -36,12 +36,17 @@ def create_parser():
         ))
 
     parser.add_argument(
-        "--is-multi-agent-obs",
-        action="store_true",
-        default=False,
+        "--multi-agent-obs",
+        type=str,
+        default="own",
         help=(
-            "Whether run Arena environments with single observation space (False) or dict observation space (True). "
-            "The dict observation space contains own_obs, team_obs and all_obs"
+            "For Arena multi-agent environments, which observation to use. Options are as follows: "
+            "own (the agent's own observation); "
+            "team-absolute (the team's observations, the position of own observation is absolute); "
+            "team-relative (the team's observations, the position of own observation is relative); "
+            "all-absolute (all agents' observations, the position of own and team observations are absolute); "
+            "all-relative (all agents' observations, the position of own and team observations are relative); "
+            "dict (a dict containing all above observations, this is mainly for the case when you need to feed different models with different observations); "
         ))
 
     parser.add_argument(
@@ -128,14 +133,14 @@ def create_experiments(args):
                 env_config=dict(
                     is_shuffle_agents=args.is_shuffle_agents,
                     train_mode=args.train_mode,
-                    obs_type=args.obs_type,
+                    sensors=args.sensors,
                 ),
                 iterations_per_reload=args.iterations_per_reload,
                 num_learning_policies=args.num_learning_policies,
                 playing_policy_load_recent_prob=args.playing_policy_load_recent_prob,
                 size_population=args.size_population,
                 share_layer_policies=args.share_layer_policies,
-                is_multi_agent_obs=args.is_multi_agent_obs,
+                multi_agent_obs=args.multi_agent_obs,
             ),
             "restore": args.restore,
             "num_samples": args.num_samples,

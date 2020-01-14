@@ -13,6 +13,8 @@ import logging
 import arena
 import numpy as np
 
+from copy import deepcopy as dcopy
+
 np.set_printoptions(edgeitems=1)
 
 logger = logging.getLogger(__name__)
@@ -24,14 +26,16 @@ def run(args, parser):
         experiments = yaml.safe_load(f)
 
     env = arena.get_one_from_grid_search(
-        arena.remove_arena_env_prefix(
-            experiments["Arena-Benchmark"]["env"]
-        )
+        dcopy(experiments["Arena-Benchmark"]["env"])
     )
-    env_config = experiments["Arena-Benchmark"]["config"]["env_config"]
 
-    env_config["obs_type"] = arena.get_one_from_grid_search(
-        env_config["obs_type"]
+    env_config = dcopy(experiments["Arena-Benchmark"]["config"]["env_config"])
+
+    env_config["sensors"] = arena.get_one_from_grid_search(
+        env_config["sensors"]
+    )
+    env_config["multi_agent_obs"] = arena.get_one_from_grid_search(
+        env_config["multi_agent_obs"]
     )
 
     env_config["train_mode"] = False
@@ -39,7 +43,7 @@ def run(args, parser):
     logger.info(env)
     # Tennis-Sparse-2T1P-Discrete
     logger.info(env_config)
-    # {'is_shuffle_agents': True, 'train_mode': True, 'obs_type': 'visual_FP'}
+    # {'is_shuffle_agents': True, 'train_mode': True, 'sensors': 'visual_FP'}
 
     env = arena.ArenaRllibEnv(
         env=env,

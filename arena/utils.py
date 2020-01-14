@@ -1,8 +1,15 @@
-import copy
 import os
 import re
 import cv2
 import io
+import logging
+import ray
+import platform
+import random
+import gym
+
+import copy
+from copy import deepcopy as dcopy
 
 import numpy as np
 
@@ -12,15 +19,28 @@ plt.switch_backend('agg')
 
 def is_match_gridsearch(config, value):
     """Check if a config match a value or
-    (if it is a gridsearch) if it contains only one value and the value matches
+    (if it is a gridsearch) if it contains only one item and the item matches the value
     """
     if is_grid_search(config):
-        if len(get_list_from_gridsearch(config)) == 1 and get_list_from_gridsearch(config)[0] == value:
+        return is_match_list(config["grid_search"], value)
+    else:
+        if config == value:
+            return True
+        else:
+            return False
+
+
+def is_match_list(item, value):
+    """Check if a item match a value or
+    (if it is a list) if it contains only one item and the item matches the value
+    """
+    if isinstance(item, list):
+        if len(item) == 1 and item[0] == value:
             return True
         else:
             return False
     else:
-        if config == value:
+        if item == value:
             return True
         else:
             return False
@@ -103,6 +123,28 @@ def find_in_list_of_list(mylist, item):
         if item in sub_list:
             return (mylist.index(sub_list), sub_list.index(item))
     raise ValueError("'{}' is not in list".format(item))
+
+
+def flatten_list(mylist):
+    flat_list = []
+    for sublist in mylist:
+        for item in sublist:
+            flat_list.append(item)
+    return flat_list
+
+
+def try_reduce_list(mylist):
+    if len(mylist) == 1:
+        return mylist[0]
+    else:
+        return mylist
+
+
+def try_reduce_dict(mydict):
+    if len(mydict.values()) == 1:
+        return list(mydict.values())[0]
+    else:
+        return mydict
 
 
 def replace_in_tuple(tup, index, value):

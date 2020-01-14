@@ -12,13 +12,22 @@ Arena-Benchmark:
         env_config:
             is_shuffle_agents: True
             train_mode: True
-            obs_type:
+            sensors:
                 grid_search:
                     - vector
                     # - visual_FP
                     # - visual_TP
                     # - visual_FP-visual_TP
-            is_multi_agent_obs: False
+                    # - vector-visual_FP
+            multi_agent_obs:
+                grid_search:
+                    - own
+                    # - team_relative
+                    # - team_absolute
+                    # - all_relative
+                    # - all_absolute
+                    # - own-team_relative
+                    # - dict
         clip_rewards: True
         # === Multi-agent Settings ===
         iterations_per_reload:

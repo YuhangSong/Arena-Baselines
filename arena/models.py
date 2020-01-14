@@ -3,6 +3,7 @@ import logging
 from ray.rllib.models.tf.tf_action_dist import Categorical
 from ray.rllib.utils.annotations import override
 from ray.rllib.models import Model, ModelCatalog
+from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.utils import try_import_tf
 
 tf = try_import_tf()
@@ -19,7 +20,40 @@ class DeterministicCategorical(Categorical):
         return tf.squeeze(tf.argmax(self.inputs, 1), axis=1)
 
 
-class ShareLayerPolicy(Model):
+class ArenaPolicy(TFModelV2):
+    """Multi-agent policy that supports:
+    1, weights sharing between policies;
+    2, centralized critic;
+    """
+
+    def __init__(self, obs_space, action_space, num_outputs, model_config,
+                 name):
+        super(CentralizedCriticModel, self).__init__(
+            obs_space, action_space, num_outputs, model_config, name)
+
+        self.action_model = FullyConnectedNetwork(
+            Box(low=0, high=1, shape=(6, )),  # one-hot encoded Discrete(6)
+            action_space,
+            num_outputs,
+            model_config,
+            name + "_action")
+        self.register_variables(self.action_model.variables())
+
+        self.value_model = FullyConnectedNetwork(obs_space, action_space, 1,
+                                                 model_config, name + "_vf")
+        self.register_variables(self.value_model.variables())
+
+    def forward(self, input_dict, state, seq_lens):
+        self._value_out, _ = self.value_model({
+            "obs": input_dict["obs_flat"]
+        }, state, seq_lens)
+        return self.action_model({
+            "obs": input_dict["obs"]["own_obs"]
+        }, state, seq_lens)
+
+    def value_function(self):
+        return tf.reshape(self._value_out, [-1])
+
     def _build_layers_v2(self, input_dict, num_outputs, options):
 
         policies_shared_scope = "shared_by_{}".format(
@@ -55,4 +89,4 @@ class ShareLayerPolicy(Model):
         return output, last_layer
 
 
-ModelCatalog.register_custom_model("ShareLayerPolicy", ShareLayerPolicy)
+ModelCatalog.register_custom_model("ArenaPolicy", ArenaPolicy)
