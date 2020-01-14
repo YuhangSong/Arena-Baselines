@@ -55,7 +55,7 @@ Arena-Benchmark:
                 - []
                 # - [own, team_relative]
         # === Settings for Rollout Worker processes ===
-        clip_rewards: True
+        clip_rewards: None
         num_workers: 10
         num_envs_per_worker: 2
         sample_batch_size: 100
