@@ -10,7 +10,10 @@ Arena-Benchmark:
     config:
         # === Environment Settings ===
         env_config:
-            is_shuffle_agents: True
+            is_shuffle_agents:
+                grid_search:
+                    - True
+                    # - False
             train_mode: True
             sensors:
                 grid_search:
@@ -35,6 +38,7 @@ Arena-Benchmark:
         num_learning_policies:
             grid_search:
                 - 1
+                # - 2
                 # - all
         playing_policy_load_recent_prob:
             grid_search:

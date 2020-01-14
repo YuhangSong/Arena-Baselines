@@ -17,6 +17,19 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 
+def override_dict(dict_, args):
+    """Override dict_ with the items in args.
+    If items in dict_ is not presented in args, keep it as it is.
+    """
+    if isinstance(dict_, dict) and isinstance(args, dict):
+        dict_ = dcopy(dict_)
+        for key, value in args.items():
+            dict_[key] = value
+        return dict_
+    else:
+        raise TypeError
+
+
 def is_gridsearch_match(config, value):
     """Check if a config match a value or
     (if it is a gridsearch) if it contains only one item and the item matches the value
@@ -52,6 +65,7 @@ def get_list_from_gridsearch(config, enable_config=True, default=None):
     If not, return the single config, but in a list.
     If not enable_config, return default.
     """
+    config = dcopy(config)
     if enable_config:
         if is_grid_search(config):
             return config["grid_search"]
@@ -65,6 +79,7 @@ def get_one_from_grid_search(config, index=0):
     """Get one of the configs in a config that is a grid_search.
     If it is not a grid_search, return it as it is.
     """
+    config = dcopy(config)
     if is_grid_search(config):
         return config["grid_search"][index]
     else:
@@ -78,6 +93,13 @@ def is_grid_search(config):
 
 
 def get_social_config(env):
+    """
+    Arguments:
+        env: Arena-Blowblow-Sparse-2T2P-Discrete
+
+    Returns:
+        [[0,1],[2,3]]
+    """
 
     xTxP = env.split("-")[3]
 
@@ -110,6 +132,12 @@ def prepare_path(path):
             # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
+
+
+def remove_repeats_in_list(list_):
+    """Remove repeats in a list.
+    """
+    return list(dict.fromkeys(list_))
 
 
 def list_subtract(x, y):
