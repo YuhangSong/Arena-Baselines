@@ -35,19 +35,19 @@ logger = logging.getLogger(__name__)
 
 def run(args, parser):
 
-    # create experiments from configs
+    # create exps from configs
     if args.config_file:
         # load configs from yaml
         with open(args.config_file) as f:
-            experiments = yaml.safe_load(f)
+            exps = yaml.safe_load(f)
 
     else:
-        experiments = arena.create_experiments(
+        exps = arena.create_exps(
             args=args,
         )
 
-    arena_experiments = arena.create_arena_experiments(
-        experiments=experiments,
+    arena_exps = arena.create_arena_exps(
+        exps=exps,
         args=args,
         parser=parser,
     )
@@ -76,9 +76,8 @@ def run(args, parser):
             num_gpus=args.ray_num_gpus,
         )
 
-    # run experiments
     run_experiments(
-        arena_experiments,
+        arena_exps,
         scheduler=_make_scheduler(args),
         queue_trials=args.queue_trials,
         resume=args.resume,

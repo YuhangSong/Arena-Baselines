@@ -29,10 +29,10 @@ def create_parser():
         type=str,
         help=(
             "Type of the observation. Options are as follows: "
-            "vector (low-dimensional vector observation); "
-            "visual_FP (first-person visual observation); "
-            "visual_TP (third-person visual observation); "
-            "obs1-obs2-... (combine multiple types of observations, not that you cannot combine visual and vector obs as it is not supported); "
+            "[vector] (low-dimensional vector observation); "
+            "[visual_FP] (first-person visual observation); "
+            "[visual_TP] (third-person visual observation); "
+            "[xx_sensor, yy_sensor, ...] (combine multiple types of observations, the observation_space would be gym.spaces.Dict and the returned observation per agent is a dict, where keys are xx_multi_agent_obs-xx_sensor); "
         ))
 
     parser.add_argument(
@@ -41,12 +41,12 @@ def create_parser():
         default="own",
         help=(
             "For Arena multi-agent environments, which observation to use. Options are as follows: "
-            "own (the agent's own observation); "
-            "team-absolute (the team's observations, the position of own observation is absolute); "
-            "team-relative (the team's observations, the position of own observation is relative); "
-            "all-absolute (all agents' observations, the position of own and team observations are absolute); "
-            "all-relative (all agents' observations, the position of own and team observations are relative); "
-            "dict (a dict containing all above observations, this is mainly for the case when you need to feed different models with different observations); "
+            "[own] (the agent's own observation); "
+            "[team_absolute] (the team's observations, the position of own observation is absolute); "
+            "[team_relative] (the team's observations, the position of own observation is relative); "
+            "[all_absolute] (all agents' observations, the position of own and team observations are absolute); "
+            "[all_relative] (all agents' observations, the position of own and team observations are relative); "
+            "[xx_multi_agent_obs, yy_multi_agent_obs, ...] (combine multiple types of observations, the observation_space would be gym.spaces.Dict and the returned observation per agent is a dict, where keys are xx_multi_agent_obs-xx_sensor); "
         ))
 
     parser.add_argument(
@@ -95,6 +95,18 @@ def create_parser():
             "none; "
             "team; "
             "[[a,b,c,...],[x,y,z,...],...] (policies of id a,b,c,... will share layers, policies of id x,y,z,... will share layers, ...); "
+            "After setting this up, you additionally need to go to arena.models.ArenaPolicy, defining which layers you want to share across the defined scope. "
+        ))
+
+    parser.add_argument(
+        "--actor-critic-obs",
+        default="none-none",
+        help=(
+            "Specify the observations of actor and critic separately. Options are as follows: "
+            "none (not taking effect); "
+            "xx-yy (actor will use xx as observations, critic will use yy as observations); "
+            "xx and yy should be one of the items in the config of sensors. "
+            "If xx or yy are not in sensors, the config of sensors will be overrided to include xx and yy. "
         ))
 
     parser.add_argument(
@@ -108,14 +120,14 @@ def create_parser():
     return parser
 
 
-def create_experiments(args):
+def create_exps(args):
     """Create configs from args
     """
 
     input("# WARNING: it is recommended to use -f CONFIG.yaml, instead of passing args. Press hit enter to continue. ")
 
     # Note: keep this in sync with tune/config_parser.py
-    experiments = {
+    exps = {
         args.experiment_name: {  # i.e. log to ~/ray_results/default
             "run": args.run,
             "checkpoint_freq": args.checkpoint_freq,
@@ -134,13 +146,15 @@ def create_experiments(args):
                     is_shuffle_agents=args.is_shuffle_agents,
                     train_mode=args.train_mode,
                     sensors=args.sensors,
+                    multi_agent_obs=args.multi_agent_obs,
+
                 ),
                 iterations_per_reload=args.iterations_per_reload,
                 num_learning_policies=args.num_learning_policies,
                 playing_policy_load_recent_prob=args.playing_policy_load_recent_prob,
                 size_population=args.size_population,
                 share_layer_policies=args.share_layer_policies,
-                multi_agent_obs=args.multi_agent_obs,
+                actor_critic_obs=args.actor_critic_obs,
             ),
             "restore": args.restore,
             "num_samples": args.num_samples,
@@ -148,4 +162,4 @@ def create_experiments(args):
         }
     }
 
-    return experiments
+    return exps

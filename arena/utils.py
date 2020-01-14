@@ -17,12 +17,12 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 
-def is_match_gridsearch(config, value):
+def is_gridsearch_match(config, value):
     """Check if a config match a value or
     (if it is a gridsearch) if it contains only one item and the item matches the value
     """
     if is_grid_search(config):
-        return is_match_list(config["grid_search"], value)
+        return is_list_match(config["grid_search"], value)
     else:
         if config == value:
             return True
@@ -30,7 +30,7 @@ def is_match_gridsearch(config, value):
             return False
 
 
-def is_match_list(item, value):
+def is_list_match(item, value):
     """Check if a item match a value or
     (if it is a list) if it contains only one item and the item matches the value
     """

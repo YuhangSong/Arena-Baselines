@@ -30,12 +30,12 @@ class ArenaRllibEnv(MultiAgentEnv):
         self.social_config = get_social_config(self.env_name)
 
         self.sensors = env_config.get(
-            "sensors", "vector"
+            "sensors", ["vector"]
         )
-        self.sensors = self.sensors.split("-")
 
-        self.multi_agent_obs = env_config.get("multi_agent_obs", "own")
-        self.multi_agent_obs = self.multi_agent_obs.split("-")
+        self.multi_agent_obs = env_config.get(
+            "multi_agent_obs", ["own"]
+        )
 
         self.dimension_to_cat_multi_agent_obs_for_sensor = {
             "visual_FP": 2,
@@ -46,7 +46,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         game_file_path, extension_name = get_env_directory(self.env_name)
 
         # check of we can use a server build
-        if is_match_list(self.sensors, "vector"):
+        if is_list_match(self.sensors, "vector"):
             if os.path.exists(game_file_path + '-Server'):
                 game_file_path = game_file_path + '-Server'
                 logger.info(
@@ -70,11 +70,11 @@ class ArenaRllibEnv(MultiAgentEnv):
         while True:
             try:
                 # TODO: Individual game instance cannot get rank from rllib, so just try ranks
-                rank = random.randint(0, 65535)
+                rank = random.randint(10000, 60000)
                 self.env = ArenaUnityEnv(
                     game_file_path,
                     rank,
-                    use_visual=True,
+                    use_visual=False,
                     uint8_visual=False,
                     multiagent=True,
                     allow_multiple_visual_obs=True,
@@ -142,6 +142,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         for multi_agent_ob in self.multi_agent_obs:
             for sensor in self.sensors:
 
+                # BUG:
                 observation_space = dcopy(
                     self.env.observation_space
                 )
@@ -282,13 +283,13 @@ class ArenaRllibEnv(MultiAgentEnv):
 
         rewards_rllib = {}
         dones_rllib = {}
+        infos_rllib = {}
         for agent_i_gymunity in range(self.number_agents):
             agent_i_rllib = self.agent_i_gymunity2rllib[agent_i_gymunity]
             agent_id_rllib = agent_i2id(agent_i_rllib)
             rewards_rllib[agent_id_rllib] = rewards_gymunity[agent_i_gymunity]
             dones_rllib[agent_id_rllib] = dones_gymunity[agent_i_gymunity]
-
-        infos_rllib = infos_gymunity
+            infos_rllib[agent_id_rllib] = infos_gymunity
 
         # done when all agents are done
         dones_rllib["__all__"] = np.all(dones_gymunity)
