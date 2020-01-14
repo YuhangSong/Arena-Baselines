@@ -42,8 +42,8 @@ Arena-Benchmark:
                 # - 0.5
         size_population:
             grid_search:
-                # - 1
-                - 8
+                - 1
+                # - 8
                 # - 16
         share_layer_policies:
             grid_search:
