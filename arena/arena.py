@@ -357,43 +357,48 @@ def get_env_infos(env, env_config):
     obs_space = dcopy(
         dummy_env.observation_space
     )
-    action_space = dcopy(
+    act_space = dcopy(
         dummy_env.action_space
     )
     dummy_env.close()
 
-    return number_agents, obs_space, action_space
+    return number_agents, obs_space, act_space
 
 
-def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_key_prefix="", running_configs=None, expanded_exp=None):
+def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_key_prefix="", running_configs=None, expanded_exps=None):
 
     if running_configs is None:
         # create running_configs, this will hold the swapping configs
         running_configs = {}
 
-    if expanded_exp is None:
-        # create expanded_exp, which is the final return of the function
-        expanded_exp = {}
+    if expanded_exps is None:
+        # create expanded_exps, which is the final return of the function
+        expanded_exps = {}
 
     if len(config_keys_to_expand) == 0:
 
         expanded_exp_key = expanded_exp_key_prefix
 
-        for running_config_key, running_config in running_configs.item():
+        # represent running_configs in expanded_exp_key
+        for running_config_key, running_config in running_configs.items():
             expanded_exp_key += ",{}={}".format(
-                running_config_key,
+                simplify_config_key(str(running_config_key)),
                 running_config,
             )
 
-        exp_to_expand = to_dir_str(exp_to_expand)
+        expanded_exp_key = to_dir_str(expanded_exp_key)
 
-        expanded_exp[expanded_exp_key] = dcopy(
+        expanded_exps[expanded_exp_key] = dcopy(
             exp_to_expand
         )
 
-        for running_config_key, running_config in running_configs.item():
-            temp = expanded_exp[expanded_exp_key]
-            len_running_config_key = len(running_config_key.split("-"))
+        expanded_exp = expanded_exps[expanded_exp_key]
+
+        # assign running_configs to expanded_exp
+        for running_config_key, running_config in running_configs.items():
+            temp = expanded_exp
+            running_config_key = running_config_key.split("-")
+            len_running_config_key = len(running_config_key)
             for i in range(len_running_config_key):
                 if i < (len_running_config_key - 1):
                     temp = temp[running_config_key[i]]
@@ -402,148 +407,138 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
                 else:
                     raise ValueError
 
-        number_agents, obs_space, action_space = get_env_infos(
-            env=env,
-            env_config=override_dict(
-                exps[exp_key]["config"]["env_config"],
-                args={
-                    "is_shuffle_agents": is_shuffle_agents,
-                    "sensors": sensors,
-                    "multi_agent_obs": multi_agent_obs
-                },
-            ),
-        )
+        if is_arena_env(expanded_exp["env"]):
 
-        expanded_exp[expanded_exp_key]["config"].update(
-            {
-                # "number_agents": number_agents,
-            }
-        )
+            number_agents, obs_space, act_space = get_env_infos(
+                env=expanded_exp["env"],
+                env_config=expanded_exp["config"]["env_config"],
+            )
 
-        if is_arena_env(env):
-
-            # policies: config of policies
-            expanded_exp[expanded_exp_key]["config"]["multiagent"] = {
-            }
-            expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies"] = {
-            }
-            # learning_policy_ids: a list of policy ids of which the policy is trained
-            expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"] = [
-            ]
-            # playing_policy_ids: a list of policy ids of which the policy is not trained
-            expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"] = [
-            ]
+            expanded_exp["config"].update(
+                {
+                    "number_agents": number_agents,
+                    "obs_space": obs_space,
+                    "act_space": act_space,
+                    # a list of policy ids of which the policy is trained
+                    "learning_policy_ids": [],
+                    # a list of policy ids of which the policy is not trained
+                    "playing_policy_ids": [],
+                    "multiagent": {
+                        # configs of policies
+                        "policies": {}
+                    },
+                }
+            )
 
             # create configs of learning policies
-            for learning_policy_i in range(expanded_exp[expanded_exp_key]["config"]["num_learning_policies"]):
+            for learning_policy_i in range(expanded_exp["config"]["num_learning_policies"]):
                 learning_policy_id = policy_i2id(
                     learning_policy_i
                 )
-                expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"] += [
+                expanded_exp["config"]["learning_policy_ids"] += [
                     learning_policy_id
                 ]
 
-            if expanded_exp[expanded_exp_key]["run"] not in ["PPO"]:
+            if expanded_exp["run"] not in ["PPO"]:
                 # build custom_action_dist to be playing mode dist (no exploration)
                 # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
                 # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
                 raise NotImplementedError
 
             # create configs of playing policies
-            for playing_policy_i in range(expanded_exp[expanded_exp_key]["config"]["num_learning_policies"], expanded_exp[expanded_exp_key]["config"]["number_agents"]):
+            for playing_policy_i in range(expanded_exp["config"]["num_learning_policies"], expanded_exp["config"]["number_agents"]):
                 playing_policy_id = policy_i2id(
                     playing_policy_i
                 )
-                expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"] += [
+                expanded_exp["config"]["playing_policy_ids"] += [
                     playing_policy_id
                 ]
 
-            if len(expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]) > 0:
+            if len(expanded_exp["config"]["playing_policy_ids"]) > 0:
 
-                if expanded_exp[expanded_exp_key]["config"]["env_config"]["is_shuffle_agents"] == False:
+                if expanded_exp["config"]["env_config"]["is_shuffle_agents"] == False:
                     logger.warning(
                         "There are playing policies, which keeps loading learning policies. This means you need to shuffle agents so that the learning policies can generalize to playing policies. Overriding config.env_config.is_shuffle_agents to True."
                     )
-                    expanded_exp[expanded_exp_key]["config"]["env_config"]["is_shuffle_agents"] = True
+                    expanded_exp["config"]["env_config"]["is_shuffle_agents"] = True
 
-            elif len(expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]) == 0:
+            elif len(expanded_exp["config"]["playing_policy_ids"]) == 0:
 
-                if expanded_exp[expanded_exp_key]["config"]["playing_policy_load_recent_prob"] != "none":
+                if expanded_exp["config"]["playing_policy_load_recent_prob"] != None:
                     logger.warning(
-                        "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to none."
+                        "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to None."
                     )
-                    expanded_exp[expanded_exp_key]["config"]["playing_policy_load_recent_prob"] = "none"
+                    expanded_exp["config"]["playing_policy_load_recent_prob"] = None
 
             else:
                 raise ValueError
 
             # apply configs of all policies
-            for policy_i in range(expanded_exp[expanded_exp_key]["config"]["number_agents"]):
+            for policy_i in range(expanded_exp["config"]["number_agents"]):
 
                 policy_id = policy_i2id(policy_i)
 
                 policy_config = {}
 
-                if policy_id in expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]:
+                if policy_id in expanded_exp["config"]["playing_policy_ids"]:
                     from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
                     policy_config["custom_action_dist"] = {
                         "Discrete": DeterministicCategorical,
                         "Box": DeterministiContinuous
                     }[
-                        expanded_exp[expanded_exp_key]["config"]["act_space"].__class__.__name__
+                        expanded_exp["config"]["act_space"].__class__.__name__
                     ]
 
                 policy_config["model"] = {}
 
-                if expanded_exp[expanded_exp_key]["config"]["share_layer_policies"] != []:
+                if expanded_exp["config"]["share_layer_policies"] != []:
                     policy_config["model"]["custom_model"] = "ArenaPolicy"
 
-                if expanded_exp[expanded_exp_key]["config"]["share_layer_policies"] != []:
+                if expanded_exp["config"]["share_layer_policies"] != []:
                     policy_config["model"]["custom_options"] = {
                     }
                     policy_config["model"]["custom_options"]["shared_scope"] = dcopy(
-                        expanded_exp[expanded_exp_key]["config"]["share_layer_policies"][
+                        expanded_exp["config"]["share_layer_policies"][
                             find_in_list_of_list(
-                                expanded_exp[expanded_exp_key]["config"]["share_layer_policies"], policy_i
+                                expanded_exp["config"]["share_layer_policies"], policy_i
                             )[0]
                         ]
                     )
 
-                expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies"][policy_id] = (
+                expanded_exp["config"]["multiagent"]["policies"][policy_id] = (
                     None,
-                    expanded_exp[expanded_exp_key]["config"]["obs_space"],
-                    expanded_exp[expanded_exp_key]["config"]["act_space"],
+                    expanded_exp["config"]["obs_space"],
+                    expanded_exp["config"]["act_space"],
                     dcopy(policy_config),
                 )
 
             # policy_mapping_fn: a map from agent_id to policy_id
             # use policy_mapping_fn_i2i as policy_mapping_fn
-            expanded_exp[expanded_exp_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
+            expanded_exp["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
                 policy_mapping_fn_i2i
             )
 
-            expanded_exp[expanded_exp_key]["config"]["callbacks"] = {
+            expanded_exp["config"]["callbacks"] = {
+                "on_train_result": ray.tune.function(
+                    on_train_result
+                )
             }
-            expanded_exp[expanded_exp_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
-                on_train_result
+            expanded_exp["config"]["multiagent"]["policies_to_train"] = dcopy(
+                expanded_exp["config"]["learning_policy_ids"]
             )
 
-            expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies_to_train"] = dcopy(
-                expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"]
-            )
+        return expanded_exps
 
     else:
 
         # get config_to_expand from exp_to_expand by config_key_to_expand
-        config_key_to_expand = config_keys_to_expand[-1]
+        config_key_to_expand = config_keys_to_expand[0]
         config_to_expand = exp_to_expand
         config_key_to_expand_in_parse = None
         for config_key_to_expand_each in config_key_to_expand.split("-"):
             config_to_expand = config_to_expand[config_key_to_expand_each]
             # config_key_to_expand_in_parse is the final one in config_key_to_expand.split("-")
             config_key_to_expand_in_parse = config_key_to_expand_each
-        # remove config_key_to_expand from config_keys_to_expand
-        config_keys_to_expand.remove(config_key_to_expand)
 
         if config_key_to_expand in ["env"]:
             config_to_expand_list = get_list_from_gridsearch(
@@ -551,23 +546,26 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
             )
         else:
             config_to_expand_list = get_and_check_config_keys_for_arena(
-                env=env,
+                env=running_configs["env"],
                 config=config_to_expand,
                 default=parser.get_default(
                     config_key_to_expand_in_parse
                 ),
             )
+
         for config_to_expanded in config_to_expand_list:
             running_configs[config_key_to_expand] = config_to_expanded
-            config_keys_to_expand, running_configs = expand_exp(
+            expanded_exps = expand_exp(
                 exp_to_expand=exp_to_expand,
-                config_keys_to_expand=config_keys_to_expand,
+                config_keys_to_expand=config_keys_to_expand[1:],
                 args=args,
                 parser=parser,
                 expanded_exp_key_prefix=expanded_exp_key_prefix,
                 running_configs=running_configs,
-                expanded_exp=expanded_exp,
+                expanded_exps=expanded_exps,
             )
+
+        return expanded_exps
 
 
 def create_arena_exps(exps, args, parser):
@@ -606,278 +604,26 @@ def create_arena_exps(exps, args, parser):
             )
         )
 
-        # """grid env >>>"""
-        #
-        # env_keys = get_list_from_gridsearch(
-        #     exps[exp_key]["env"]
-        # )
-
-        # for env in env_keys:
-        #
-        #     """>>> grid env"""
-
-        # share_layer_policies_keys = get_and_check_config_keys_for_arena(
+        # share_layer_policies_keys = preprocess_share_layer_policies_keys(
+        #     share_layer_policies_keys=share_layer_policies_keys,
         #     env=env,
-        #     config=exps[exp_key]["config"]["share_layer_policies"],
-        #     default=[],
-        # )
-
-        share_layer_policies_keys = preprocess_share_layer_policies_keys(
-            share_layer_policies_keys=share_layer_policies_keys,
-            env=env,
-        )
-
-        # for share_layer_policies in share_layer_policies_keys:
-        #
-        #     """>>> grid share_layer_policies"""
-
-        # """grid is_shuffle_agents >>>"""
-        #
-        # is_shuffle_agents_keys = get_and_check_config_keys_for_arena(
-        #     env=env,
-        #     config=exps[exp_key]["config"]["env_config"]["is_shuffle_agents"],
-        #     default=[],
-        # )
-
-        is_shuffle_agents_keys = preprocess_is_shuffle_agents_keys(
-            is_shuffle_agents_keys=is_shuffle_agents_keys,
-            share_layer_policies=share_layer_policies,
-        )
-
-        # for is_shuffle_agents in is_shuffle_agents_keys:
-        #
-        #     """>>> grid is_shuffle_agents"""
-
-        # """grid sensors >>>"""
-        #
-        # sensors_keys = get_and_check_config_keys_for_arena(
-        #     env=env,
-        #     config=exps[exp_key]["config"]["env_config"]["sensors"],
-        #     default=[],
         # )
         #
-        # for sensors in sensors_keys:
-        #
-        #     """>>> grid sensors"""
-
-        # """grid actor_critic_obs >>>"""
-        #
-        # actor_critic_obs_keys = get_and_check_config_keys_for_arena(
-        #     env=env,
-        #     config=exps[exp_key]["config"]["actor_critic_obs"],
-        #     default=[],
+        # is_shuffle_agents_keys = preprocess_is_shuffle_agents_keys(
+        #     is_shuffle_agents_keys=is_shuffle_agents_keys,
+        #     share_layer_policies=share_layer_policies,
         # )
         #
-        # for actor_critic_obs in actor_critic_obs_keys:
-
-        varify_actor_critic_obs(actor_critic_obs)
-
-        # """>>> grid actor_critic_obs"""
-
-        # """grid multi_agent_obs >>>"""
+        # varify_actor_critic_obs(actor_critic_obs)
         #
-        # multi_agent_obs_keys = get_and_check_config_keys_for_arena(
-        #     env=env,
-        #     config=exps[exp_key]["config"]["env_config"]["multi_agent_obs"],
-        #     default=[],
-        # )
-
-        multi_agent_obs_keys = preprocess_multi_agent_obs_keys(
-            multi_agent_obs_keys=multi_agent_obs_keys,
-            actor_critic_obs=actor_critic_obs,
-        )
-
-        # for multi_agent_obs in multi_agent_obs_keys:
-        #
-        #     """>>> grid multi_agent_obs"""
-
-        # number_agents, obs_space, action_space = get_env_infos(
-        #     env=env,
-        #     env_config=override_dict(
-        #         exps[exp_key]["config"]["env_config"],
-        #         args={
-        #             "is_shuffle_agents": is_shuffle_agents,
-        #             "sensors": sensors,
-        #             "multi_agent_obs": multi_agent_obs
-        #         },
-        #     ),
-        # )
-
-        # """grid num_learning_policies >>>"""
-        #
-        # num_learning_policies_keys = get_and_check_config_keys_for_arena(
-        #     env=env,
-        #     config=exps[exp_key]["config"]["num_learning_policies"],
-        #     default=1,
-        # )
-
-        num_learning_policies_keys = preprocess_num_learning_policies_keys(
-            num_learning_policies_keys=num_learning_policies_keys,
-            number_agents=number_agents,
-        )
-
-        # for num_learning_policies in num_learning_policies_keys:
-        #
-        #     """>>> grid num_learning_policies"""
-
-        # arena_exp_key = "{},env={},sensors={},multi_agent_obs={},num_learning_policies={},share_layer_policies={},actor_critic_obs={}".format(
-        #     exp_key,
-        #     env,
-        #     list_to_str(sensors),
-        #     list_to_str(multi_agent_obs),
-        #     num_learning_policies,
-        #     list_to_str(share_layer_policies),
-        #     list_to_str(actor_critic_obs),
+        # multi_agent_obs_keys = preprocess_multi_agent_obs_keys(
+        #     multi_agent_obs_keys=multi_agent_obs_keys,
+        #     actor_critic_obs=actor_critic_obs,
         # )
         #
-        # expanded_exp[expanded_exp_key] = dcopy(
-        #     exps[exp_key]
-        # )
-        #
-        # expanded_exp[expanded_exp_key]["config"]["env"] = dcopy(
-        #     env
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["env_config"]["sensors"] = dcopy(
-        #     sensors
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["env_config"]["multi_agent_obs"] = dcopy(
-        #     multi_agent_obs
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["number_agents"] = dcopy(
-        #     number_agents
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["obs_space"] = dcopy(
-        #     obs_space
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["act_space"] = dcopy(
-        #     action_space
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["num_learning_policies"] = dcopy(
-        #     num_learning_policies
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["env_config"]["is_shuffle_agents"] = dcopy(
-        #     is_shuffle_agents
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["share_layer_policies"] = dcopy(
-        #     share_layer_policies
-        # )
-        # expanded_exp[expanded_exp_key]["config"]["actor_critic_obs"] = dcopy(
-        #     actor_critic_obs
-        # )
-
-        # if args.eager:
-        #     expanded_exp[expanded_exp_key]["config"]["eager"] = True
-
-        # if is_arena_env(env):
-
-        # # policies: config of policies
-        # expanded_exp[expanded_exp_key]["config"]["multiagent"] = {
-        # }
-        # expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies"] = {
-        # }
-        # # learning_policy_ids: a list of policy ids of which the policy is trained
-        # expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"] = [
-        # ]
-        # # playing_policy_ids: a list of policy ids of which the policy is not trained
-        # expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"] = [
-        # ]
-
-        # # create configs of learning policies
-        # for learning_policy_i in range(expanded_exp[expanded_exp_key]["config"]["num_learning_policies"]):
-        #     learning_policy_id = policy_i2id(
-        #         learning_policy_i
-        #     )
-        #     expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"] += [
-        #         learning_policy_id
-        #     ]
-        #
-        # if expanded_exp[expanded_exp_key]["run"] not in ["PPO"]:
-        #     # build custom_action_dist to be playing mode dist (no exploration)
-        #     # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-        #     # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
-        #     raise NotImplementedError
-        #
-        # # create configs of playing policies
-        # for playing_policy_i in range(expanded_exp[expanded_exp_key]["config"]["num_learning_policies"], expanded_exp[expanded_exp_key]["config"]["number_agents"]):
-        #     playing_policy_id = policy_i2id(
-        #         playing_policy_i
-        #     )
-        #     expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"] += [
-        #         playing_policy_id
-        #     ]
-        #
-        # if len(expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]) > 0:
-        #
-        #     if expanded_exp[expanded_exp_key]["config"]["env_config"]["is_shuffle_agents"] == False:
-        #         logger.warning(
-        #             "There are playing policies, which keeps loading learning policies. This means you need to shuffle agents so that the learning policies can generalize to playing policies. Overriding config.env_config.is_shuffle_agents to True."
-        #         )
-        #         expanded_exp[expanded_exp_key]["config"]["env_config"]["is_shuffle_agents"] = True
-        #
-        # elif len(expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]) == 0:
-        #
-        #     if expanded_exp[expanded_exp_key]["config"]["playing_policy_load_recent_prob"] != "none":
-        #         logger.warning(
-        #             "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to none."
-        #         )
-        #         expanded_exp[expanded_exp_key]["config"]["playing_policy_load_recent_prob"] = "none"
-        #
-        # else:
-        #     raise ValueError
-        #
-        # # apply configs of all policies
-        # for policy_i in range(expanded_exp[expanded_exp_key]["config"]["number_agents"]):
-        #
-        #     policy_id = policy_i2id(policy_i)
-        #
-        #     policy_config = {}
-        #
-        #     if policy_id in expanded_exp[expanded_exp_key]["config"]["playing_policy_ids"]:
-        #         from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
-        #         policy_config["custom_action_dist"] = {
-        #             "Discrete": DeterministicCategorical,
-        #             "Box": DeterministiContinuous
-        #         }[
-        #             expanded_exp[expanded_exp_key]["config"]["act_space"].__class__.__name__
-        #         ]
-        #
-        #     policy_config["model"] = {}
-        #
-        #     if expanded_exp[expanded_exp_key]["config"]["share_layer_policies"] != []:
-        #         policy_config["model"]["custom_model"] = "ArenaPolicy"
-        #
-        #     if expanded_exp[expanded_exp_key]["config"]["share_layer_policies"] != []:
-        #         policy_config["model"]["custom_options"] = {
-        #         }
-        #         policy_config["model"]["custom_options"]["shared_scope"] = dcopy(
-        #             expanded_exp[expanded_exp_key]["config"]["share_layer_policies"][
-        #                 find_in_list_of_list(
-        #                     expanded_exp[expanded_exp_key]["config"]["share_layer_policies"], policy_i
-        #                 )[0]
-        #             ]
-        #         )
-        #
-        #     expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies"][policy_id] = (
-        #         None,
-        #         expanded_exp[expanded_exp_key]["config"]["obs_space"],
-        #         expanded_exp[expanded_exp_key]["config"]["act_space"],
-        #         dcopy(policy_config),
-        #     )
-        #
-        # # policy_mapping_fn: a map from agent_id to policy_id
-        # # use policy_mapping_fn_i2i as policy_mapping_fn
-        # expanded_exp[expanded_exp_key]["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-        #     policy_mapping_fn_i2i
-        # )
-        #
-        # expanded_exp[expanded_exp_key]["config"]["callbacks"] = {
-        # }
-        # expanded_exp[expanded_exp_key]["config"]["callbacks"]["on_train_result"] = ray.tune.function(
-        #     on_train_result
-        # )
-        #
-        # expanded_exp[expanded_exp_key]["config"]["multiagent"]["policies_to_train"] = dcopy(
-        #     expanded_exp[expanded_exp_key]["config"]["learning_policy_ids"]
+        # num_learning_policies_keys = preprocess_num_learning_policies_keys(
+        #     num_learning_policies_keys=num_learning_policies_keys,
+        #     number_agents=number_agents,
         # )
 
     return arena_exps

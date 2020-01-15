@@ -149,8 +149,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         agent_i_gymunity = 0
         for multi_agent_ob in self.multi_agent_obs:
             for sensor in self.sensors:
-
-                # BUG:
+                # BUG: only vector space supported
                 observation_space = dcopy(
                     self.env.observation_space
                 )

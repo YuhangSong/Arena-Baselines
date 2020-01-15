@@ -159,6 +159,19 @@ def to_dir_str(str_):
     return str_
 
 
+def simplify_config_key(config_key):
+    """
+        Example:
+            "config-env_config-is_shuffle_agents" is converted to "c-ec-isa"
+    """
+    config_key = config_key.replace("-", " - ")
+    config_key = config_key.replace("_", " ")
+    words = config_key.split()
+    letters = [word[0] for word in words]
+    return_ = "".join(letters)
+    return return_
+
+
 def find_in_list_of_list(list_, item):
     for sub_list in list_:
         if item in sub_list:
