@@ -1,5 +1,7 @@
 import logging
 
+from .utils import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -184,7 +186,8 @@ def preprocess_share_layer_policies_keys(share_layer_policies_keys, env):
                         env
                     )
                 )
-    return remove_repeats_in_list(share_layer_policies_keys)
+    return share_layer_policies_keys
+    # return remove_repeats_in_list(share_layer_policies_keys)
 
 
 def preprocess_multi_agent_obs_keys(multi_agent_obs_keys, actor_critic_obs):
@@ -201,7 +204,8 @@ def preprocess_multi_agent_obs_keys(multi_agent_obs_keys, actor_critic_obs):
                         multi_agent_obs_keys[i]
                     )
                 )
-    return remove_repeats_in_list(multi_agent_obs_keys)
+    # return remove_repeats_in_list(multi_agent_obs_keys)
+    return multi_agent_obs_keys
 
 
 def preprocess_is_shuffle_agents_keys(is_shuffle_agents_keys, share_layer_policies):

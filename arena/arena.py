@@ -312,13 +312,13 @@ def on_train_result(info):
 
 
 def check_config_keys(env, config_keys, default):
-    is isinstance(config_keys, list):
+    if isinstance(config_keys, list):
         if not is_arena_env(env):
             if is_gridsearch_match(config_keys, default):
                 logger.warning(
                     "None-arena env does not support the config of {}. ".format(
                         config_keys,
-                    )
+                    ) +
                     "Overriding it to {}.".format(
                         default,
                     )
@@ -329,8 +329,9 @@ def check_config_keys(env, config_keys, default):
     return config_keys
 
 
-def get_and_check_config_keys_for_arena(config, default):
+def get_and_check_config_keys_for_arena(env, config, default):
     return check_config_keys(
+        env=env,
         config_keys=get_list_from_gridsearch(
             config=config,
         ),
@@ -370,6 +371,11 @@ def create_arena_exps(exps, args, parser):
     """
     arena_exps = {}
 
+    grid_search_configs = [
+        "env"
+        "config-env_config-is_shuffle_agents",
+    ]
+
     exps = override_exps_according_to_dummy(
         exps=exps,
         dummy=args.dummy,
@@ -387,82 +393,80 @@ def create_arena_exps(exps, args, parser):
 
             """>>> grid env"""
 
-            """grid is_shuffle_agents >>>"""
-
-            is_shuffle_agents_keys = get_and_check_config_keys_for_arena(
+            share_layer_policies_keys = get_and_check_config_keys_for_arena(
                 env=env,
-                config=exps[exp_key]["config"]["env_config"]["is_shuffle_agents"],
+                config=exps[exp_key]["config"]["share_layer_policies"],
                 default=[],
             )
 
-            is_shuffle_agents_keys = preprocess_is_shuffle_agents(
-                is_shuffle_agents_keys=is_shuffle_agents_keys,
-                share_layer_policies=share_layer_policies,
+            share_layer_policies_keys = preprocess_share_layer_policies_keys(
+                share_layer_policies_keys=share_layer_policies_keys,
+                env=env,
             )
 
-            for is_shuffle_agents in is_shuffle_agents_keys:
+            for share_layer_policies in share_layer_policies_keys:
 
-                """>>> grid is_shuffle_agents"""
+                """>>> grid share_layer_policies"""
 
-                """grid sensors >>>"""
+                """grid is_shuffle_agents >>>"""
 
-                sensors_keys = get_and_check_config_keys_for_arena(
+                is_shuffle_agents_keys = get_and_check_config_keys_for_arena(
                     env=env,
-                    config=exps[exp_key]["config"]["env_config"]["sensors"],
+                    config=exps[exp_key]["config"]["env_config"]["is_shuffle_agents"],
                     default=[],
                 )
 
-                for sensors in sensors_keys:
+                is_shuffle_agents_keys = preprocess_is_shuffle_agents_keys(
+                    is_shuffle_agents_keys=is_shuffle_agents_keys,
+                    share_layer_policies=share_layer_policies,
+                )
 
-                    """>>> grid sensors"""
+                for is_shuffle_agents in is_shuffle_agents_keys:
 
-                    """grid actor_critic_obs >>>"""
+                    """>>> grid is_shuffle_agents"""
 
-                    actor_critic_obs_keys = get_and_check_config_keys_for_arena(
+                    """grid sensors >>>"""
+
+                    sensors_keys = get_and_check_config_keys_for_arena(
                         env=env,
-                        config=exps[exp_key]["config"]["actor_critic_obs"],
+                        config=exps[exp_key]["config"]["env_config"]["sensors"],
                         default=[],
                     )
 
-                    for actor_critic_obs in actor_critic_obs_keys:
+                    for sensors in sensors_keys:
 
-                        varify_actor_critic_obs(actor_critic_obs)
+                        """>>> grid sensors"""
 
-                        """>>> grid actor_critic_obs"""
+                        """grid actor_critic_obs >>>"""
 
-                        """grid multi_agent_obs >>>"""
-
-                        multi_agent_obs_keys = get_and_check_config_keys_for_arena(
+                        actor_critic_obs_keys = get_and_check_config_keys_for_arena(
                             env=env,
-                            config=exps[exp_key]["config"]["env_config"]["multi_agent_obs"],
+                            config=exps[exp_key]["config"]["actor_critic_obs"],
                             default=[],
                         )
 
-                        multi_agent_obs_keys = preprocess_multi_agent_obs_keys(
-                            multi_agent_obs=multi_agent_obs_keys,
-                            actor_critic_obs=actor_critic_obs,
-                        )
+                        for actor_critic_obs in actor_critic_obs_keys:
 
-                        for multi_agent_obs in multi_agent_obs_keys:
+                            varify_actor_critic_obs(actor_critic_obs)
 
-                            """>>> grid multi_agent_obs"""
+                            """>>> grid actor_critic_obs"""
 
-                            """grid share_layer_policies >>>"""
+                            """grid multi_agent_obs >>>"""
 
-                            share_layer_policies_keys = get_and_check_config_keys_for_arena(
+                            multi_agent_obs_keys = get_and_check_config_keys_for_arena(
                                 env=env,
-                                config=exps[exp_key]["config"]["share_layer_policies"],
+                                config=exps[exp_key]["config"]["env_config"]["multi_agent_obs"],
                                 default=[],
                             )
 
-                            share_layer_policies_keys = preprocess_share_layer_policies_keys(
-                                share_layer_policies_keys=share_layer_policies_keys,
-                                env=env,
+                            multi_agent_obs_keys = preprocess_multi_agent_obs_keys(
+                                multi_agent_obs_keys=multi_agent_obs_keys,
+                                actor_critic_obs=actor_critic_obs,
                             )
 
-                            for share_layer_policies in share_layer_policies_keys:
+                            for multi_agent_obs in multi_agent_obs_keys:
 
-                                """>>> grid share_layer_policies"""
+                                """>>> grid multi_agent_obs"""
 
                                 number_agents, obs_space, action_space = get_env_infos(
                                     env=env,
@@ -493,13 +497,13 @@ def create_arena_exps(exps, args, parser):
 
                                     """>>> grid num_learning_policies"""
 
-                                    arena_exp_key = "{},e={},ot={},mao={},nlp={},slp={},aco={}".format(
+                                    arena_exp_key = "{},env={},sensors={},multi_agent_obs={},num_learning_policies={},share_layer_policies={},actor_critic_obs={}".format(
                                         exp_key,
                                         env,
                                         list_to_str(sensors),
                                         list_to_str(multi_agent_obs),
                                         num_learning_policies,
-                                        share_layer_policies,
+                                        list_to_str(share_layer_policies),
                                         list_to_str(actor_critic_obs),
                                     )
 
@@ -652,5 +656,12 @@ def create_arena_exps(exps, args, parser):
                                         arena_exps[arena_exp_key]["config"]["multiagent"]["policies_to_train"] = dcopy(
                                             arena_exps[arena_exp_key]["config"]["learning_policy_ids"]
                                         )
+
+                                        # def policies_to_train_fn(spec):
+                                        #     return arena_exps[arena_exp_key]["config"]["learning_policy_ids"]
+                                        #
+                                        # arena_exps[arena_exp_key]["config"]["multiagent"]["policies_to_train"] = ray.tune.function(
+                                        #     policies_to_train_fn
+                                        # )
 
     return arena_exps

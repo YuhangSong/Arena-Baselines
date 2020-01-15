@@ -137,7 +137,7 @@ def prepare_path(path):
 def remove_repeats_in_list(list_):
     """Remove repeats in a list.
     """
-    return list(dict.fromkeys(list_))
+    return list(dict.fromkeys(list_).keys())
 
 
 def list_subtract(x, y):
@@ -147,14 +147,15 @@ def list_subtract(x, y):
 
 
 def list_to_str(list_):
-    """Convert a list [a, b, ...] to a string "a-b-..."
+    """Convert list [a, b, ...] to string "[a-b-...]"
     """
-    outstr = ''
-    for i in range(len(list_)):
-        outstr += list_[i]
-        if i < (len(list_) - 1):
-            outstr += "-"
-    return outstr
+    str_ = str(list_)
+    str_ = str_.replace(",", "-")
+    str_ = str_.replace(" ", "")
+    str_ = str_.replace("'", "")
+    str_ = str_.replace("[", "(")
+    str_ = str_.replace("]", ")")
+    return str_
 
 
 def find_in_list_of_list(list_, item):
