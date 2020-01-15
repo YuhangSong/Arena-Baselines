@@ -146,10 +146,11 @@ def list_subtract(x, y):
     return [item for item in x if item not in y]
 
 
-def list_to_str(list_):
-    """Convert list [a, b, ...] to string "[a-b-...]"
+def to_dir_str(str_):
+    """Convert a str to a str that can be used as a dir path.
+
+        * Convert list [a, b, ...] to string "[a-b-...]"
     """
-    str_ = str(list_)
     str_ = str_.replace(",", "-")
     str_ = str_.replace(" ", "")
     str_ = str_.replace("'", "")

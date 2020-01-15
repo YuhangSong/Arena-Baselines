@@ -15,7 +15,8 @@ def create_parser():
 
     parser.add_argument(
         "--is-shuffle-agents",
-        action="store_true",
+        action="store_false",
+        default=True,
         help=(
             "Whether shuffle agents every episode. "
             "This helps the trained policies to have better generalization ability. "
@@ -34,8 +35,7 @@ def create_parser():
 
     parser.add_argument(
         "--sensors",
-        default="vector",
-        type=str,
+        default=["vector"],
         help=(
             "Type of the observation. Options are as follows: "
             "[vector] (low-dimensional vector observation); "
@@ -47,8 +47,7 @@ def create_parser():
 
     parser.add_argument(
         "--multi-agent-obs",
-        type=str,
-        default="own",
+        default=["own"],
         help=(
             "For Arena multi-agent environments, which observation to use. Options are as follows: "
             "[own] (the agent's own observation); "
@@ -63,7 +62,6 @@ def create_parser():
     parser.add_argument(
         "--iterations-per-reload",
         default=1,
-        type=int,
         help=(
             "Number of iterations between each reload. "
             "In each reload, learning policies are saved and all policies are reloaded. "
@@ -72,8 +70,7 @@ def create_parser():
 
     parser.add_argument(
         "--num-learning-policies",
-        default="independent",
-        type=str,
+        default=1,
         help=(
             "How many agents in the game are bound to learning policies (one to each). Options are as follows: "
             "all (all agents are bound to learning policies, one for each. This is also known as independent learner.); "
@@ -86,7 +83,6 @@ def create_parser():
     parser.add_argument(
         "--playing-policy-load-recent-prob",
         default=0.8,
-        type=float,
         help=(
             "When reload, for playing policies only, the probability of chosing recent learning policy, against chosing uniformly among historical ones. "
             "This config supports grid_search. "
@@ -95,7 +91,6 @@ def create_parser():
     parser.add_argument(
         "--size-population",
         default=1,
-        type=int,
         help=(
             "Number of policies to be trained in population-based training. "
             "In each reload, each one of all learning/player policies will be reloaded with one of the size_population policies randomly. "
@@ -104,7 +99,7 @@ def create_parser():
 
     parser.add_argument(
         "--share-layer-policies",
-        default=None,
+        default=[],
         help=(
             "Specify the policies that share layers. Options are as follows: "
             "[]; "
@@ -116,7 +111,7 @@ def create_parser():
 
     parser.add_argument(
         "--actor-critic-obs",
-        default="none-none",
+        default=[],
         help=(
             "Specify the observations of actor and critic separately. Options are as follows: "
             "[] (not taking effect); "

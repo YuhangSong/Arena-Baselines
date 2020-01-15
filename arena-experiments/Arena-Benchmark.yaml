@@ -18,14 +18,14 @@ Arena-Benchmark:
             sensors:
                 grid_search:
                     - [vector]
-                    # - [visual_FP]
+                    - [visual_FP]
                     # - [visual_TP]
                     # - [visual_FP, visual_TP]
                     # - [vector, visual_FP]
             multi_agent_obs:
                 grid_search:
                     - [own]
-                    # - [team_relative]
+                    - [team_relative]
                     # - [team_absolute]
                     # - [all_relative]
                     # - [all_absolute]
