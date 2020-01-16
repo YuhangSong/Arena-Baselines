@@ -311,122 +311,151 @@ def on_train_result(info):
                 policy.population_i = population_i
 
 
-def check_config_keys(env, config_keys, default):
-    if isinstance(config_keys, list):
-        if not is_arena_env(env):
-            if is_gridsearch_match(config_keys, default):
+def preprocess_config_value_this_level(running_config, config_key_this_level, config_value_this_level, default):
+    config_value_this_level = get_list_from_gridsearch(config_value_this_level)
+    if config_key_this_level not in ["env"]:
+        if not is_arena_env(running_config["env"]):
+            if not is_list_match(config_value_this_level, default):
                 logger.warning(
                     "None-arena env does not support the config of {}. ".format(
-                        config_keys,
+                        config_key_this_level,
                     ) +
-                    "Overriding it to {}.".format(
+                    "Overriding it from {} to [{}].".format(
+                        config_value_this_level,
                         default,
                     )
                 )
-                config_keys = default
-    else:
-        raise TypeError
-    return config_keys
-
-
-def get_and_check_config_keys_for_arena(env, config, default):
-    return check_config_keys(
-        env=env,
-        config_keys=get_list_from_gridsearch(
-            config=config,
-        ),
-        default=default,
-    )
+                config_value_this_level = [default]
+    return config_value_this_level
 
 
 def get_env_infos(env, env_config):
-    """Create dummy_env to get parameters/setting of env
+    """Create dummy_env to get env_infos of env as a dict.
+
+    Arguments:
+        env: id of env
+        env_config:
+    Returns:
+        env_infos
     """
+
+    env_infos = {}
 
     if is_arena_env(env):
         dummy_env = ArenaRllibEnv(
             env=env,
             env_config=env_config,
         )
-        number_agents = dcopy(
+        env_infos["number_agents"] = dcopy(
             dummy_env.number_agents
         )
     else:
         dummy_env = gym.make(env)
-        number_agents = 1
-    obs_space = dcopy(
+        env_infos["number_agents"] = 1
+
+    env_infos["obs_space"] = dcopy(
         dummy_env.observation_space
     )
-    act_space = dcopy(
+    env_infos["act_space"] = dcopy(
         dummy_env.action_space
     )
+
     dummy_env.close()
 
-    return number_agents, obs_space, act_space
+    return env_infos
 
 
-def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_key_prefix="", running_configs=None, expanded_exps=None):
+def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_exp_key_prefix="", expanded_exps={}, running_config={}):
+    """Expand config_to_expand at config_keys_to_expand, where the config_to_expand could be a grid_search.
 
-    if running_configs is None:
-        # create running_configs, this will hold the swapping configs
-        running_configs = {}
-
-    if expanded_exps is None:
-        # create expanded_exps, which is the final return of the function
-        expanded_exps = {}
+    Arguments:
+        parser: this is used to get default value of configs
+        expanded_exp_key_prefix: prefix of expanded_exp_key
+        expanded_exps: holding the expanded_exps which is the final return of the function
+    """
 
     if len(config_keys_to_expand) == 0:
 
+        # if there is not any config_keys_to_expand, create expanded_exps
+
+        # create expanded_exp_key
         expanded_exp_key = expanded_exp_key_prefix
-
-        # represent running_configs in expanded_exp_key
-        for running_config_key, running_config in running_configs.items():
-            expanded_exp_key += ",{}={}".format(
-                simplify_config_key(str(running_config_key)),
-                running_config,
-            )
-
+        expanded_exp_key += running_config_to_str(running_config)
         expanded_exp_key = to_dir_str(expanded_exp_key)
 
+        # create expanded_exps[expanded_exp_key]
         expanded_exps[expanded_exp_key] = dcopy(
-            exp_to_expand
+            config_to_expand
         )
 
+        # refer expanded_exps[expanded_exp_key] as expanded_exp
         expanded_exp = expanded_exps[expanded_exp_key]
 
-        # assign running_configs to expanded_exp
-        for running_config_key, running_config in running_configs.items():
-            temp = expanded_exp
-            running_config_key = running_config_key.split("-")
-            len_running_config_key = len(running_config_key)
-            for i in range(len_running_config_key):
-                if i < (len_running_config_key - 1):
-                    temp = temp[running_config_key[i]]
-                elif i == (len_running_config_key - 1):
-                    temp[running_config_key[i]] = running_config
-                else:
-                    raise ValueError
+        update_config_value_by_config(
+            config_to_update=expanded_exp,
+            config=running_config,
+        )
 
         if is_arena_env(expanded_exp["env"]):
 
-            number_agents, obs_space, act_space = get_env_infos(
-                env=expanded_exp["env"],
-                env_config=expanded_exp["config"]["env_config"],
+            expanded_exp["config"].update(
+                get_env_infos(
+                    env=expanded_exp["env"],
+                    env_config=expanded_exp["config"]["env_config"],
+                )
             )
+
+            if isinstance(expanded_exp["config"]["num_learning_policies"], str):
+                if expanded_exp["config"]["num_learning_policies"] in ["all"]:
+                    expanded_exp["config"]["num_learning_policies"] = dcopy(
+                        expanded_exp["config"]["number_agents"]
+                    )
+                    logger.warning(
+                        "Override config.num_learning_policies from all to {}".format(
+                            expanded_exp["config"]["num_learning_policies"],
+                        ) +
+                        "This may cause repeated experiments."
+                    )
+                else:
+                    raise NotImplementedError
+
+            if isinstance(expanded_exp["config"]["share_layer_policies"], str):
+                if expanded_exp["config"]["share_layer_policies"] in ["team"]:
+                    expanded_exp["config"]["share_layer_policies"] = dcopy(
+                        get_social_config(
+                            expanded_exp["env"]
+                        )
+                    )
+                    logger.warning(
+                        "Override config.share_layer_policies from team to {}".format(
+                            expanded_exp["config"]["share_layer_policies"],
+                        ) +
+                        "This may cause repeated experiments."
+                    )
+
+            if not((len(expanded_exp["config"]["actor_critic_obs"]) == 0) or (len(expanded_exp["config"]["actor_critic_obs"]) == 2)):
+                raise Exception(
+                    "actor_critic_obs can only be [] or [xx, yy]"
+                )
 
             expanded_exp["config"].update(
                 {
-                    "number_agents": number_agents,
-                    "obs_space": obs_space,
-                    "act_space": act_space,
                     # a list of policy ids of which the policy is trained
                     "learning_policy_ids": [],
                     # a list of policy ids of which the policy is not trained
                     "playing_policy_ids": [],
                     "multiagent": {
                         # configs of policies
-                        "policies": {}
+                        "policies": {},
+                        "policy_mapping_fn": ray.tune.function(
+                            policy_mapping_fn_i2i
+                        )
                     },
+                    "callbacks": {
+                        "on_train_result": ray.tune.function(
+                            on_train_result
+                        )
+                    }
                 }
             )
 
@@ -439,14 +468,13 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
                     learning_policy_id
                 ]
 
-            if expanded_exp["run"] not in ["PPO"]:
-                # build custom_action_dist to be playing mode dist (no exploration)
-                # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
-                raise NotImplementedError
-
             # create configs of playing policies
             for playing_policy_i in range(expanded_exp["config"]["num_learning_policies"], expanded_exp["config"]["number_agents"]):
+                if expanded_exp["run"] not in ["PPO"]:
+                    # build custom_action_dist to be playing mode dist (no exploration)
+                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                    raise NotImplementedError
                 playing_policy_id = policy_i2id(
                     playing_policy_i
                 )
@@ -454,21 +482,27 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
                     playing_policy_id
                 ]
 
+            expanded_exp["config"]["multiagent"]["policies_to_train"] = dcopy(
+                expanded_exp["config"]["learning_policy_ids"]
+            )
+
             if len(expanded_exp["config"]["playing_policy_ids"]) > 0:
 
                 if expanded_exp["config"]["env_config"]["is_shuffle_agents"] == False:
                     logger.warning(
-                        "There are playing policies, which keeps loading learning policies. This means you need to shuffle agents so that the learning policies can generalize to playing policies. Overriding config.env_config.is_shuffle_agents to True."
+                        "There are playing policies, which keeps loading learning policies. " +
+                        "This means you need to shuffle agents so that the learning policies can generalize to playing policies. "
                     )
-                    expanded_exp["config"]["env_config"]["is_shuffle_agents"] = True
+                    input("# WARNING: Need comfirmation.")
 
             elif len(expanded_exp["config"]["playing_policy_ids"]) == 0:
 
                 if expanded_exp["config"]["playing_policy_load_recent_prob"] != None:
                     logger.warning(
-                        "There are no playing agents. Thus, config.playing_policy_load_recent_prob is invalid. Overriding config.playing_policy_load_recent_prob to None."
+                        "There are no playing agents." +
+                        "Thus, config.playing_policy_load_recent_prob will not taking effect."
                     )
-                    expanded_exp["config"]["playing_policy_load_recent_prob"] = None
+                    input("# WARNING: Need comfirmation.")
 
             else:
                 raise ValueError
@@ -491,19 +525,16 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
 
                 policy_config["model"] = {}
 
-                if expanded_exp["config"]["share_layer_policies"] != []:
+                if (expanded_exp["config"]["share_layer_policies"] != []) or (expanded_exp["config"]["actor_critic_obs"] != []):
                     policy_config["model"]["custom_model"] = "ArenaPolicy"
 
                 if expanded_exp["config"]["share_layer_policies"] != []:
                     policy_config["model"]["custom_options"] = {
+                        "shared_scope": get_shared_scope(
+                            share_layer_policies=expanded_exp["config"]["share_layer_policies"],
+                            policy_i=policy_im
+                        ),
                     }
-                    policy_config["model"]["custom_options"]["shared_scope"] = dcopy(
-                        expanded_exp["config"]["share_layer_policies"][
-                            find_in_list_of_list(
-                                expanded_exp["config"]["share_layer_policies"], policy_i
-                            )[0]
-                        ]
-                    )
 
                 expanded_exp["config"]["multiagent"]["policies"][policy_id] = (
                     None,
@@ -512,57 +543,37 @@ def expand_exp(exp_to_expand, config_keys_to_expand, args, parser, expanded_exp_
                     dcopy(policy_config),
                 )
 
-            # policy_mapping_fn: a map from agent_id to policy_id
-            # use policy_mapping_fn_i2i as policy_mapping_fn
-            expanded_exp["config"]["multiagent"]["policy_mapping_fn"] = ray.tune.function(
-                policy_mapping_fn_i2i
-            )
-
-            expanded_exp["config"]["callbacks"] = {
-                "on_train_result": ray.tune.function(
-                    on_train_result
-                )
-            }
-            expanded_exp["config"]["multiagent"]["policies_to_train"] = dcopy(
-                expanded_exp["config"]["learning_policy_ids"]
-            )
-
         return expanded_exps
 
     else:
 
-        # get config_to_expand from exp_to_expand by config_key_to_expand
-        config_key_to_expand = config_keys_to_expand[0]
-        config_to_expand = exp_to_expand
-        config_key_to_expand_in_parse = None
-        for config_key_to_expand_each in config_key_to_expand.split("-"):
-            config_to_expand = config_to_expand[config_key_to_expand_each]
-            # config_key_to_expand_in_parse is the final one in config_key_to_expand.split("-")
-            config_key_to_expand_in_parse = config_key_to_expand_each
+        config_key_this_level = config_keys_to_expand[0]
 
-        if config_key_to_expand in ["env"]:
-            config_to_expand_list = get_list_from_gridsearch(
-                config_to_expand
-            )
-        else:
-            config_to_expand_list = get_and_check_config_keys_for_arena(
-                env=running_configs["env"],
-                config=config_to_expand,
-                default=parser.get_default(
-                    config_key_to_expand_in_parse
-                ),
-            )
+        config_value_this_level = get_config_value_by_key(
+            config_to_get=dcopy(config_to_expand),
+            config_key=config_key_this_level,
+        )
 
-        for config_to_expanded in config_to_expand_list:
-            running_configs[config_key_to_expand] = config_to_expanded
+        config_value_this_level = preprocess_config_value_this_level(
+            running_config=running_config,
+            config_key_this_level=config_key_this_level,
+            config_value_this_level=config_value_this_level,
+            default=parser.get_default(
+                get_key_in_parse_from_config_key(
+                    config_key_this_level
+                )
+            ),
+        )
+
+        for each_config_value_this_level in config_value_this_level:
+            running_config[config_key_this_level] = each_config_value_this_level
             expanded_exps = expand_exp(
-                exp_to_expand=exp_to_expand,
+                config_to_expand=dcopy(config_to_expand),
                 config_keys_to_expand=config_keys_to_expand[1:],
-                args=args,
                 parser=parser,
                 expanded_exp_key_prefix=expanded_exp_key_prefix,
-                running_configs=running_configs,
                 expanded_exps=expanded_exps,
+                running_config=running_config,
             )
 
         return expanded_exps
@@ -580,50 +591,26 @@ def create_arena_exps(exps, args, parser):
 
     arena_exps = {}
 
-    for exp_key, exp in exps.items():
+    for exp_key, config in exps.items():
 
         if args.eager:
-            exp["config"]["eager"] = True
+            config["config"]["eager"] = True
 
         arena_exps.update(
             expand_exp(
-                exp_to_expand=exp,
+                config_to_expand=dcopy(config),
                 config_keys_to_expand=[
                     "env",
                     "config-num_learning_policies",
                     "config-share_layer_policies",
                     "config-actor_critic_obs",
-                    "config-env_config-is_shuffle_agents",
                     "config-env_config-sensors",
                     "config-env_config-multi_agent_obs",
-
+                    "config-env_config-is_shuffle_agents",
                 ],
-                args=args,
                 parser=parser,
                 expanded_exp_key_prefix=exp_key,
             )
         )
-
-        # share_layer_policies_keys = preprocess_share_layer_policies_keys(
-        #     share_layer_policies_keys=share_layer_policies_keys,
-        #     env=env,
-        # )
-        #
-        # is_shuffle_agents_keys = preprocess_is_shuffle_agents_keys(
-        #     is_shuffle_agents_keys=is_shuffle_agents_keys,
-        #     share_layer_policies=share_layer_policies,
-        # )
-        #
-        # varify_actor_critic_obs(actor_critic_obs)
-        #
-        # multi_agent_obs_keys = preprocess_multi_agent_obs_keys(
-        #     multi_agent_obs_keys=multi_agent_obs_keys,
-        #     actor_critic_obs=actor_critic_obs,
-        # )
-        #
-        # num_learning_policies_keys = preprocess_num_learning_policies_keys(
-        #     num_learning_policies_keys=num_learning_policies_keys,
-        #     number_agents=number_agents,
-        # )
 
     return arena_exps

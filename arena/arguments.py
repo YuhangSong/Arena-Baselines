@@ -133,14 +133,6 @@ def create_parser():
     return parser
 
 
-def varify_actor_critic_obs(actor_critic_obs):
-    """Verify that actor_critic_obs is valid.
-    """
-    if not((len(actor_critic_obs) == 0) or (len(actor_critic_obs) == 2)):
-        raise Exception(
-            "actor_critic_obs can only be [] or [xx, yy]")
-
-
 def override_exps_according_to_dummy(exps, dummy):
     """Overide exps according to dummy.
     """
@@ -158,63 +150,6 @@ def override_exps_according_to_dummy(exps, dummy):
             exps[exp_key]["config"]["train_batch_size"] = 100
             exps[exp_key]["config"]["sgd_minibatch_size"] = 100
     return exps
-
-
-def preprocess_num_learning_policies_keys(num_learning_policies_keys, number_agents):
-    """
-    """
-    for i in range(len(num_learning_policies_keys)):
-        if isinstance(num_learning_policies_keys[i], str):
-            if num_learning_policies_keys[i] == "all":
-                num_learning_policies_keys[i] = dcopy(number_agents)
-    return remove_repeats_in_list(num_learning_policies_keys)
-
-
-def preprocess_share_layer_policies_keys(share_layer_policies_keys, env):
-    """
-    """
-    for i in range(len(share_layer_policies_keys)):
-        if isinstance(share_layer_policies_keys[i], str):
-            if share_layer_policies_keys[i] == "team":
-                share_layer_policies_keys[i] = dcopy(
-                    get_social_config(
-                        env
-                    )
-                )
-    return share_layer_policies_keys
-    # return remove_repeats_in_list(share_layer_policies_keys)
-
-
-def preprocess_multi_agent_obs_keys(multi_agent_obs_keys, actor_critic_obs):
-    """
-    If xx or yy of actor_critic_obs are not in multi_agent_obs, multi_agent_obs will be overrided to include them.
-    """
-    for i in range(len(multi_agent_obs_keys)):
-        for each_actor_critic_obs in actor_critic_obs:
-            if each_actor_critic_obs not in multi_agent_obs_keys[i]:
-                multi_agent_obs_keys[i] += [each_actor_critic_obs]
-                logger.warning(
-                    "{} in actor_critic_obs is not in multi_agent_obs, override multi_agent_obs to {}".format(
-                        each_actor_critic_obs,
-                        multi_agent_obs_keys[i]
-                    )
-                )
-    # return remove_repeats_in_list(multi_agent_obs_keys)
-    return multi_agent_obs_keys
-
-
-def preprocess_is_shuffle_agents_keys(is_shuffle_agents_keys, share_layer_policies):
-    is_shuffle_agents_keys = dcopy(is_shuffle_agents_keys)
-    for i in range(len(is_shuffle_agents_keys)):
-        if share_layer_policies != []:
-            if is_shuffle_agents_keys[i] != False:
-                is_shuffle_agents_keys[i] = False
-                logger.warning(
-                    "share_layer_policies is not [], override is_shuffle_agents to {}. ".format(
-                        is_shuffle_agents_keys[i]
-                    )
-                )
-    return remove_repeats_in_list(is_shuffle_agents_keys)
 
 
 def create_exps(args):

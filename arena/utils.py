@@ -7,6 +7,7 @@ import ray
 import platform
 import random
 import gym
+import json
 
 import copy
 from copy import deepcopy as dcopy
@@ -15,6 +16,15 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
+
+
+def print_dict(dict_, indent=1):
+    for key, value in dict_.items():
+        print('\t' * indent + str(key))
+        if isinstance(value, dict):
+            print_dict(value, indent + 1)
+        else:
+            print('\t' * (indent + 1) + str(value))
 
 
 def override_dict(dict_, args):
@@ -147,9 +157,9 @@ def list_subtract(x, y):
 
 
 def to_dir_str(str_):
-    """Convert a str to a str that can be used as a dir path.
+    """Convert a str to a str that can be used as a dir path. Specifically,
 
-        * Convert list [a, b, ...] to string "[a-b-...]"
+        * Convert [a, b, ...] to "(a-b-...)"
     """
     str_ = str_.replace(",", "-")
     str_ = str_.replace(" ", "")
@@ -159,10 +169,109 @@ def to_dir_str(str_):
     return str_
 
 
+def update_config_value_by_key_value(config_to_update, config_key, config_value):
+    """Update config_to_update at config_key to config_value
+
+    Example:
+        Arguments:
+            config_to_update: {
+                "a": "b",
+                "c": {
+                    "d": "e",
+                    "f": "g",
+                },
+            }
+            config_key: "c-f"
+            config_value: "h"
+        Returns:
+            {
+                "a": "b",
+                "c": {
+                    "d": "e",
+                    "f": "h",
+                },
+            }
+    """
+    temp = config_to_update
+    config_key = config_key.split("-")
+    len_config_key = len(config_key)
+    for i in range(len_config_key):
+        if i < (len_config_key - 1):
+            temp = temp[config_key[i]]
+        elif i == (len_config_key - 1):
+            temp[config_key[i]] = config_value
+        else:
+            raise ValueError
+
+
+def get_config_value_by_key(config_to_get, config_key):
+    """Update config_to_update at config_key to config_value
+
+    Example:
+        Arguments:
+            config_to_update: {
+                "a": "b",
+                "c": {
+                    "d": "e",
+                    "f": "g",
+                },
+            }
+            config_key: "c-f"
+        Returns:
+            "g"
+    """
+    temp = config_to_get
+    config_key = config_key.split("-")
+    len_config_key = len(config_key)
+    for i in range(len_config_key):
+        if i < (len_config_key - 1):
+            temp = temp[config_key[i]]
+        elif i == (len_config_key - 1):
+            return temp[config_key[i]]
+        else:
+            raise ValueError
+
+
+def update_config_value_by_config(config_to_update, config):
+    """Update config_to_update according to config
+
+    Example:
+        Arguments:
+            config_to_update: {
+                "a": "b",
+                "c": {
+                    "d": "e",
+                    "f": "g",
+                },
+            }
+            config: {
+                "c-f": "h",
+                "c-d": "g",
+            }
+        Returns:
+            {
+                "a": "b",
+                "c": {
+                    "d": "g",
+                    "f": "h",
+                },
+            }
+    """
+    for config_key, config_value in config.items():
+        update_config_value_by_key_value(
+            config_to_update=config_to_update,
+            config_key=config_key,
+            config_value=config_value,
+        )
+
+
 def simplify_config_key(config_key):
     """
-        Example:
-            "config-env_config-is_shuffle_agents" is converted to "c-ec-isa"
+    Example:
+        Arguments:
+            config_key: "config-env_config-is_shuffle_agents"
+        Returns:
+            "c-ec-isa"
     """
     config_key = config_key.replace("-", " - ")
     config_key = config_key.replace("_", " ")
@@ -172,7 +281,32 @@ def simplify_config_key(config_key):
     return return_
 
 
+def running_config_to_str(running_config):
+    """
+    Example:
+        Arguments:
+            running_config: {'env': 'Arena-Tennis-Sparse-2T1P-Discrete', 'config-num_learning_policies': 1}
+        Returns:
+            "e=Arena-Tennis-Sparse-2T1P-Discrete,c-nlp=1"
+    """
+    str_ = ""
+    for running_config_key, running_config_value in running_config.items():
+        str_ += ",{}={}".format(
+            simplify_config_key(str(running_config_key)),
+            running_config_value,
+        )
+    return str_
+
+
 def find_in_list_of_list(list_, item):
+    """
+    Example:
+        Arguments:
+            list_: [[0,1],[2,3]]
+            item: 2
+        Returns:
+            (1,0)
+    """
     for sub_list in list_:
         if item in sub_list:
             return (list_.index(sub_list), sub_list.index(item))
@@ -199,6 +333,35 @@ def try_reduce_dict(dict_):
         return list(dict_.values())[0]
     else:
         return dict_
+
+
+def get_key_in_parse_from_config_key(config_key):
+    """
+    Example:
+        Arguments:
+            config_key: "a-b-c"
+        Returns:
+            "c"
+    """
+    return config_key.split("-")[-1]
+
+
+def get_shared_scope(share_layer_policies, policy_i):
+    """
+    Example:
+        Arguments:
+            share_layer_policies: [[0,1],[2,3]]
+            policy_i: 2
+        Returns:
+            [2,3]
+    """
+    return dcopy(
+        share_layer_policies[
+            find_in_list_of_list(
+                share_layer_policies, policy_i
+            )[0]
+        ]
+    )
 
 
 def replace_in_tuple(tup, index, value):
