@@ -46,6 +46,14 @@ More documentation of games can be found [here](#games)
 | Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :x: |
 | Arena-Blowblow-Sparse-2T2P-Discrete | :heavy_check_mark: | :x: |
 
+### Utilities
+
+Many research-oriented utilities, such as:
+
+| **Utilities** | **Supported** | **In-progress** |
+| - | - | - |
+| Tune (grid search parameters, schedule trails, yaml config) | :heavy_check_mark: | :heavy_check_mark: |
+
 ## Status: Release
 
 We are currently open to any suggestions or pull requests from the community to make Arena better.
