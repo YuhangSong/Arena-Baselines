@@ -27,13 +27,13 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 | **Baselines** | **Supported** | **Benchmarked** |
 | - | -  | - |
-| Independent Learners | :heavy_check_mark: | :heavy_check_mark: |
-| Self-play | :heavy_check_mark: | :heavy_check_mark: |
-| Population-based Training | :heavy_check_mark: | :heavy_check_mark: |
-| Share Weights: between Arbitrary Agents / Teams | :heavy_check_mark: | :heavy_check_mark: |
-| Sharing observations: own, team_absolute, team_relative, all_absolute, all_relative | :heavy_check_mark: | :heavy_check_mark: |
-| Multiple sensors: first-person visual, second-person visual, vector (lidar), or any combinations | :heavy_check_mark: | :heavy_check_mark: |
-| Use separated observations for actor and critic. | :heavy_check_mark: | :heavy_check_mark: |
+| Independent Learners | :heavy_check_mark: | :x: |
+| Self-play | :heavy_check_mark: | :x: |
+| Population-based Training | :heavy_check_mark: | :x: |
+| Share Weights: between Arbitrary Agents / Teams | :heavy_check_mark: | :x: |
+| Sharing observations: own, team_absolute, team_relative, all_absolute, all_relative | :heavy_check_mark: | :x: |
+| Multiple sensors: first-person visual, second-person visual, vector (lidar), or any combinations | :heavy_check_mark: | :x: |
+| Use separated observations for actor and critic (such as centralized critic and decentralized actors). | :heavy_check_mark: | :x: |
 
 ### Games
 
@@ -43,8 +43,8 @@ More documentation of games can be found [here](#games)
 
 | **Games** | **Supported** | **Benchmarked** |
 | - | - | - |
-| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :heavy_check_mark: |
-| Arena-Blowblow-Sparse-2T2P-Discrete | :heavy_check_mark: | :heavy_check_mark: |
+| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :x: |
+| Arena-Blowblow-Sparse-2T2P-Discrete | :heavy_check_mark: | :x: |
 
 ## Status: Release
 
