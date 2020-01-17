@@ -312,10 +312,15 @@ def on_train_result(info):
 
 
 def preprocess_config_value_this_level(running_config, config_key_this_level, config_value_this_level, default):
+
     config_value_this_level = get_list_from_gridsearch(config_value_this_level)
+
     if config_key_this_level not in ["env"]:
+
         if not is_arena_env(running_config["env"]):
+
             if not is_list_match(config_value_this_level, default):
+
                 logger.warning(
                     "None-arena env does not support the config of {}. ".format(
                         config_key_this_level,
@@ -326,6 +331,7 @@ def preprocess_config_value_this_level(running_config, config_key_this_level, co
                     )
                 )
                 config_value_this_level = [default]
+
     return config_value_this_level
 
 
@@ -334,7 +340,7 @@ def get_env_infos(env, env_config):
 
     Arguments:
         env: id of env
-        env_config:
+        env_config: env_config
     Returns:
         env_infos
     """
@@ -369,6 +375,8 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
     """Expand config_to_expand at config_keys_to_expand, where the config_to_expand could be a grid_search.
 
     Arguments:
+        config_to_expand: config to expand
+        config_keys_to_expand: keys at which config_to_expand will be expanded
         parser: this is used to get default value of configs
         expanded_exp_key_prefix: prefix of expanded_exp_key
         expanded_exps: holding the expanded_exps which is the final return of the function
@@ -376,12 +384,15 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
 
     if len(config_keys_to_expand) == 0:
 
-        # if there is not any config_keys_to_expand, create expanded_exps
+        # if there is not any config_keys_to_expand
 
-        # create expanded_exp_key
-        expanded_exp_key = expanded_exp_key_prefix
-        expanded_exp_key += running_config_to_str(running_config)
-        expanded_exp_key = to_dir_str(expanded_exp_key)
+        # create expanded_exp_key, the key of expanded_exps
+        expanded_exp_key = to_dir_str(
+            expanded_exp_key_prefix +
+            running_config_to_str(
+                running_config
+            )
+        )
 
         # create expanded_exps[expanded_exp_key]
         expanded_exps[expanded_exp_key] = dcopy(
@@ -391,6 +402,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
         # refer expanded_exps[expanded_exp_key] as expanded_exp
         expanded_exp = expanded_exps[expanded_exp_key]
 
+        # update expanded_exp with running_config
         update_config_value_by_config(
             config_to_update=expanded_exp,
             config=running_config,
@@ -398,6 +410,9 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
 
         if is_arena_env(expanded_exp["env"]):
 
+            # if is arena env
+
+            # update expanded_exp["config"] with infos of env
             expanded_exp["config"].update(
                 get_env_infos(
                     env=expanded_exp["env"],
@@ -405,6 +420,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                 )
             )
 
+            # process expanded_exp["config"]["num_learning_policies"]
             if isinstance(expanded_exp["config"]["num_learning_policies"], str):
                 if expanded_exp["config"]["num_learning_policies"] in ["all"]:
                     expanded_exp["config"]["num_learning_policies"] = dcopy(
@@ -419,6 +435,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                 else:
                     raise NotImplementedError
 
+            # process expanded_exp["config"]["share_layer_policies"]
             if isinstance(expanded_exp["config"]["share_layer_policies"], str):
                 if expanded_exp["config"]["share_layer_policies"] in ["team"]:
                     expanded_exp["config"]["share_layer_policies"] = dcopy(
@@ -433,11 +450,13 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                         "This may cause repeated experiments."
                     )
 
+            # process expanded_exp["config"]["actor_critic_obs"]
             if not((len(expanded_exp["config"]["actor_critic_obs"]) == 0) or (len(expanded_exp["config"]["actor_critic_obs"]) == 2)):
                 raise Exception(
                     "actor_critic_obs can only be [] or [xx, yy]"
                 )
 
+            # append necessary configs to expanded_exp["config"]
             expanded_exp["config"].update(
                 {
                     # a list of policy ids of which the policy is trained
@@ -447,11 +466,13 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                     "multiagent": {
                         # configs of policies
                         "policies": {},
+                        # mapping agent to policy
                         "policy_mapping_fn": ray.tune.function(
                             policy_mapping_fn_i2i
                         )
                     },
                     "callbacks": {
+                        # called after each train iteration
                         "on_train_result": ray.tune.function(
                             on_train_result
                         )
@@ -470,11 +491,6 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
 
             # create configs of playing policies
             for playing_policy_i in range(expanded_exp["config"]["num_learning_policies"], expanded_exp["config"]["number_agents"]):
-                if expanded_exp["run"] not in ["PPO"]:
-                    # build custom_action_dist to be playing mode dist (no exploration)
-                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
-                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
-                    raise NotImplementedError
                 playing_policy_id = policy_i2id(
                     playing_policy_i
                 )
@@ -482,11 +498,20 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                     playing_policy_id
                 ]
 
+            # config.multiagent.policies_to_train is config.learning_policy_ids
             expanded_exp["config"]["multiagent"]["policies_to_train"] = dcopy(
                 expanded_exp["config"]["learning_policy_ids"]
             )
 
             if len(expanded_exp["config"]["playing_policy_ids"]) > 0:
+
+                # if there are playing policy
+
+                if expanded_exp["run"] not in ["PPO"]:
+                    # build custom_action_dist to be playing mode dist (no exploration)
+                    # TODO: support pytorch policy and other algorithms, currently only add support for tf_action_dist on PPO
+                    # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
+                    raise NotImplementedError
 
                 if expanded_exp["config"]["env_config"]["is_shuffle_agents"] == False:
                     logger.warning(
@@ -515,6 +540,8 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                 policy_config = {}
 
                 if policy_id in expanded_exp["config"]["playing_policy_ids"]:
+
+                    # for playing policy, create custom_action_dist that does not explore
                     from ray.rllib.models.tf.tf_action_dist import Deterministic as DeterministiContinuous
                     policy_config["custom_action_dist"] = {
                         "Discrete": DeterministicCategorical,
@@ -525,10 +552,13 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
 
                 policy_config["model"] = {}
 
+                # config.share_layer_policies and config.actor_critic_obs are implemented in ArenaPolicy
                 if (expanded_exp["config"]["share_layer_policies"] != []) or (expanded_exp["config"]["actor_critic_obs"] != []):
                     policy_config["model"]["custom_model"] = "ArenaPolicy"
 
                 if expanded_exp["config"]["share_layer_policies"] != []:
+
+                    # pass custom_options for share_layer_policies
                     policy_config["model"]["custom_options"] = {
                         "shared_scope": get_shared_scope(
                             share_layer_policies=expanded_exp["config"]["share_layer_policies"],
@@ -536,6 +566,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                         ),
                     }
 
+                # finish expanded_exp["config"]["multiagent"]["policies"]
                 expanded_exp["config"]["multiagent"]["policies"][policy_id] = (
                     None,
                     expanded_exp["config"]["obs_space"],
@@ -581,7 +612,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
 
 def create_arena_exps(exps, args, parser):
     """Create arena_exps from exps
-    Expand exps with grid_search, this is implemented to override the default support of grid_search for customized configs
+    Expand exps with grid_search, this is implemented to override the default support of grid_search for customized configs.
     """
 
     exps = override_exps_according_to_dummy(
