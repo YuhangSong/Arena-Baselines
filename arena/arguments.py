@@ -130,6 +130,15 @@ def create_parser():
             "This config does not support grid_search. "
         ))
 
+    parser.add_argument(
+        "--eval",
+        action="store_true",
+        default=False,
+        help=(
+            "For evaluation. "
+            "This config does not support grid_search. "
+        ))
+
     return parser
 
 

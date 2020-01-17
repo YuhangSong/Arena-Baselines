@@ -83,12 +83,39 @@ def run(args, parser):
             "This is mainly due to there are grid search used in configs that is not supported by original rllib. "
         )
 
-    run_experiments(
-        arena_exps,
-        scheduler=_make_scheduler(args),
-        queue_trials=args.queue_trials,
-        resume=args.resume,
-    )
+    if args.eval:
+
+        if len(arena_exps.keys()) < 1:
+            raise ValueError
+        elif len(arena_exps.keys()) > 1:
+            raise NotImplementedError
+        else:
+            config = arena_exps[list(arena_exps.keys())[0]]
+
+        from ray.rllib.evaluation.rollout_worker import RolloutWorker
+
+        worker = RolloutWorker(
+            env_creator=lambda _: arena.ArenaRllibEnv(
+                env=config["env"],
+                env_config=arena.update_config_value_by_key_value(
+                    config_to_update=config["config"]["env_config"],
+                    config_key="train_mode",
+                    config_value=False,
+                ),
+            ),
+            policy=config["config"]["multiagent"]["policies"],
+            policy_mapping_fn=config["config"]["multiagent"]["policy_mapping_fn"],
+        )
+        input(worker.sample())
+
+    else:
+
+        run_experiments(
+            arena_exps,
+            scheduler=_make_scheduler(args),
+            queue_trials=args.queue_trials,
+            resume=args.resume,
+        )
 
 
 if __name__ == "__main__":

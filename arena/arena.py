@@ -550,25 +550,30 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                         expanded_exp["config"]["act_space"].__class__.__name__
                     ]
 
-                policy_config["model"] = {}
-
                 # config.share_layer_policies and config.actor_critic_obs are implemented in ArenaPolicy
                 if (expanded_exp["config"]["share_layer_policies"] != []) or (expanded_exp["config"]["actor_critic_obs"] != []):
+
+                    policy_config["model"] = {}
                     policy_config["model"]["custom_model"] = "ArenaPolicy"
 
-                if expanded_exp["config"]["share_layer_policies"] != []:
+                    if expanded_exp["config"]["share_layer_policies"] != []:
 
-                    # pass custom_options for share_layer_policies
-                    policy_config["model"]["custom_options"] = {
-                        "shared_scope": get_shared_scope(
-                            share_layer_policies=expanded_exp["config"]["share_layer_policies"],
-                            policy_i=policy_im
-                        ),
-                    }
+                        # pass custom_options for share_layer_policies
+                        policy_config["model"]["custom_options"] = {
+                            "shared_scope": get_shared_scope(
+                                share_layer_policies=expanded_exp["config"]["share_layer_policies"],
+                                policy_i=policy_im
+                            ),
+                        }
+
+                if expanded_exp["run"] not in ["PPO"]:
+                    raise NotImplementedError
+                else:
+                    from ray.rllib.agents.ppo.ppo_policy import PPOTFPolicy
 
                 # finish expanded_exp["config"]["multiagent"]["policies"]
                 expanded_exp["config"]["multiagent"]["policies"][policy_id] = (
-                    None,
+                    PPOTFPolicy,
                     expanded_exp["config"]["obs_space"],
                     expanded_exp["config"]["act_space"],
                     dcopy(policy_config),

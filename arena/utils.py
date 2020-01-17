@@ -202,6 +202,7 @@ def update_config_value_by_key_value(config_to_update, config_key, config_value)
             temp[config_key[i]] = config_value
         else:
             raise ValueError
+    return config_to_update
 
 
 def get_config_value_by_key(config_to_get, config_key):
@@ -263,6 +264,7 @@ def update_config_value_by_config(config_to_update, config):
             config_key=config_key,
             config_value=config_value,
         )
+    return config_to_update
 
 
 def simplify_config_key(config_key):
