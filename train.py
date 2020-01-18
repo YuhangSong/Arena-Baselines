@@ -124,7 +124,7 @@ def run(args, parser):
             policy=arena_exp["config"]["multiagent"]["policies"],
             policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],
             batch_mode="complete_episodes",
-            batch_steps=100,
+            batch_steps=500,
             num_envs=1,
         )
 
