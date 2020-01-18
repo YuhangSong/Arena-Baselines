@@ -75,9 +75,10 @@ def get_checkpoint_path(logdir, population_i, iteration_i):
     return checkpoint_path
 
 
-def get_possible_logdirs():
+def get_possible_logdirs(base_logdir="~/ray_results/"):
+    input(glob.glob("~/ray_results/Arena-Benchmark" + "*"))
     possible_logdirs = []
-    for file in glob.glob("~/ray_results/Arena-Benchmark" + "*", recursive=True):
+    for file in glob.glob("~/ray_results/Arena-Benchmark" + "*"):
         possible_logdirs += [file]
     input(possible_logdirs)
 
