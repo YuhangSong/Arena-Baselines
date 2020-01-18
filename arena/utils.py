@@ -18,13 +18,14 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 
-def print_dict(dict_, indent=1):
+def dict_to_print_str(dict_, indent=1, str_=""):
     for key, value in dict_.items():
-        print('\t' * indent + str(key))
+        str_ += ('\t' * indent + str(key) + "\n")
         if isinstance(value, dict):
-            print_dict(value, indent + 1)
+            str_ += (value, indent + 1)
         else:
-            print('\t' * (indent + 1) + str(value))
+            str_ += ('\t' * (indent + 1) + str(value) + "\n")
+    return str_
 
 
 def override_dict(dict_, args):

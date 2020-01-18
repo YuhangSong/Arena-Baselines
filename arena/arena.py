@@ -75,6 +75,13 @@ def get_checkpoint_path(logdir, population_i, iteration_i):
     return checkpoint_path
 
 
+def get_possible_logdirs():
+    possible_logdirs = []
+    for file in glob.glob("~/ray_results/Arena-Benchmark" + "*", recursive=True):
+        possible_logdirs += [file]
+    input(possible_logdirs)
+
+
 def get_possible_populations(logdir):
     """Get possible populations on the disk, sorted in order
     """
@@ -567,6 +574,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                         }
 
                 if expanded_exp["run"] not in ["PPO"]:
+                    # # TODO: currently only support PPO
                     raise NotImplementedError
                 else:
                     from ray.rllib.agents.ppo.ppo_policy import PPOTFPolicy
