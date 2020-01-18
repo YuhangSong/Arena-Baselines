@@ -3,7 +3,7 @@ import re
 import cv2
 import io
 import logging
-import ray
+
 import platform
 import random
 import gym
@@ -11,6 +11,10 @@ import json
 
 import copy
 from copy import deepcopy as dcopy
+
+import ray
+from ray.rllib.utils.debug import summarize
+from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
 
 import numpy as np
 
@@ -20,14 +24,55 @@ plt.switch_backend('agg')
 logger = logging.getLogger(__name__)
 
 
-def dict_to_print_str(dict_, indent=1, str_=""):
-    for key, value in dict_.items():
-        str_ += ('\t' * indent + str(key) + "\n")
-        if isinstance(value, dict):
-            str_ += (value, indent + 1)
-        else:
-            str_ += ('\t' * (indent + 1) + str(value) + "\n")
-    return str_
+def summarize_sample_batch(sample_batch):
+
+    summarization = {}
+
+    if isinstance(sample_batch, MultiAgentBatch):
+
+        for policy_id, sample_batch_per_policy in sample_batch.policy_batches.items():
+
+            summarization[policy_id] = summarize_sample_batch_per_policy(
+                sample_batch_per_policy)
+
+    else:
+
+        raise NotImplementedError
+
+    return summarization
+
+
+def summarize_sample_batch_per_policy(sample_batch_per_policy):
+
+    summarization_per_policy = {}
+
+    summarization_keys = [
+        "episode_rewards",
+        "episode_lengths",
+    ]
+
+    for sample_batch_per_policy_per_episode in sample_batch_per_policy.split_by_episode():
+        sample_batch_per_policy_per_episode = sample_batch_per_policy_per_episode.data
+
+        for summarization_key in summarization_keys:
+            if summarization_key not in summarization_per_policy.keys():
+                summarization_per_policy[summarization_key] = []
+
+        summarization_per_policy["episode_rewards"] += [
+            np.sum(sample_batch_per_policy_per_episode["rewards"])]
+        summarization_per_policy["episode_lengths"] += [
+            np.shape(sample_batch_per_policy_per_episode["rewards"])[0]]
+
+    for summarization_key in summarization_keys:
+
+        summarization_per_policy["{}_mean".format(summarization_key)] = np.mean(
+            summarization_per_policy[summarization_key])
+        summarization_per_policy["{}_max".format(summarization_key)] = np.max(
+            summarization_per_policy[summarization_key])
+        summarization_per_policy["{}_min".format(summarization_key)] = np.min(
+            summarization_per_policy[summarization_key])
+
+    return summarization_per_policy
 
 
 def override_dict(dict_, args):
@@ -143,7 +188,7 @@ def human_select(options, prefix_msg="", key="unamed"):
             "WARNING: {} There are multiple {} as follows: \n{} \nPlease select one of them by number (0-{}):".format(
                 prefix_msg,
                 key,
-                dict_to_print_str(selection_dict),
+                summarize(selection_dict),
                 len(selection_dict.keys()) - 1,
             )
         )

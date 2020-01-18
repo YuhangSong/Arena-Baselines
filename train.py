@@ -19,6 +19,7 @@ import ray
 from ray.tests.cluster_utils import Cluster
 from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
+from ray.rllib.utils.debug import summarize
 
 from arena import *
 
@@ -173,8 +174,6 @@ def run(args, parser):
                 iteration_i=iteration_i,
             )
 
-            print(checkpoint_path)
-
             policy.set_weights(
                 pickle.load(
                     open(
@@ -183,6 +182,12 @@ def run(args, parser):
                     )
                 )
             )
+
+        while True:
+
+            sample_batch = worker.sample()
+            summarization = summarize_sample_batch(sample_batch)
+            input(summarize(summarization))
 
     else:
 

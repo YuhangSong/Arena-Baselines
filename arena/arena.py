@@ -302,6 +302,7 @@ def on_train_result(info):
                 )
 
                 try:
+                    print(policy.model.model_config)
                     policy.set_weights(
                         pickle.load(
                             open(
@@ -558,6 +559,8 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                 policy_id = policy_i2id(policy_i)
 
                 policy_config = {}
+
+                policy_config["vf_share_layers"] = True,
 
                 if policy_id in expanded_exp["config"]["playing_policy_ids"]:
 
