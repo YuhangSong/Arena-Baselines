@@ -144,6 +144,7 @@ def create_parser():
         default=None,
         help=(
             "For evaluation. The logdir you would like to evaluate over. "
+            "If not specified, you will be premoted to select one. "
             "This config does not support grid_search. "
         ))
 

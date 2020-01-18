@@ -17,6 +17,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
+logger = logging.getLogger(__name__)
+
 
 def dict_to_print_str(dict_, indent=1, str_=""):
     for key, value in dict_.items():
@@ -127,6 +129,60 @@ def get_social_config(env):
         all_list += [copy.deepcopy(t_list)]
 
     return all_list
+
+
+def human_select(options, prefix_msg="", key="unamed"):
+
+    options = list(options)
+
+    selection_dict = list_to_selection_dict(options)
+
+    while True:
+
+        input_ = input(
+            "WARNING: {} There are multiple {} as follows: \n{} \nPlease select one of them by number (0-{}):".format(
+                prefix_msg,
+                key,
+                dict_to_print_str(selection_dict),
+                len(selection_dict.keys()) - 1,
+            )
+        )
+
+        if input_ == "":
+            selected_i = 0
+
+        else:
+            try:
+                selected_i = int(input_)
+
+            except Exception as e:
+                logger.warning("input cannot be interpreted as int, retrying")
+                continue
+
+        if selected_i not in selection_dict.keys():
+            logger.warning("selection is not with in range, retrying. ")
+            continue
+
+        break
+
+    return selection_dict[selected_i]
+
+
+def list_to_selection_dict(list_):
+    """
+    Example:
+        Arguments:
+            list_: ["a","b"]
+        Returns:
+            {
+                0: "a",
+                1: "b",
+            }
+    """
+    selection_dict = {}
+    for i in range(len(list_)):
+        selection_dict[i] = list_[i]
+    return selection_dict
 
 
 def prepare_path(path):

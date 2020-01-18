@@ -90,101 +90,99 @@ def run(args, parser):
         if len(arena_exps.keys()) < 1:
             raise ValueError
 
-        elif len(arena_exps.keys()) > 1:
+        elif len(arena_exps.keys()) >= 1:
 
-            # if there are multiple arena_exps, select one
+            if len(arena_exps.keys()) > 1:
 
-            selection_dict = {}
-            for i in range(len(arena_exps.keys())):
-                selection_dict[i] = list(arena_exps.keys())[i]
-
-            input_ = input(
-                "WARNING: There are multiple arena_exps as follows: \n{} \nPlease select one of them by number (0-{}):".format(
-                    dict_to_print_str(selection_dict),
-                    len(arena_exps.keys()) - 1,
+                arena_exp_key = human_select(
+                    options=list(arena_exps.keys()),
+                    key="arena_exp_key",
                 )
-            )
 
-            selected_i = int(input_)
+            else:
+                # if there is just one arena_exps
+                arena_exp_key = list(arena_exps.keys())[0]
 
-        else:
-
-            # if there is just one arena_exps
-            selected_i = 0
-
-        selected_key = list(arena_exps.keys())[selected_i]
-
-        logger.info("Evaluating arena_exp: {}".format(
-            selected_key,
+        logger.info("Evaluating arena_exp_key: {}".format(
+            arena_exp_key,
         ))
 
-        config = arena_exps[selected_key]
+        arena_exp = arena_exps[arena_exp_key]
 
         from ray.rllib.evaluation.rollout_worker import RolloutWorker
 
         worker = RolloutWorker(
             env_creator=lambda _: ArenaRllibEnv(
-                env=config["env"],
+                env=arena_exp["env"],
                 env_config=update_config_value_by_key_value(
-                    config_to_update=config["config"]["env_config"],
+                    config_to_update=arena_exp["config"]["env_config"],
                     config_key="train_mode",
                     config_value=False,
                 ),
             ),
-            policy=config["config"]["multiagent"]["policies"],
-            policy_mapping_fn=config["config"]["multiagent"]["policy_mapping_fn"],
+            policy=arena_exp["config"]["multiagent"]["policies"],
+            policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],
         )
 
-        while True:
-            if args.eval_logdir is None:
-                possible_logdirs = get_possible_logdirs()
-                args.eval_logdir = input(
-                    "args.eval_logdir is required, you can type it in now:")
+        for policy_id, policy in worker.policy_map.items():
+
+            logdir = dcopy(args.eval_logdir)
+
+            if logdir is None:
+                logdir = human_select(
+                    options=get_possible_logdirs(),
+                    prefix_msg="Setting policy {}.".format(
+                        policy_id,
+                    ),
+                    key="logdir",
+                )
             else:
-                if os.path.exists(args.eval_logdir):
-                    break
-                else:
-                    logger.warning("args.eval_logdir={} does not exist. You will be promoted to choose one that exists. ".format(
-                        args.eval_logdir
+                if not os.path.exists(logdir):
+                    raise Exception("logdir={} does not exist. ".format(
+                        logdir
                     ))
-                    args.eval_logdir = None
 
-        possible_populations = get_possible_populations(
-            logdir=args.eval_logdir)
+            possible_populations = get_possible_populations(
+                logdir=logdir
+            )
 
-        while True:
-            population_i = int(input("possible_populations are {}, choose one of them:".format(
-                possible_populations
-            )))
-            if population_i in possible_populations:
-                break
-            else:
-                logger.warning(
-                    "population_i should be in possible_populations")
+            population_i = human_select(
+                options=get_possible_populations(
+                    logdir=logdir
+                ),
+                prefix_msg="Setting policy {}.".format(
+                    policy_id,
+                ),
+                key="population_i",
+            )
 
-        possible_iterations = get_possible_iterations()
+            iteration_i = human_select(
+                options=get_possible_iterations(
+                    logdir=logdir,
+                    population_i=population_i,
+                ),
+                prefix_msg="Setting policy {}.".format(
+                    policy_id,
+                ),
+                key="iteration_i",
+            )
 
-        while True:
-            iteration_i = int(input("possible_iterations are {}, choose one of them:".format(
-                possible_populations
-            )))
-            if iteration_i in possible_iterations:
-                break
-            else:
-                logger.warning("iteration_i should be in possible_iterations")
+            checkpoint_path = get_checkpoint_path(
+                logdir=logdir,
+                population_i=population_i,
+                iteration_i=iteration_i,
+            )
 
-        checkpoint_path = get_checkpoint_path(
-            logdir=args.eval_logdir,
-            population_i=population_i,
-            iteration_i=iteration_i,
-        )
+            print(checkpoint_path)
 
-        logger.info("loading from checkpoint_path: {}".format(
-            checkpoint_path
-        ))
-
-        input(worker.policy_map)
-        input(worker.sample())
+            policy.set_weights(
+                pickle.load(
+                    open(
+                        checkpoint_path,
+                        "rb"
+                    )
+                )
+            )
 
     else:
 
@@ -197,7 +195,6 @@ def run(args, parser):
 
 
 if __name__ == "__main__":
-    get_possible_logdirs()
     parser = create_parser()
     args = parser.parse_args()
     run(args, parser)
