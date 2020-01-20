@@ -50,9 +50,11 @@ More documentation of games can be found [here](#games)
 
 Many research-oriented utilities, such as:
 
-| **Utilities** | **Supported** | **In-progress** |
-| - | - | - |
-| Tune (grid search parameters, schedule trails, yaml config) | :heavy_check_mark: | :heavy_check_mark: |
+| **Utilities** | **Supported**(:heavy_check_mark:) / **In-progress**(:heavy_minus_sign:) |
+| - | - |
+| Tune (grid search parameters, schedule trails, yaml config and etc.) | :heavy_check_mark: |
+| Interactively load and evaluate trained policies/populations | :heavy_check_mark: |
+| Visualize performance in population | :heavy_minus_sign: |
 
 ## Status: Release
 
