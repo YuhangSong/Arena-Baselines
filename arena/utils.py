@@ -176,7 +176,7 @@ def get_social_config(env):
     return all_list
 
 
-def human_select(options, prefix_msg="", key="unamed"):
+def human_select(options, prefix_msg="", key="unamed", default=-1):
 
     options = list(options)
 
@@ -185,16 +185,15 @@ def human_select(options, prefix_msg="", key="unamed"):
     while True:
 
         input_ = input(
-            "WARNING: {} There are multiple {} as follows: \n{} \nPlease select one of them by number (0-{}):".format(
+            "WARNING: {} There are multiple {} as follows: \n{} \nPlease select one of them by number (negative numbers are supported):".format(
                 prefix_msg,
                 key,
                 summarize(selection_dict),
-                len(selection_dict.keys()) - 1,
             )
         )
 
         if input_ == "":
-            selected_i = 0
+            selected_i = default
 
         else:
             try:
@@ -204,13 +203,17 @@ def human_select(options, prefix_msg="", key="unamed"):
                 logger.warning("input cannot be interpreted as int, retrying")
                 continue
 
-        if selected_i not in selection_dict.keys():
-            logger.warning("selection is not with in range, retrying. ")
-            continue
-
         break
 
-    return selection_dict[selected_i]
+    logger.info("You select \n{}".format(
+        summarize({
+            "{}".format(
+                selected_i,
+            ): options[selected_i]
+        })
+    ))
+
+    return options[selected_i]
 
 
 def list_to_selection_dict(list_):
