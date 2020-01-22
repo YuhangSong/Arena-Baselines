@@ -302,7 +302,6 @@ def on_train_result(info):
                 )
 
                 try:
-                    print(policy.model.model_config)
                     policy.set_weights(
                         pickle.load(
                             open(

@@ -33,7 +33,7 @@ Arena-Benchmark:
         # === Multi-agent Settings ===
         iterations_per_reload:
             grid_search:
-                - 1
+                - 10
                 # - 10
         num_learning_policies:
             grid_search:

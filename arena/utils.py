@@ -264,9 +264,10 @@ def list_subtract(x, y):
 def to_dir_str(str_):
     """Convert a str to a str that can be used as a dir path. Specifically,
 
-        * Convert [a, b, ...] to "(a-b-...)"
+        * remove spaces
+        * remove '
+        * replace [] with ()
     """
-    str_ = str_.replace(",", "-")
     str_ = str_.replace(" ", "")
     str_ = str_.replace("'", "")
     str_ = str_.replace("[", "(")
