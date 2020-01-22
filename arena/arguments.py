@@ -151,22 +151,39 @@ def create_parser():
     return parser
 
 
-def override_exps_according_to_dummy(exps, dummy):
-    """Overide exps according to dummy.
+def override_exps_to_dummy(exps):
+    """Overide exps to dummy mode.
     """
     exps = dcopy(exps)
-    if dummy:
-        logger.warning(
-            "Run in dummy mode. "
-            "Overriding configs. "
-        )
-        for exp_key in exps.keys():
-            exps[exp_key]["config"]["num_gpus"] = 0
-            exps[exp_key]["config"]["num_workers"] = 1
-            exps[exp_key]["config"]["num_envs_per_worker"] = 1
-            exps[exp_key]["config"]["sample_batch_size"] = 100
-            exps[exp_key]["config"]["train_batch_size"] = 100
-            exps[exp_key]["config"]["sgd_minibatch_size"] = 100
+
+    logger.warning(
+        "Overriding configs to dummy mode. "
+    )
+
+    for exp_key in exps.keys():
+        exps[exp_key]["config"]["num_gpus"] = 0
+        exps[exp_key]["config"]["num_workers"] = 1
+        exps[exp_key]["config"]["num_envs_per_worker"] = 1
+        exps[exp_key]["config"]["sample_batch_size"] = 100
+        exps[exp_key]["config"]["train_batch_size"] = 100
+        exps[exp_key]["config"]["sgd_minibatch_size"] = 100
+
+    return exps
+
+
+def override_exps_to_eval(exps):
+    """Overide exps to eval mode.
+    """
+    exps = dcopy(exps)
+
+    logger.warning(
+        "Overriding configs to eval mode. "
+    )
+
+    for exp_key in exps.keys():
+        exps[exp_key]["config"]["num_learning_policies"] = 0
+        exps[exp_key]["config"]["env_config"]["train_mode"] = False
+
     return exps
 
 

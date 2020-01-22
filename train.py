@@ -115,11 +115,7 @@ def run(args, parser):
         worker = RolloutWorker(
             env_creator=lambda _: ArenaRllibEnv(
                 env=arena_exp["env"],
-                env_config=update_config_value_by_key_value(
-                    config_to_update=arena_exp["config"]["env_config"],
-                    config_key="train_mode",
-                    config_value=False,
-                ),
+                env_config=arena_exp["config"]["env_config"],
             ),
             policy=arena_exp["config"]["multiagent"]["policies"],
             policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],

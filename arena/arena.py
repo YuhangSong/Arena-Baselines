@@ -644,10 +644,11 @@ def create_arena_exps(exps, args, parser):
     Expand exps with grid_search, this is implemented to override the default support of grid_search for customized configs.
     """
 
-    exps = override_exps_according_to_dummy(
-        exps=exps,
-        dummy=args.dummy,
-    )
+    if args.eval:
+        exps = override_exps_to_eval(exps)
+
+    if args.dummy:
+        exps = override_exps_to_dummy(exps)
 
     arena_exps = {}
 
