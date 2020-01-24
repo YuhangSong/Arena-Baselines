@@ -3,6 +3,27 @@ from .arena import *
 
 
 def inquire_checkpoints(policy_ids):
+    """Promote a series if inquires to get checkpoints.
+    Arguments:
+        policy_ids: the policy_ids to inquire
+    Returns:
+        Example: {
+            policy_0:
+                logdir_0:
+                    population_0:
+                        [
+                            iteration_0,
+                            iteration_1,
+                            ...,
+                        ]
+                    population_1:
+                        ...,
+                logdir_1:
+                    ...,
+            policy_1:
+                ...,
+        }
+    """
 
     checkpoints = {}
     prefix_msg = 'Setting '
@@ -14,23 +35,22 @@ def inquire_checkpoints(policy_ids):
         )
 
         answers = prompt(
-            [
-                {
-                    'type': 'list',
-                    'name': 'policy_id',
-                    'message': '{}. Would you like to copy checkpoints config from the following policy_id?'.format(
-                        prefix_msg,
-                    ),
-                    'choices': list(checkpoints.keys()) + ['No, create a new config']
-                },
-            ],
+            [{
+                'type': 'list',
+                'name': 'policy_id',
+                'message': '{}. Would you like to copy config of checkpoints from that of the following policy_id?'.format(
+                    prefix_msg,
+                ),
+                'choices': list(checkpoints.keys()) + ['no, create a new one']
+            }],
             style=custom_style_2,
         )
 
         if answers['policy_id'] in checkpoints.keys():
 
             checkpoints[policy_id] = dcopy(
-                checkpoints[answers['policy_id']])
+                checkpoints[answers['policy_id']]
+            )
 
         else:
 
@@ -39,33 +59,32 @@ def inquire_checkpoints(policy_ids):
             logdirs = human_select(
                 choices=get_possible_logdirs(),
                 prefix_msg=prefix_msg,
-                key="logdir",
+                name="logdir",
             )
 
             for logdir in logdirs:
 
                 prefix_msg += ", logdir={}".format(
-                    '...' + logdir[-5:],
+                    '...' + logdir.split("_")[-1],
                 )
 
                 answers = prompt(
-                    [
-                        {
-                            'type': 'list',
-                            'name': 'logdir',
-                            'message': '{}. Would you like to copy checkpoints config from the following logdir?'.format(
-                                prefix_msg,
-                            ),
-                            'choices': list(checkpoints[policy_id].keys()) + ['No, create a new config']
-                        },
-                    ],
+                    [{
+                        'type': 'list',
+                        'name': 'logdir',
+                        'message': '{}. Would you like to copy config of checkpoints from that of the following logdir?'.format(
+                            prefix_msg,
+                        ),
+                        'choices': list(checkpoints[policy_id].keys()) + ['no, create a new one']
+                    }],
                     style=custom_style_2,
                 )
 
                 if answers['logdir'] in checkpoints[policy_id].keys():
 
                     checkpoints[policy_id][logdir] = dcopy(
-                        checkpoints[policy_id][answers['logdir']])
+                        checkpoints[policy_id][answers['logdir']]
+                    )
 
                 else:
 
@@ -76,7 +95,7 @@ def inquire_checkpoints(policy_ids):
                             logdir=logdir
                         ),
                         prefix_msg=prefix_msg,
-                        key="population_i",
+                        name="population_i",
                     )
 
                     for population_i in population_is:
@@ -86,23 +105,22 @@ def inquire_checkpoints(policy_ids):
                         )
 
                         answers = prompt(
-                            [
-                                {
-                                    'type': 'list',
-                                    'name': 'population_i',
-                                    'message': '{}. Would you like to copy checkpoints config from the following population_i?'.format(
-                                        prefix_msg,
-                                    ),
-                                    'choices': list(checkpoints[policy_id][logdir].keys()) + ['No, create a new config']
-                                },
-                            ],
+                            [{
+                                'type': 'list',
+                                'name': 'population_i',
+                                'message': '{}. Would you like to copy config of checkpoints from that of the following population_i?'.format(
+                                    prefix_msg,
+                                ),
+                                'choices': list(checkpoints[policy_id][logdir].keys()) + ['no, create a new one']
+                            }],
                             style=custom_style_2,
                         )
 
                         if answers['population_i'] in checkpoints[policy_id][logdir].keys():
 
                             checkpoints[policy_id][logdir][population_i] = dcopy(
-                                checkpoints[policy_id][logdir][answers['population_i']])
+                                checkpoints[policy_id][logdir][answers['population_i']]
+                            )
 
                         else:
 
@@ -114,16 +132,14 @@ def inquire_checkpoints(policy_ids):
                             )
 
                             answers = prompt(
-                                [
-                                    {
-                                        'type': 'input',
-                                        'name': 'step_size',
-                                        'message': 'There are {} possible iteration indexes. Enter the step size of skipping:'.format(
-                                            len(possible_iteration_indexes)
-                                        ),
-                                        'default': '1'
-                                    },
-                                ],
+                                [{
+                                    'type': 'input',
+                                    'name': 'step_size',
+                                    'message': 'There are {} possible iteration indexes. Enter the step size of skipping:'.format(
+                                        len(possible_iteration_indexes)
+                                    ),
+                                    'default': '1'
+                                }],
                                 style=custom_style_2,
                             )
 
@@ -134,7 +150,7 @@ def inquire_checkpoints(policy_ids):
                                     int(answers['step_size'])
                                 ),
                                 prefix_msg=prefix_msg,
-                                key="iteration_index",
+                                name="iteration_index",
                             )
 
                             for iteration_index in iteration_indexes:
@@ -148,6 +164,20 @@ def inquire_checkpoints(policy_ids):
 
 
 def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
+    """
+    Returns:
+        result_matrix:
+            nested list with the shape of: (
+                len(checkpoint_paths[policy_ids[0]]),
+                len(checkpoint_paths[policy_ids[1]]),
+                ...,
+                len(policy_ids)
+            )
+            Example:
+                Number at result_matrix[1,3,0] means the episode_rewards_mean of policy_0
+                when load policy_0 with checkpoint_paths[policy_ids[0]][1]
+                and load policy_1 with checkpoint_paths[policy_ids[1]][3]
+    """
 
     if policy_ids is None:
         policy_ids = list(checkpoint_paths.keys())

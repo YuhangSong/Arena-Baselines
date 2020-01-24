@@ -395,6 +395,38 @@ def get_env_directory(env_name):
     }[platform.system()]
 
 
+def is_arena_env(each_env):
+    """Check if a env (string) is an arena env.
+    """
+    return each_env[:len(ARENA_ENV_PREFIX)] == ARENA_ENV_PREFIX
+
+
+def is_all_arena_env(env):
+    """Check if all env in a grid_search env are arena env.
+    If env is not a grid_search, return is_arena_env.
+    """
+    if is_grid_search(env):
+        for each_env in env["grid_search"]:
+            if not is_arena_env(each_env):
+                return False
+        return True
+    else:
+        return is_arena_env(env)
+
+
+def is_any_arena_env(env):
+    """Check if any env in a grid_search env is arena env.
+    If env is not a grid_search, return is_arena_env.
+    """
+    if is_grid_search(env):
+        for each_env in env["grid_search"]:
+            if is_arena_env(each_env):
+                return True
+        return False
+    else:
+        return is_arena_env(env)
+
+
 def remove_arena_env_prefix(env):
     """Remove ARENA_ENV_PREFIX from a env (possibly a grid_search).
     """

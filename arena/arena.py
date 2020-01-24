@@ -10,11 +10,12 @@ from copy import deepcopy as dcopy
 
 import numpy as np
 
-from .envs import *
-from .models import *
 from .utils import *
 from .constants import *
-from .arguments import *
+
+from .envs import ArenaRllibEnv, is_arena_env
+from .models import DeterministicCategorical
+from .arguments import create_parser, override_exps_to_dummy, override_exps_to_eval
 
 logger = logging.getLogger(__name__)
 
@@ -23,38 +24,6 @@ def policy_mapping_fn_i2i(agent_id):
     """A policy_mapping_fn that maps agent i to policy i.
     """
     return policy_i2id(agent_id2i(agent_id))
-
-
-def is_arena_env(each_env):
-    """Check if a env (string) is an arena env.
-    """
-    return each_env[:len(ARENA_ENV_PREFIX)] == ARENA_ENV_PREFIX
-
-
-def is_all_arena_env(env):
-    """Check if all env in a grid_search env are arena env.
-    If env is not a grid_search, return is_arena_env.
-    """
-    if is_grid_search(env):
-        for each_env in env["grid_search"]:
-            if not is_arena_env(each_env):
-                return False
-        return True
-    else:
-        return is_arena_env(env)
-
-
-def is_any_arena_env(env):
-    """Check if any env in a grid_search env is arena env.
-    If env is not a grid_search, return is_arena_env.
-    """
-    if is_grid_search(env):
-        for each_env in env["grid_search"]:
-            if is_arena_env(each_env):
-                return True
-        return False
-    else:
-        return is_arena_env(env)
 
 
 def get_checkpoint_path(logdir, population_i, iteration_i):

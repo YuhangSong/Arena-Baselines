@@ -37,7 +37,8 @@ def summarize_sample_batch(sample_batch):
         for policy_id, sample_batch_per_policy in sample_batch.policy_batches.items():
 
             summarization[policy_id] = summarize_sample_batch_per_policy(
-                sample_batch_per_policy)
+                sample_batch_per_policy
+            )
 
     else:
 
@@ -47,34 +48,71 @@ def summarize_sample_batch(sample_batch):
 
 
 def summarize_sample_batch_per_policy(sample_batch_per_policy):
-
-    summarization_per_policy = {}
+    """
+    Example:
+        Arguments:
+            sample_batch_per_policy:
+                { 'data': { 'action_logp': np.ndarray((110,), dtype=float32, min=-2.746, max=-1.997, mean=-2.18),
+                            'action_prob': np.ndarray((110,), dtype=float32, min=0.064, max=0.136, mean=0.115),
+                            'actions': np.ndarray((110,), dtype=int64, min=0.0, max=8.0, mean=3.445),
+                            'advantages': np.ndarray((110,), dtype=float32, min=-0.484, max=0.584, mean=0.083),
+                            'agent_index': np.ndarray((110,), dtype=int64, min=0.0, max=0.0, mean=0.0),
+                            'behaviour_logits': np.ndarray((110, 9), dtype=float32, min=-0.503, max=0.26, mean=0.031),
+                            'dones': np.ndarray((110,), dtype=bool, min=0.0, max=1.0, mean=0.064),
+                            'eps_id': np.ndarray((110,), dtype=int64, min=234012419.0, max=1905914944.0, mean=1067234709.982),
+                            'infos': np.ndarray((110,), dtype=object, head={'text_observation': ['', ''], 'brain_info': <mlagents.envs.brain.BrainInfo object at 0x13e72d208>}),
+                            'new_obs': np.ndarray((110, 84), dtype=float32, min=0.0, max=0.554, mean=0.286),
+                            'obs': np.ndarray((110, 84), dtype=float32, min=0.0, max=0.554, mean=0.286),
+                            'prev_actions': np.ndarray((110,), dtype=int64, min=0.0, max=8.0, mean=3.273),
+                            'prev_rewards': np.ndarray((110,), dtype=float32, min=0.0, max=0.0, mean=0.0),
+                            'rewards': np.ndarray((110,), dtype=float32, min=0.0, max=1.0, mean=0.036),
+                            't': np.ndarray((110,), dtype=int64, min=0.0, max=22.0, mean=7.673),
+                            'unroll_id': np.ndarray((110,), dtype=int64, min=0.0, max=6.0, mean=3.0),
+                            'value_targets': np.ndarray((110,), dtype=float32, min=0.0, max=1.0, mean=0.546),
+                            'vf_preds': np.ndarray((110,), dtype=float32, min=0.31, max=0.491, mean=0.463)},
+                  'type': 'SampleBatch'}
+        Returns:
+            summarization_per_policy:
+                {'episode_rewards_mean': 0.33333334,
+                 'episode_rewards_max': 1.0,
+                 'episode_rewards_min': 0.0,
+                 'episode_lengths_mean': 19.666666666666668,
+                 'episode_lengths_max': 26,
+                 'episode_lengths_min': 14}
+    """
 
     summarization_keys = [
         "episode_rewards",
         "episode_lengths",
     ]
 
+    summarization_per_policy_episode = {}
     for sample_batch_per_policy_per_episode in sample_batch_per_policy.split_by_episode():
         sample_batch_per_policy_per_episode = sample_batch_per_policy_per_episode.data
 
         for summarization_key in summarization_keys:
-            if summarization_key not in summarization_per_policy.keys():
-                summarization_per_policy[summarization_key] = []
+            if summarization_key not in summarization_per_policy_episode.keys():
+                summarization_per_policy_episode[summarization_key] = []
 
-        summarization_per_policy["episode_rewards"] += [
-            np.sum(sample_batch_per_policy_per_episode["rewards"])]
-        summarization_per_policy["episode_lengths"] += [
-            np.shape(sample_batch_per_policy_per_episode["rewards"])[0]]
+        summarization_per_policy_episode["episode_rewards"] += [
+            np.sum(sample_batch_per_policy_per_episode["rewards"])
+        ]
+        summarization_per_policy_episode["episode_lengths"] += [
+            np.shape(sample_batch_per_policy_per_episode["rewards"])[0]
+        ]
 
+    summarization_per_policy = {}
     for summarization_key in summarization_keys:
 
         summarization_per_policy["{}_mean".format(summarization_key)] = np.mean(
-            summarization_per_policy[summarization_key])
+            summarization_per_policy_episode[summarization_key]
+        )
         summarization_per_policy["{}_max".format(summarization_key)] = np.max(
-            summarization_per_policy[summarization_key])
+            summarization_per_policy_episode[summarization_key]
+        )
         summarization_per_policy["{}_min".format(summarization_key)] = np.min(
-            summarization_per_policy[summarization_key])
+            summarization_per_policy_episode[summarization_key]
+        )
 
     return summarization_per_policy
 
@@ -180,13 +218,11 @@ def get_social_config(env):
     return all_list
 
 
-def human_select(choices, prefix_msg="", key="unamed", default_index=-1):
+def human_select(choices, prefix_msg="", name="unamed", default_index=-1):
 
     choices = list(choices)
 
-    if len(choices) < 1:
-        raise ValueError
-
+    # it only works on str
     for i in range(len(choices)):
         choices[i] = str(choices[i])
 
@@ -197,24 +233,21 @@ def human_select(choices, prefix_msg="", key="unamed", default_index=-1):
 
     choices[default_index]['checked'] = True
 
-    questions = []
-    question = {
+    questions = [{
         'type': 'checkbox',
         'message': "{}. There are multiple {} as follows:".format(
             prefix_msg,
-            key,
+            name,
         ),
-        'name': key,
+        'name': name,
         'choices': choices,
         'validate': lambda answer: 'You must choose at least one of them.'
         if len(answer) == 0 else True,
-        # 'pointer_index': default_index if default_index > 0 else (len(choices) + default_index),
-    }
-    questions += [question]
+    }]
 
     answers = prompt(questions, style=custom_style_2)
 
-    return answers[key]
+    return answers[name]
 
 
 def list_to_selection_dict(list_):
