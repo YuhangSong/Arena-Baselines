@@ -1,5 +1,6 @@
 from .arena import *
 from .eval import *
+from .vis import *
 
 from ray.tune.registry import register_env
 

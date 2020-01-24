@@ -478,30 +478,3 @@ def replace_in_tuple(tup, index, value):
     lst[index] = value
     tup = tuple(lst)
     return tup
-
-
-def get_img_from_fig(fig, dpi=180):
-    # define a function which returns an image as numpy array from figure
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=180)
-    buf.seek(0)
-    img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
-    buf.close()
-    img = cv2.imdecode(img_arr, 1)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img
-
-
-def plot_feature(data, label=None, y_range=None, new_fig=True, fig=None):
-    # plot a feature of size(x)
-    if new_fig:
-        fig = plt.figure()
-    ax = plt.gca()
-    if y_range is not None:
-        ax.set_ylim(y_range)
-    ax.plot(np.arange(np.shape(data)[0]), data, label=label)
-    if label is not None:
-        ax.legend()
-    if new_fig:
-        plt.close()
-    return fig

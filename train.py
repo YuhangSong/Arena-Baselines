@@ -137,7 +137,7 @@ def run(args, parser):
 
         result_matrix = np.asarray(result_matrix)
 
-        input(np.shape(result_matrix))
+        vis_result_matrix(result_matrix)
 
     else:
 

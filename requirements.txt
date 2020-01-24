@@ -1,2 +1,4 @@
 matplotlib
 PyInquirer
+seaborn
+imageio
