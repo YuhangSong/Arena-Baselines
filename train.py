@@ -120,73 +120,24 @@ def run(args, parser):
             policy=arena_exp["config"]["multiagent"]["policies"],
             policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],
             batch_mode="complete_episodes",
-            batch_steps=500,
+            batch_steps=100,
             num_envs=1,
         )
 
-        for policy_id, policy in worker.policy_map.items():
+        policy_ids = list(worker.policy_map.keys())
 
-            logdir = dcopy(args.eval_logdir)
+        checkpoints = inquire_checkpoints(policy_ids)
 
-            if logdir is None:
-                logdir = human_select(
-                    choices=get_possible_logdirs(),
-                    prefix_msg="Setting policy {}.".format(
-                        policy_id,
-                    ),
-                    key="logdir",
-                )
-            else:
-                if not os.path.exists(logdir):
-                    raise Exception("logdir={} does not exist. ".format(
-                        logdir
-                    ))
+        checkpoint_paths = checkpoints_2_checkpoint_paths(checkpoints)
 
-            possible_populations = get_possible_populations(
-                logdir=logdir
-            )
+        result_matrix = run_result_matrix(
+            checkpoint_paths=checkpoint_paths,
+            worker=worker,
+        )
 
-            population_i = human_select(
-                choices=get_possible_populations(
-                    logdir=logdir
-                ),
-                prefix_msg="Setting policy {}.".format(
-                    policy_id,
-                ),
-                key="population_i",
-            )
+        result_matrix = np.asarray(result_matrix)
 
-            iteration_i = human_select(
-                choices=get_possible_iterations(
-                    logdir=logdir,
-                    population_i=population_i,
-                ),
-                prefix_msg="Setting policy {}.".format(
-                    policy_id,
-                ),
-                key="iteration_i",
-            )
-
-            checkpoint_path = get_checkpoint_path(
-                logdir=logdir,
-                population_i=population_i,
-                iteration_i=iteration_i,
-            )
-
-            policy.set_weights(
-                pickle.load(
-                    open(
-                        checkpoint_path,
-                        "rb"
-                    )
-                )
-            )
-
-        while True:
-
-            sample_batch = worker.sample()
-            summarization = summarize_sample_batch(sample_batch)
-            input(summarize(summarization))
+        input(np.shape(result_matrix))
 
     else:
 

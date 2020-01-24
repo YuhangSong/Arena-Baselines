@@ -139,15 +139,6 @@ def create_parser():
             "This config does not support grid_search. "
         ))
 
-    parser.add_argument(
-        "--eval-logdir",
-        default=None,
-        help=(
-            "For evaluation. The logdir you would like to evaluate over. "
-            "If not specified, you will be premoted to select one. "
-            "This config does not support grid_search. "
-        ))
-
     return parser
 
 

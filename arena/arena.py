@@ -75,6 +75,70 @@ def get_checkpoint_path(logdir, population_i, iteration_i):
     return checkpoint_path
 
 
+def checkpoints_2_checkpoint_paths(checkpoints):
+    """Convert from checkpoints to checkpoint_paths.
+    Example:
+        Arguments:
+            checkpoints: {
+                policy_0:
+                    logdir_0:
+                        population_0:
+                            [
+                                iteration_0,
+                                iteration_1,
+                                ...,
+                            ]
+                        population_1:
+                            ...,
+                    logdir_1:
+                        ...,
+                policy_1:
+                    ...,
+            }
+        Returns:
+            {
+                policy_0:
+                    [
+                        logdir_0/population_0/iteration_0,
+                        logdir_0/population_0/iteration_1,
+                        ...,
+                        logdir_0/population_1/iteration_0,
+                        logdir_0/population_1/iteration_1,
+                        ...,
+                        logdir_1/population_0/iteration_0,
+                        logdir_1/population_0/iteration_1,
+                        ...,
+                        logdir_1/population_1/iteration_0,
+                        logdir_1/population_1/iteration_1,
+                        ...,
+                    ],
+                policy_1:
+                    [
+                        ...,
+                    ],
+            }
+    """
+
+    checkpoint_paths = {}
+    for policy_id in checkpoints.keys():
+
+        checkpoint_paths[policy_id] = []
+        for logdir in checkpoints[policy_id]:
+
+            for population_i in checkpoints[policy_id][logdir]:
+
+                for iteration_i in checkpoints[policy_id][logdir][population_i]:
+
+                    checkpoint_path = get_checkpoint_path(
+                        logdir=logdir,
+                        population_i=population_i,
+                        iteration_i=iteration_i,
+                    )
+                    checkpoint_paths[policy_id] += [checkpoint_path]
+
+    return checkpoint_paths
+
+
 def get_possible_logdirs(base_logdir="~/ray_results/"):
     """Get possible logdirs on this machine.
     """
@@ -121,7 +185,7 @@ def get_possible_populations(logdir):
         possible_populations
     )
     possible_populations.sort()
-    return possible_populations
+    return list(possible_populations)
 
 
 def get_possible_iterations(logdir, population_i):
@@ -150,7 +214,13 @@ def get_possible_iterations(logdir, population_i):
         possible_iterations
     )
     possible_iterations.sort()
-    return possible_iterations
+    return list(possible_iterations)
+
+
+def get_possible_iteration_indexes(logdir, population_i):
+    possible_iterations = get_possible_iterations(logdir, population_i)
+    possible_iteration_indexes = range(len(possible_iterations))
+    return possible_iteration_indexes, possible_iterations
 
 
 def on_train_result(info):

@@ -200,8 +200,7 @@ def human_select(choices, prefix_msg="", key="unamed", default_index=-1):
     questions = []
     question = {
         'type': 'checkbox',
-        'qmark': '*',
-        'message': "WARNING: {} There are multiple {} as follows:".format(
+        'message': "{}. There are multiple {} as follows:".format(
             prefix_msg,
             key,
         ),
@@ -215,7 +214,7 @@ def human_select(choices, prefix_msg="", key="unamed", default_index=-1):
 
     answers = prompt(questions, style=custom_style_2)
 
-    return answers[key][0]
+    return answers[key]
 
 
 def list_to_selection_dict(list_):
