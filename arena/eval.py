@@ -113,8 +113,26 @@ def inquire_checkpoints(policy_ids):
                                 population_i=population_i,
                             )
 
+                            answers = prompt(
+                                [
+                                    {
+                                        'type': 'input',
+                                        'name': 'step_size',
+                                        'message': 'There are {} possible iteration indexes. Enter the step size of skipping:'.format(
+                                            len(possible_iteration_indexes)
+                                        ),
+                                        'default': '1'
+                                    },
+                                ],
+                                style=custom_style_2,
+                            )
+
                             iteration_indexes = human_select(
-                                choices=possible_iteration_indexes,
+                                choices=range(
+                                    0,
+                                    len(possible_iteration_indexes),
+                                    int(answers['step_size'])
+                                ),
                                 prefix_msg=prefix_msg,
                                 key="iteration_index",
                             )
