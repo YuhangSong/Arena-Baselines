@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import argparse
 import yaml
@@ -96,7 +96,7 @@ def run(args, parser):
             if len(arena_exps.keys()) > 1:
 
                 arena_exp_key = human_select(
-                    options=list(arena_exps.keys()),
+                    choices=list(arena_exps.keys()),
                     key="arena_exp_key",
                 )
 
@@ -130,7 +130,7 @@ def run(args, parser):
 
             if logdir is None:
                 logdir = human_select(
-                    options=get_possible_logdirs(),
+                    choices=get_possible_logdirs(),
                     prefix_msg="Setting policy {}.".format(
                         policy_id,
                     ),
@@ -147,7 +147,7 @@ def run(args, parser):
             )
 
             population_i = human_select(
-                options=get_possible_populations(
+                choices=get_possible_populations(
                     logdir=logdir
                 ),
                 prefix_msg="Setting policy {}.".format(
@@ -157,7 +157,7 @@ def run(args, parser):
             )
 
             iteration_i = human_select(
-                options=get_possible_iterations(
+                choices=get_possible_iterations(
                     logdir=logdir,
                     population_i=population_i,
                 ),
@@ -199,6 +199,7 @@ def run(args, parser):
 
 
 if __name__ == "__main__":
+
     parser = create_parser()
     args = parser.parse_args()
     run(args, parser)

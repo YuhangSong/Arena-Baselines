@@ -9,6 +9,9 @@ import random
 import gym
 import json
 
+from PyInquirer import style_from_dict, Token, prompt, Separator
+from examples import custom_style_2
+
 import copy
 from copy import deepcopy as dcopy
 
@@ -20,6 +23,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
+
 
 logger = logging.getLogger(__name__)
 
@@ -176,44 +180,42 @@ def get_social_config(env):
     return all_list
 
 
-def human_select(options, prefix_msg="", key="unamed", default=-1):
+def human_select(choices, prefix_msg="", key="unamed", default_index=-1):
 
-    options = list(options)
+    choices = list(choices)
 
-    selection_dict = list_to_selection_dict(options)
+    if len(choices) < 1:
+        raise ValueError
 
-    while True:
+    for i in range(len(choices)):
+        choices[i] = str(choices[i])
 
-        input_ = input(
-            "WARNING: {} There are multiple {} as follows: \n{} \nPlease select one of them by number (negative numbers are supported):".format(
-                prefix_msg,
-                key,
-                summarize(selection_dict),
-            )
-        )
+    for i in range(len(choices)):
+        choices[i] = {
+            'name': choices[i]
+        }
 
-        if input_ == "":
-            selected_i = default
+    choices[default_index]['checked'] = True
 
-        else:
-            try:
-                selected_i = int(input_)
+    questions = []
+    question = {
+        'type': 'checkbox',
+        'qmark': '*',
+        'message': "WARNING: {} There are multiple {} as follows:".format(
+            prefix_msg,
+            key,
+        ),
+        'name': key,
+        'choices': choices,
+        'validate': lambda answer: 'You must choose at least one of them.'
+        if len(answer) == 0 else True,
+        # 'pointer_index': default_index if default_index > 0 else (len(choices) + default_index),
+    }
+    questions += [question]
 
-            except Exception as e:
-                logger.warning("input cannot be interpreted as int, retrying")
-                continue
+    answers = prompt(questions, style=custom_style_2)
 
-        break
-
-    logger.info("You select \n{}".format(
-        summarize({
-            "{}".format(
-                selected_i,
-            ): options[selected_i]
-        })
-    ))
-
-    return options[selected_i]
+    return answers[key][0]
 
 
 def list_to_selection_dict(list_):

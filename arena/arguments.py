@@ -183,6 +183,7 @@ def override_exps_to_eval(exps):
     for exp_key in exps.keys():
         exps[exp_key]["config"]["num_learning_policies"] = 0
         exps[exp_key]["config"]["env_config"]["train_mode"] = False
+        exps[exp_key]["config"]["env_config"]["is_shuffle_agents"] = False
 
     return exps
 

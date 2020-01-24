@@ -391,7 +391,7 @@ def get_env_infos(env, env_config):
     return env_infos
 
 
-def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_exp_key_prefix="", expanded_exps={}, running_config={}):
+def expand_exp(config_to_expand, config_keys_to_expand, args=None, parser=None, expanded_exp_key_prefix="", expanded_exps={}, running_config={}):
     """Expand config_to_expand at config_keys_to_expand, where the config_to_expand could be a grid_search.
 
     Arguments:
@@ -533,12 +533,13 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
                     # see this issue for a fix: https://github.com/ray-project/ray/issues/5729
                     raise NotImplementedError
 
-                if expanded_exp["config"]["env_config"]["is_shuffle_agents"] == False:
-                    logger.warning(
-                        "There are playing policies, which keeps loading learning policies. " +
-                        "This means you need to shuffle agents so that the learning policies can generalize to playing policies. "
-                    )
-                    input("# WARNING: Need comfirmation.")
+                if not args.eval:
+                    if expanded_exp["config"]["env_config"]["is_shuffle_agents"] == False:
+                        logger.warning(
+                            "There are playing policies, which keeps loading learning policies. " +
+                            "This means you need to shuffle agents so that the learning policies can generalize to playing policies. "
+                        )
+                        input("# WARNING: Need comfirmation.")
 
             elif len(expanded_exp["config"]["playing_policy_ids"]) == 0:
 
@@ -629,6 +630,7 @@ def expand_exp(config_to_expand, config_keys_to_expand, parser=None, expanded_ex
             expanded_exps = expand_exp(
                 config_to_expand=dcopy(config_to_expand),
                 config_keys_to_expand=config_keys_to_expand[1:],
+                args=args,
                 parser=parser,
                 expanded_exp_key_prefix=expanded_exp_key_prefix,
                 expanded_exps=expanded_exps,
@@ -668,6 +670,7 @@ def create_arena_exps(exps, args, parser):
                     "config-env_config-multi_agent_obs",
                     "config-env_config-is_shuffle_agents",
                 ],
+                args=args,
                 parser=parser,
                 expanded_exp_key_prefix=exp_key,
             )
