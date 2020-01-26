@@ -54,7 +54,7 @@ Many research-oriented utilities, such as:
 | - | - |
 | Tune (grid search parameters, schedule trails, yaml config and etc.) | :heavy_check_mark: |
 | Interactively load and evaluate trained policies/populations | :heavy_check_mark: |
-| Visualize performance in population | :heavy_minus_sign: |
+| Visualize performance in population | :heavy_check_mark: |
 
 ## Status: Release
 

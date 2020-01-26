@@ -14,6 +14,11 @@ def vis_result_matrix(result_matrix, log_path):
 
     if len(np.shape(result_matrix)) == 3:
 
+        # where there are two agents,
+        # the 0 dimension is loading different checkpoints to agent_0
+        # the 1 dimension is loading different checkpoints to agent_1
+        # the 3 dimension is episode reward of different agents
+
         for policy_i in range(result_matrix.shape[2]):
 
             policy_id = policy_i2id(policy_i)
@@ -34,6 +39,10 @@ def vis_result_matrix(result_matrix, log_path):
                 ),
             )
     else:
+
+        # TODO: visulize result_matrix generated from other settings
+        # For example, a 3T1P game would generate a result_matrix with 4 dimensions.
+        # How to visualize it?
         raise NotImplementedError
 
 
