@@ -3,7 +3,7 @@ from .arena import *
 
 
 def inquire_checkpoints(policy_ids):
-    """Promote a series if inquires to get checkpoints.
+    """Promote a series of inquires to get checkpoints.
     Arguments:
         policy_ids: the policy_ids to inquire
     Returns:
@@ -165,6 +165,10 @@ def inquire_checkpoints(policy_ids):
 
 def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
     """
+    Arguments:
+        checkpoint_paths:
+        worker:
+        policy_ids:
     Returns:
         result_matrix:
             nested list with the shape of: (
@@ -174,7 +178,7 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
                 len(policy_ids)
             )
             Example:
-                Number at result_matrix[1,3,0] means the episode_rewards_mean of policy_0
+                Value at result_matrix[1,3,0] means the episode_rewards_mean of policy_0
                 when load policy_0 with checkpoint_paths[policy_ids[0]][1]
                 and load policy_1 with checkpoint_paths[policy_ids[1]][3]
     """
@@ -184,7 +188,10 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
 
     if len(policy_ids) == 0:
 
-        summarization = summarize_sample_batch(worker.sample())
+        sampled = worker.sample()
+        worker.env.reset()
+
+        summarization = summarize_sample_batch(sampled)
 
         result_matrix = []
         for policy_id in summarization.keys():

@@ -10,7 +10,7 @@ from .constants import policy_i2id
 sns.set()
 
 
-def vis_result_matrix(result_matrix):
+def vis_result_matrix(result_matrix, log_path):
 
     if len(np.shape(result_matrix)) == 3:
 
@@ -28,7 +28,10 @@ def vis_result_matrix(result_matrix):
 
             save_img(
                 img=img,
-                dir='result_matrix-{}.jpg'.format(policy_id),
+                dir='{}/result_matrix-{}.jpg'.format(
+                    log_path,
+                    policy_id,
+                ),
             )
     else:
         raise NotImplementedError

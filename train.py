@@ -110,8 +110,20 @@ def run(args, parser):
 
         arena_exp = arena_exps[arena_exp_key]
 
-        from ray.rllib.evaluation.rollout_worker import RolloutWorker
+        answers = prompt(
+            [{
+                'type': 'input',
+                'name': 'eval_log_path',
+                'message': 'Where do you want to log the results of this evaluation?',
+                'default': '../eval_log_path/'
+            }],
+            style=custom_style_2,
+        )
 
+        prepare_path(answers['eval_log_path'])
+
+        # worker = ArenaRolloutWorker(
+        # TODO: RolloutWorker does not support monitor for multi-agent envs
         worker = RolloutWorker(
             env_creator=lambda _: ArenaRllibEnv(
                 env=arena_exp["env"],
@@ -122,6 +134,7 @@ def run(args, parser):
             batch_mode="complete_episodes",
             batch_steps=100,
             num_envs=1,
+            monitor_path=answers['eval_log_path'],
         )
 
         policy_ids = list(worker.policy_map.keys())
@@ -137,7 +150,10 @@ def run(args, parser):
 
         result_matrix = np.asarray(result_matrix)
 
-        vis_result_matrix(result_matrix)
+        vis_result_matrix(
+            result_matrix=result_matrix,
+            log_path=answers['eval_log_path'],
+        )
 
     else:
 

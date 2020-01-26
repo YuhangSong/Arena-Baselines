@@ -1,6 +1,8 @@
 from .arena import *
 from .eval import *
 from .vis import *
+from .utils import prepare_path
+from .rollout_worker import ArenaRolloutWorker
 
 from ray.tune.registry import register_env
 

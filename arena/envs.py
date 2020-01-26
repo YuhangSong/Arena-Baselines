@@ -313,8 +313,31 @@ class ArenaRllibEnv(MultiAgentEnv):
             actions_gymunity[agent_i_gymunity] = actions_rllib[agent_id_rllib]
         return actions_gymunity
 
+    def render(self, mode="rgb_array"):
+        return self.env.render(mode)
+
+    @property
+    def metadata(self):
+        return self.env.metadata
+
+    @property
+    def reward_range(self):
+        return self.env.reward_range
+
+    @property
+    def metadata(self):
+        return self.env.metadata
+
+    @property
+    def spec(self):
+        return self.env.spec
+
     def close(self):
         self.env.close()
+
+    @property
+    def unwrapped(self):
+        return self
 
 
 class ArenaUnityEnv(UnityEnv):
@@ -376,6 +399,50 @@ class ArenaUnityEnv(UnityEnv):
 
     def _single_step(self, info):
         raise NotImplementedError
+
+    def render(self, mode="rgb_array"):
+        """arena-spec: add support for rendering visual_obs of multiple agents and multiple cameras into one grided rendered frame
+        """
+
+        logger.info("rendering")
+
+        if mode in ['rgb_array']:
+
+            if len(np.shape(self.visual_obs)) == 5:
+                # (multiple agents, multiple visual obs, 84, 84, 1)
+
+                frame = self.visual_obs
+
+                # convert to uint8
+                if frame.dtype != np.uint8:
+                    frame = (255.0 * frame).astype(np.uint8)
+
+                # reshape to (multiple_img, img_shape)
+                frame = np.reshape(
+                    frame,
+                    newshape=(-1,) + np.shape(self.visual_obs)[2:],
+                )
+
+                # convert to rgb
+                if np.shape(frame)[-1] == 1:
+                    frame = np.concatenate(
+                        [frame] * 3,
+                        axis=3,
+                    )
+
+                # grid them to make it a gallery single img
+                frame = gallery(
+                    frame,
+                    ncols=self.number_agents,
+                )
+
+                return frame
+
+            else:
+                raise NotImplementedError
+
+        else:
+            raise NotImplementedError
 
 
 def get_env_directory(env_name):

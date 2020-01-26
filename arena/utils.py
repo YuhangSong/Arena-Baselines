@@ -511,3 +511,14 @@ def replace_in_tuple(tup, index, value):
     lst[index] = value
     tup = tuple(lst)
     return tup
+
+
+def gallery(array, ncols=3):
+    nindex, height, width, intensity = array.shape
+    nrows = nindex // ncols
+    assert nindex == nrows * ncols
+    # want result.shape = (height*nrows, width*ncols, intensity)
+    result = (array.reshape(nrows, ncols, height, width, intensity)
+              .swapaxes(1, 2)
+              .reshape(height * nrows, width * ncols, intensity))
+    return result

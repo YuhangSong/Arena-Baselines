@@ -135,7 +135,10 @@ def create_parser():
         action="store_true",
         default=False,
         help=(
-            "For evaluation. "
+            "In eval mode, a series of questions will be promoted to ask about how to loading policies. "
+            "After this, a result matrix will be produced evaluating all policies. "
+            "If the config of env supports a visualization of result maxtrix, it will be produced. "
+            "A batch of videos of the episode will also be produced. "
             "This config does not support grid_search. "
         ))
 
