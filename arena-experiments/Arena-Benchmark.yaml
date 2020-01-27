@@ -19,8 +19,8 @@ Arena-Benchmark:
             train_mode: True
             sensors:
                 grid_search:
-                    # - [vector]
-                    - [visual_FP]
+                    - [vector]
+                    # - [visual_FP]
                     # - [visual_TP]
                     # - [visual_FP, visual_TP]
                     # - [vector, visual_FP]
