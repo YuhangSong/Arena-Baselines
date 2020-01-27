@@ -513,6 +513,21 @@ def replace_in_tuple(tup, index, value):
     return tup
 
 
+def plot_feature(data, label=None, y_range=None, new_fig=True, fig=None):
+    # plot a feature of size(x)
+    if new_fig:
+        fig = plt.figure()
+    ax = plt.gca()
+    if y_range is not None:
+        ax.set_ylim(y_range)
+    ax.plot(np.arange(np.shape(data)[0]), data, label=label)
+    if label is not None:
+        ax.legend()
+    if new_fig:
+        plt.close()
+    return fig
+
+
 def gallery(array, ncols=3):
     nindex, height, width, intensity = array.shape
     nrows = nindex // ncols
