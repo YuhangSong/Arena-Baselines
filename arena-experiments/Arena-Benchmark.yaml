@@ -7,6 +7,8 @@ Arena-Benchmark:
     run: PPO
     checkpoint_freq: 200
     checkpoint_at_end: True
+    stop:
+        training_iteration: 20000
     config:
         # === Environment Settings ===
         env_config:
@@ -34,7 +36,6 @@ Arena-Benchmark:
         iterations_per_reload:
             grid_search:
                 - 10
-                # - 10
         num_learning_policies:
             grid_search:
                 - 1
