@@ -1,6 +1,13 @@
 ## Setup X-Server
 
 ```
+# Install Nvidia driver
+# There are many ways to do this, the following is just my preference
+# Search for nvidia drivers using
+apt-cache search nvidia-driver
+# Install the nvidia-xxx package
+sudo apt install nvidia-xxx
+
 # Install Xorg
 sudo apt-get update
 sudo apt-get install -y xserver-xorg mesa-utils
