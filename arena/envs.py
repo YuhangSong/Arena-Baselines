@@ -1,10 +1,26 @@
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from gym_unity.envs import UnityEnv
+from gym import error, spaces
 
 from .utils import *
 from .constants import *
 
 logger = logging.getLogger(__name__)
+
+IS_AUTO_RESET = True
+VALID_SENSORS = ["visual_FP", "visual_TP", "vector"]
+SENSOR2CAMERA = {
+    "visual_FP": 0,
+    "visual_TP": 1,
+}
+CAMERA2SENSOR = dict([(value, key) for key, value in SENSOR2CAMERA.items()])
+
+
+def _validate_sensors(sensors):
+    assert isinstance(sensors, list)
+    for sensor in sensors:
+        if sensor not in VALID_SENSORS:
+            raise Exception("sensor {} is invalid".format(sensor))
 
 
 class ArenaRllibEnv(MultiAgentEnv):
@@ -21,11 +37,6 @@ class ArenaRllibEnv(MultiAgentEnv):
 
     """Following configurations need to be compatible with Arena-BuildingToolkit.
     """
-    IS_AUTO_RESET = True
-    VISUAL_SENSOR_INDEX = {
-        "visual_FP": 0,
-        "visual_TP": 1,
-    }
 
     def __init__(self, env, env_config):
 
@@ -40,6 +51,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         self.sensors = env_config.get(
             "sensors", ["vector"]
         )
+        _validate_sensors(self.sensors)
 
         self.multi_agent_obs = env_config.get(
             "multi_agent_obs", ["own"]
@@ -149,9 +161,8 @@ class ArenaRllibEnv(MultiAgentEnv):
         agent_i_gymunity = 0
         for multi_agent_ob in self.multi_agent_obs:
             for sensor in self.sensors:
-                # BUG: only vector space supported
                 observation_space = dcopy(
-                    self.env.observation_space
+                    self.env.observation_space[sensor]
                 )
 
                 observation_space.shape = replace_in_tuple(
@@ -233,7 +244,7 @@ class ArenaRllibEnv(MultiAgentEnv):
         )
 
         # auto reset (rllib)
-        if dones_rllib["__all__"] and ArenaRllibEnv.IS_AUTO_RESET:
+        if dones_rllib["__all__"] and IS_AUTO_RESET:
             obs_rllib = self.reset()
 
         return obs_rllib, rewards_rllib, dones_rllib, infos_rllib
@@ -259,7 +270,7 @@ class ArenaRllibEnv(MultiAgentEnv):
                     # for visual observations, take one out
                     if sensor.split("_")[0] == "visual":
                         obs_ = obs_[
-                            :, ArenaRllibEnv.VISUAL_SENSOR_INDEX[sensor]
+                            :, SENSOR2CAMERA[sensor]
                         ]
                     # [multiple agents, ...]
                     # take other agents obs according to agent_i_gymunity_mapping
@@ -344,6 +355,35 @@ class ArenaUnityEnv(UnityEnv):
     """An override of UnityEnv from gym_unity.envs, to fix some of their bugs and add some supports.
     Search "arena-spec" for these places.
     """
+
+    def __init__(self, *args, **kwargs):
+        """arena-spec: add support for multiple sensors, observation_space is modified to be a dict
+        """
+        super(ArenaUnityEnv, self).__init__(*args, **kwargs)
+
+        brain = self._env.brains[self.brain_name]
+
+        self._observation_space = {}
+
+        for camera_i in range(len(brain.camera_resolutions)):
+            if brain.camera_resolutions[camera_i]["blackAndWhite"]:
+                depth = 1
+            else:
+                depth = 3
+            self._observation_space[CAMERA2SENSOR[camera_i]] = spaces.Box(
+                0,
+                1,
+                dtype=np.float32,
+                shape=(
+                    brain.camera_resolutions[camera_i]["height"],
+                    brain.camera_resolutions[camera_i]["width"],
+                    depth,
+                ),
+            )
+
+        high = np.array([np.inf] * brain.vector_observation_space_size)
+        self._observation_space['vector'] = spaces.Box(
+            -high, high, dtype=np.float32)
 
     def _preprocess_multi(self, multiple_visual_obs):
         """arena-spec: ml-agent does not support multiple agents & multiple obs
