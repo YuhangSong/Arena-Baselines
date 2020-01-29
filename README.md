@@ -1,6 +1,6 @@
 <img src="./images/Cover-Landscape-Visual.png" align="middle" width="1000"/>
 
-## Introduction
+# Arena-Baselines
 
 <img align="left" width="100" height="100" src="./images/Logo.png">
 
@@ -54,30 +54,32 @@ To contribute to the project, [joint us in  Slack](https://join.slack.com/t/aren
 
 ## Table of Contents
 
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [Introduction](#introduction)
-- [Features](#features)
-	- [Baselines](#baselines)
-	- [Games](#games)
-	- [Utilities](#utilities)
-- [Status: Release](#status-release)
-- [Table of Contents](#table-of-contents)
-- [Get Started](#get-started)
-	- [Dependencies](#dependencies)
-- [Usage](#usage)
-	- [Run tests](#run-tests)
-	- [Reproduce Arena-Benchmark](#reproduce-arena-benchmark)
-	- [Visualization](#visualization)
-	- [Evaluate and Visualize Evaluation](#evaluate-and-visualize-evaluation)
-	- [Run in Dummy Mode for Debugging](#run-in-dummy-mode-for-debugging)
-	- [Resume Training](#resume-training)
-- [Configs](#configs)
-- [Common Problems](#common-problems)
-		- [Game threads still running](#game-threads-still-running)
-- [Citation](#citation)
-- [License](#license)
-- [Acknowledgement](#acknowledgement)
+- [Arena-Baselines](#arena-baselines)
+	- [Features](#features)
+		- [Baselines](#baselines)
+		- [Games](#games)
+		- [Utilities](#utilities)
+	- [Status: Release](#status-release)
+	- [Table of Contents](#table-of-contents)
+	- [Get Started](#get-started)
+		- [Dependencies](#dependencies)
+	- [Usage](#usage)
+		- [Run tests](#run-tests)
+		- [Reproduce Arena-Benchmark](#reproduce-arena-benchmark)
+		- [Visualization](#visualization)
+		- [Evaluate and Visualize Evaluation](#evaluate-and-visualize-evaluation)
+		- [Run in Dummy Mode for Debugging](#run-in-dummy-mode-for-debugging)
+		- [Resume Training](#resume-training)
+	- [Configs](#configs)
+	- [Common Problems](#common-problems)
+			- [Game threads still running](#game-threads-still-running)
+	- [Citation](#citation)
+	- [License](#license)
+	- [Acknowledgement](#acknowledgement)
 
+<!-- /TOC -->
 
 ## Get Started
 
