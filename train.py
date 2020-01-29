@@ -122,6 +122,8 @@ def run(args, parser):
 
         prepare_path(answers['eval_log_path'])
 
+        from ray.rllib.evaluation.rollout_worker import RolloutWorker
+
         # worker = ArenaRolloutWorker(
         # TODO: RolloutWorker does not support monitor for multi-agent envs
         worker = RolloutWorker(

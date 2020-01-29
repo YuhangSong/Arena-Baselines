@@ -170,17 +170,7 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
         worker:
         policy_ids:
     Returns:
-        result_matrix:
-            nested list with the shape of: (
-                len(checkpoint_paths[policy_ids[0]]),
-                len(checkpoint_paths[policy_ids[1]]),
-                ...,
-                len(policy_ids)
-            )
-            Example:
-                Value at result_matrix[1,3,0] means the episode_rewards_mean of policy_0
-                when load policy_0 with checkpoint_paths[policy_ids[0]][1]
-                and load policy_1 with checkpoint_paths[policy_ids[1]][3]
+        result_matrix: see https://github.com/YuhangSong/Arena-Baselines/#evaluate-and-visualize-evaluation
     """
 
     if policy_ids is None:
