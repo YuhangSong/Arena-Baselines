@@ -54,33 +54,30 @@ To contribute to the project, [joint us in  Slack](https://join.slack.com/t/aren
 
 ## Table of Contents
 
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-	- [Introduction](#introduction)
-	- [Features](#features)
-		- [Baselines](#baselines)
-		- [Games](#games)
-		- [Utilities](#utilities)
-	- [Status: Release](#status-release)
-	- [Table of Contents](#table-of-contents)
-	- [Get Started](#get-started)
-		- [Dependencies](#dependencies)
-	- [Usage](#usage)
-		- [Run tests](#run-tests)
-		- [Reproduce Arena-Benchmark](#reproduce-arena-benchmark)
-		- [Visualization](#visualization)
-		- [Evaluate and Visualize Evaluation](#evaluate-and-visualize-evaluation)
-		- [Run in Dummy Mode for Debugging](#run-in-dummy-mode-for-debugging)
-		- [Resume Training](#resume-training)
-			- [ss](#ss)
-	- [Configs](#configs)
-	- [Common Problems](#common-problems)
-			- [Game threads still running](#game-threads-still-running)
-	- [Citation](#citation)
-	- [License](#license)
-	- [Acknowledgement](#acknowledgement)
+- [Introduction](#introduction)
+- [Features](#features)
+	- [Baselines](#baselines)
+	- [Games](#games)
+	- [Utilities](#utilities)
+- [Status: Release](#status-release)
+- [Table of Contents](#table-of-contents)
+- [Get Started](#get-started)
+	- [Dependencies](#dependencies)
+- [Usage](#usage)
+	- [Run tests](#run-tests)
+	- [Reproduce Arena-Benchmark](#reproduce-arena-benchmark)
+	- [Visualization](#visualization)
+	- [Evaluate and Visualize Evaluation](#evaluate-and-visualize-evaluation)
+	- [Run in Dummy Mode for Debugging](#run-in-dummy-mode-for-debugging)
+	- [Resume Training](#resume-training)
+- [Configs](#configs)
+- [Common Problems](#common-problems)
+		- [Game threads still running](#game-threads-still-running)
+- [Citation](#citation)
+- [License](#license)
+- [Acknowledgement](#acknowledgement)
 
-<!-- /TOC -->
 
 ## Get Started
 
@@ -240,13 +237,11 @@ Then, we will try to visualize ```result_matrix```, see ```vis_result_matrix``` 
 
 ### Run in Dummy Mode for Debugging
 
-Append ```--dummy``` argument to the end of the command
+Append ```--dummy``` argument to the end of the command, which will try to run the experiments with minimal request of resources. This is for the convenience of debugging.
 
 ### Resume Training
 
 To resume/restore a training, append ```--resume``` to the above command in [Reproduce Arena-Benchmark](##reproduce-arena-benchmark)
-
-#### ss
 
 ## Configs
 
