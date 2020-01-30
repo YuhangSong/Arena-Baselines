@@ -8,7 +8,7 @@ from ray.tune.registry import register_env
 
 game_files = [
     "Arena-Tennis-Sparse-2T1P-Discrete",
-    "BarrierGunner-3X3-PT-Sparse-2T1P-Discrete",
+    "Arena-BarrierGunner-3X3-PT-Sparse-2T1P-Discrete",
 ]
 
 for game_file in game_files:
