@@ -30,12 +30,7 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 30+ games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tanl, BlowBlow, FallFlat, and etc.
 There are also multiple variants of each game with different team setups, social structures, actions spaces, observation spaces (first-person visual, third-person visual, vector or mixed), domain randomizations, and etc.
-More documentation of games can be found [here](#games)
-
-| **Games** | **Supported** | **Benchmarked** |
-| - | - | - |
-| Arena-Tennis-Sparse-2T1P-Discrete | :heavy_check_mark: | :x: |
-| Arena-Blowblow-Sparse-2T2P-Discrete | :heavy_check_mark: | :x: |
+More documentation of games can be found in [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark)
 
 ### Utilities
 
@@ -201,6 +196,8 @@ You should see the ```episode_len_mean``` goes up from 20 (as shown in the follo
 
 <img src="./images/Arena-Benchmark.png" align="middle" width="1000"/>
 
+Our benchmark can be found in [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
+
 ### Visualization
 
 The code log multiple curves (as well as figures and other formats of data) to help analysis the training process, run:
@@ -236,6 +233,8 @@ when load ```policy_0``` with ```checkpoint_paths[policy_ids[0]][1]```
 and load ```policy_1``` with ```checkpoint_paths[policy_ids[1]][3]```.
 
 Then, we will try to visualize ```result_matrix```, see ```vis_result_matrix``` in ```./arena/vis.py```.
+
+You can, of course, compare your agents with our [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark), which produces a stable ranking in the population.
 
 ### Run in Dummy Mode for Debugging
 
