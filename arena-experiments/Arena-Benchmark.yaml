@@ -1,9 +1,9 @@
 Arena-Benchmark:
     env:
         grid_search:
+            - BarrierGunner-3X3-PT-Sparse-2T1P-Discrete-Darwin
             # - PongNoFrameskip-v4
-            - Arena-Tennis-Sparse-2T1P-Discrete
-            # - Arena-Blowblow-Sparse-2T2P-Discrete
+            # - Arena-Tennis-Sparse-2T1P-Discrete
     run: PPO
     local_dir: ~/Arena-Benchmark
     checkpoint_freq: 200

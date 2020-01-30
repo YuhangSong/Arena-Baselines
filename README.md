@@ -12,6 +12,10 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 ## Features
 
+Arena-Baselines is built upon [ray](https://github.com/ray-project/ray), benefiting from lots of handy features from it as well as bringing some further advantages.
+
+<img src="./images/arena-ray.png" align="middle" width="900"/>
+
 ### Baselines
 
 10+ most popular deep multi-agent reinforcement learning baselines, including: independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
@@ -28,7 +32,7 @@ If you use this repository to conduct research, we kindly ask that you [cite the
 
 ### Games
 
-30+ games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tanl, BlowBlow, FallFlat, and etc.
+30+ games built by [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit), including Tennis, Tank, BlowBlow, FallFlat, and etc.
 There are also multiple variants of each game with different team setups, social structures, actions spaces, observation spaces (first-person visual, third-person visual, vector or mixed), domain randomizations, and etc.
 More documentation of games can be found in [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark)
 
