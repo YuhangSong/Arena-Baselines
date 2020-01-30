@@ -201,7 +201,7 @@ def get_social_config(env):
         [[0,1],[2,3]]
     """
 
-    xTxP = env.split("-")[3]
+    xTxP = env.split("-")[-2]
 
     T = int(xTxP.split("T")[0])
     P = int(xTxP.split("T")[1].split("P")[0])
