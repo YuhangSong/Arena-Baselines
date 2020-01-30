@@ -205,7 +205,7 @@ You should see the ```episode_len_mean``` goes up from 20 (as shown in the follo
 
 The code log multiple curves (as well as figures and other formats of data) to help analysis the training process, run:
 ```
-source activate Arena-Baselines && tensorboard --logdir=~/ray_results --port=9999
+source activate Arena-Baselines && tensorboard --logdir=~/Arena-Benchmark --port=9999
 ```
 and visit ```http://localhost:9999``` for visualization with tensorboard.
 
