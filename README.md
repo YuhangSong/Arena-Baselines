@@ -20,15 +20,15 @@ Arena-Baselines is built upon [ray](https://github.com/ray-project/ray), benefit
 
 10+ most popular deep multi-agent reinforcement learning baselines, including: independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
 
-| **Baselines** | **Supported** | **Benchmarked** |
-| - | -  | - |
-| Independent Learners | :heavy_check_mark: | :x: |
-| Self-play | :heavy_check_mark: | :x: |
-| Population-based Training | :heavy_check_mark: | :x: |
-| Share Weights: between Arbitrary Agents / Teams | :heavy_check_mark: | :x: |
-| Sharing observations: own, team_absolute, team_relative, all_absolute, all_relative | :heavy_check_mark: | :x: |
-| Multiple sensors: first-person visual, third-person visual, vector (lidar), or any combinations | :heavy_check_mark: | :x: |
-| Use separated observations for actor and critic (such as centralized critic and decentralized actors). | :heavy_check_mark: | :x: |
+| **Baselines** | **Supported**(:heavy_check_mark:) / **In-progress**(:heavy_minus_sign:) |
+| - | -  |
+| Independent Learners | :heavy_check_mark: |
+| Self-play | :heavy_check_mark: |
+| Population-based Training | :heavy_check_mark: |
+| Share Weights: between Arbitrary Agents / Teams | :heavy_check_mark: |
+| Sharing observations: own, team_absolute, team_relative, all_absolute, all_relative | :heavy_check_mark: |
+| Multiple sensors: first-person visual, third-person visual, vector (lidar), or any combinations | :heavy_check_mark: |
+| Use separated observations for actor and critic (such as centralized critic and decentralized actors). | :heavy_check_mark: |
 
 ### Games
 
