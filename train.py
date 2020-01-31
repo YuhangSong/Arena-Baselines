@@ -141,7 +141,10 @@ def run(args, parser):
 
         policy_ids = list(worker.policy_map.keys())
 
-        checkpoints = inquire_checkpoints(policy_ids)
+        checkpoints = inquire_checkpoints(
+            local_dir=arena_exp["local_dir"],
+            policy_ids=policy_ids,
+        )
 
         checkpoint_paths = checkpoints_2_checkpoint_paths(checkpoints)
 

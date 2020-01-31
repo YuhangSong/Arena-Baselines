@@ -108,19 +108,19 @@ def checkpoints_2_checkpoint_paths(checkpoints):
     return checkpoint_paths
 
 
-def get_possible_logdirs(base_logdir="~/ray_results/"):
+def get_possible_logdirs(local_dir):
     """Get possible logdirs on this machine.
     """
 
-    # replace ~ in base_logdir with os.path.expanduser("~"),
+    # replace ~ in local_dir with os.path.expanduser("~"),
     # so that grob can work properly
-    base_logdir = base_logdir.replace(
+    local_dir = local_dir.replace(
         "~",
         os.path.expanduser("~"),
     )
 
     possible_logdirs = []
-    for logdirs_level_0 in glob.glob("{}/Arena-Benchmark{}".format(base_logdir, "*")):
+    for logdirs_level_0 in glob.glob("{}/Arena-Benchmark{}".format(local_dir, "*")):
         for logdirs_level_1 in glob.glob("{}/{}".format(logdirs_level_0, "*")):
             if logdirs_level_1[-5:] != ".json":
                 possible_logdirs += [logdirs_level_1]

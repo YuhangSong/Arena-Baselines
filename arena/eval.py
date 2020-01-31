@@ -2,7 +2,7 @@ from .utils import *
 from .arena import *
 
 
-def inquire_checkpoints(policy_ids):
+def inquire_checkpoints(local_dir, policy_ids):
     """Promote a series of inquires to get checkpoints.
     Arguments:
         policy_ids: the policy_ids to inquire
@@ -57,7 +57,7 @@ def inquire_checkpoints(policy_ids):
             checkpoints[policy_id] = {}
 
             logdirs = human_select(
-                choices=get_possible_logdirs(),
+                choices=get_possible_logdirs(local_dir),
                 prefix_msg=prefix_msg,
                 name="logdir",
             )

@@ -196,11 +196,6 @@ Now train on Arena games (reproduce our Arena-Benchmark) with:
 ```
 python train.py -f ./arena-experiments/Arena-Benchmark.yaml
 ```
-You should see the ```episode_len_mean``` goes up from 20 (as shown in the following), which means you installation works fine.
-
-<img src="./images/Arena-Benchmark.png" align="middle" width="1000"/>
-
-Our benchmark can be found in [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
 
 ### Visualization
 
@@ -215,6 +210,12 @@ If your port is blocked, use [natapp](https://natapp.cn/) to forward a port:
 ./natapp --authtoken 237e94b5d173a7c3
 ```
 Above token is a free port used by myself, please apply a free port (or buy a faster one) yourself on [natapp](https://natapp.cn/) so that you can enjoy the best experience.
+
+You should see the ```episode_len_mean``` goes up from 20 (as shown in the following), which means you installation works fine.
+
+<img src="./images/Arena-Benchmark.png" align="middle" width="1000"/>
+
+Our established benchmark can be found in [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
 
 ### Evaluate and Visualize Evaluation
 
@@ -238,7 +239,7 @@ and load ```policy_1``` with ```checkpoint_paths[policy_ids[1]][3]```.
 
 Then, we will try to visualize ```result_matrix```, see ```vis_result_matrix``` in ```./arena/vis.py```.
 
-You can, of course, compare your agents with our [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark), which produces a stable ranking in the population.
+You can, of course, compare your agents against our established [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
 
 ### Run in Dummy Mode for Debugging
 
