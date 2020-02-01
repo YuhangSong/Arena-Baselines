@@ -253,7 +253,7 @@ To resume/restore a training, append ```--resume``` to the above command in [Rep
 ### Register New Games
 
 To register a new game, append the ID of the game to ```env_ids``` in ```./arena/__init__.py```.
-Note that the id of a game is slightly different from the file name of a game, see [Common Naming Rules](https://github.com/YuhangSong/Arena-Benchmark/blob/master/README.md#common-naming-rules).
+Note that the ID of a game is slightly different from the file name of a game, see [Common Naming Rules](https://github.com/YuhangSong/Arena-Benchmark/blob/master/README.md#common-naming-rules).
 
 ## Configs
 
