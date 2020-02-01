@@ -45,8 +45,8 @@ class ArenaRllibEnv(MultiAgentEnv):
             logger.error(error)
             raise Exception(error)
 
-        self.env_name = env
-        self.social_config = get_social_config(self.env_name)
+        self.env_id = env
+        self.social_config = get_social_config(self.env_id)
 
         self.sensors = env_config.get(
             "sensors", ["vector"]
@@ -63,7 +63,7 @@ class ArenaRllibEnv(MultiAgentEnv):
             "vector": 0,
         }
 
-        game_file_path, extension_name = get_env_directory(self.env_name)
+        game_file_path, extension_name = get_env_directory(self.env_id)
 
         # check of we can use a server build
         if is_list_match(self.sensors, "vector"):
@@ -485,15 +485,13 @@ class ArenaUnityEnv(UnityEnv):
             raise NotImplementedError
 
 
-def get_env_directory(env_name):
-    """Get env path according to env_name
+def get_env_directory(env_id):
+    """Get env path according to env_id
     """
     return os.path.join(
         os.path.dirname(__file__),
         "bin/{}-{}".format(
-            remove_arena_env_prefix(
-                env_name
-            ),
+            env_id,
             platform.system(),
         )
     ), {

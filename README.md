@@ -71,6 +71,7 @@ To contribute to the project, [joint us in  Slack](https://join.slack.com/t/aren
 		- [Evaluate and Visualize Evaluation](#evaluate-and-visualize-evaluation)
 		- [Run in Dummy Mode for Debugging](#run-in-dummy-mode-for-debugging)
 		- [Resume Training](#resume-training)
+		- [Register New Games](#register-new-games)
 	- [Configs](#configs)
 	- [Common Problems](#common-problems)
 			- [Game threads still running](#game-threads-still-running)
@@ -248,6 +249,11 @@ Append ```--dummy``` argument to the end of the command, which will try to run t
 ### Resume Training
 
 To resume/restore a training, append ```--resume``` to the above command in [Reproduce Arena-Benchmark](##reproduce-arena-benchmark)
+
+### Register New Games
+
+To register a new game, append the ID of the game to ```env_ids``` in ```./arena/__init__.py```.
+Note that the id of a game is slightly different from the file name of a game, see [Common Naming Rules](https://github.com/YuhangSong/Arena-Benchmark/blob/master/README.md#common-naming-rules).
 
 ## Configs
 

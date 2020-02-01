@@ -6,15 +6,15 @@ from .rollout_worker import ArenaRolloutWorker
 
 from ray.tune.registry import register_env
 
-game_files = [
+env_ids = [
     "Arena-Tennis-Sparse-2T1P-Discrete",
     "Arena-BarrierGunner-3X3-PT-Sparse-2T1P-Discrete",
 ]
 
-for game_file in game_files:
+for env_id in env_ids:
     register_env(
-        game_file,
+        env_id,
         lambda env_config: ArenaRllibEnv(
-            game_file,
+            env_id,
             env_config=env_config,
         ))
