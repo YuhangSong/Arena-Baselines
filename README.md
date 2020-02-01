@@ -5,10 +5,10 @@
 <img align="left" width="100" height="100" src="./images/Logo.png">
 
 [Arena](https://sites.google.com/view/arena-unity/) is a general evaluation platform and building toolkit for single/multi-agent intelligence.
-As a part of [Arena](https://sites.google.com/view/arena-unity/) project, this repository is to provide implementation of state-of-the-art deep multi-agent reinforcement learning baselines.
-Arena-Baselines is fully based on [RLlib](https://ray.readthedocs.io/en/latest/rllib.html).
-More resources can be found in [Arena Home](https://sites.google.com/view/arena-unity/).
-If you use this repository to conduct research, we kindly ask that you [cite the paper](#citation) as a reference.
+As a part of [Arena](https://sites.google.com/view/arena-unity/) project, this repository is to provide implementation of state-of-the-art deep single/multi-agent reinforcement learning baselines.
+Arena-Baselines is based on [ray](https://github.com/ray-project/ray).
+Other resources can be found in [Arena Home](https://sites.google.com/view/arena-unity/).
+If you use this repository to conduct research, we kindly ask that you [cite the papers](#citation) as references.
 
 ## Features
 
@@ -18,7 +18,7 @@ Arena-Baselines is built upon [ray](https://github.com/ray-project/ray), benefit
 
 ### Baselines
 
-10+ most popular deep multi-agent reinforcement learning baselines, including: independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
+10+ most popular deep single/multi-agent reinforcement learning baselines, including: independent learners, self-play, variable-shared policies (share arbitrary variables/layers), centralized critic via experiences sharing, centralized critic via observations sharing, Q-Mix, arbitrary grouping agents, centralized critic with counterfactual baselines, population-based training, and etc.
 
 | **Baselines** | **Supported**(:heavy_check_mark:) / **In-progress**(:heavy_minus_sign:) |
 | - | -  |
