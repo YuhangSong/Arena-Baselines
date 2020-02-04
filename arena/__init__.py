@@ -9,6 +9,7 @@ from ray.tune.registry import register_env
 env_ids = [
     "Arena-Tennis-Sparse-2T1P-Discrete",
     "Arena-BarrierGunner-3X3-PT-Sparse-2T1P-Discrete",
+    "Arena-Blowblow-Sparse-2T2P-Discrete",
 ]
 
 for env_id in env_ids:
