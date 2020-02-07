@@ -139,6 +139,10 @@ def run(args, parser):
             monitor_path=answers['eval_log_path'],
         )
 
+        logger.info("Testing worker...")
+        worker.sample()
+        logger.info("Finish testing worker.")
+
         policy_ids = list(worker.policy_map.keys())
 
         checkpoints = inquire_checkpoints(

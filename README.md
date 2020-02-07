@@ -223,8 +223,52 @@ Our established benchmark can be found in [Arena-Benchmark](https://github.com/Y
 Append ```--eval``` argument.
 In evaluation mode, the programe will detect the logdirs you have locally on your computer as well as detect the populations and iterations you have in each logdir.
 Then a series of questions will be promoted for you to make a selection of which checkpoint(s) you want to load for each agent.
-After this, you will have selected a list of ```checkpoint_paths``` for each agent, then the programe will run each of the possible combinations and record the results in a single matrix called ```result_matrix```.
+After this, you will have selected a list of ```checkpoint_paths``` for each agent, then the programe will run each of the possible combinations, thus, you will see print like the following:
 
+**Note about ```agent``` and ```policy```**: ```agent``` is the concept in environment, and ```policy``` is the corresponding concept on the learning side. In Arena-Baselines, the mapping between the two is one-to-one, though you can share weights between policies (equals to the case where two agents is controlled by just one policy).
+
+```
+============================= sampling... =============================
+policy_loading_status:
+{ 'policy_0': { 'checkpoint_path': '...size_population=1_2020-02-07_17-01-35stfrwt58/learning_agent/p_0-i_1',
+                'checkpoint_path_i': 0},
+  'policy_1': { 'checkpoint_path': '...size_population=1_2020-02-07_17-01-35stfrwt58/learning_agent/p_0-i_2',
+                'checkpoint_path_i': 1}}
+results:
+{ 'policy_0': { 'episode_lengths_max': 24,
+                'episode_lengths_mean': 15.428571428571429,
+                'episode_lengths_min': 14,
+                'episode_rewards_max': 1.0,
+                'episode_rewards_mean': 0.71428573,
+                'episode_rewards_min': 0.0},
+  'policy_1': { 'episode_lengths_max': 24,
+                'episode_lengths_mean': 15.428571428571429,
+                'episode_lengths_min': 14,
+                'episode_rewards_max': 1.0,
+                'episode_rewards_mean': 0.2857143,
+                'episode_rewards_min': 0.0}}
+============================= sampling... =============================
+policy_loading_status:
+{ 'policy_0': { 'checkpoint_path': '...size_population=1_2020-02-07_17-01-35stfrwt58/learning_agent/p_0-i_1',
+                'checkpoint_path_i': 0},
+  'policy_1': { 'checkpoint_path': '...size_population=1_2020-02-07_17-01-35stfrwt58/learning_agent/p_0-i_3',
+                'checkpoint_path_i': 2}}
+summarization:
+{ 'policy_0': { 'episode_lengths_max': 32,
+                'episode_lengths_mean': 17.0,
+                'episode_lengths_min': 14,
+                'episode_rewards_max': 1.0,
+                'episode_rewards_mean': 0.33333334,
+                'episode_rewards_min': 0.0},
+  'policy_1': { 'episode_lengths_max': 32,
+                'episode_lengths_mean': 17.0,
+                'episode_lengths_min': 14,
+                'episode_rewards_max': 1.0,
+                'episode_rewards_mean': 0.6666667,
+                'episode_rewards_min': 0.0}}
+```
+where ```policy_loading_status``` tells you which checkpoint is loaded to each policy, and ```summarization``` tells you the episode statistic of each policy when loading policies according to ```policy_loading_status```.
+The above results will be recorded in a single matrix called ```result_matrix```.
 ```result_matrix``` is nested list with the shape of:
 ```
 (
@@ -234,13 +278,13 @@ After this, you will have selected a list of ```checkpoint_paths``` for each age
     len(policy_ids)
 )
 ```
-Example: value at ```result_matrix[1,3,0]``` means the episode_rewards_mean of ```policy_0```
-when load ```policy_0``` with ```checkpoint_paths[policy_ids[0]][1]```
-and load ```policy_1``` with ```checkpoint_paths[policy_ids[1]][3]```.
+Example: value at ```result_matrix[a,b,c]``` means
+when load ```policy_0``` with ```checkpoint_paths[policy_ids[0]][a]```
+and load ```policy_1``` with ```checkpoint_paths[policy_ids[1]][b]```, the episode_rewards_mean of ```policy_c```.
 
 Then, we will try to visualize ```result_matrix```, see ```vis_result_matrix``` in ```./arena/vis.py```.
 
-You can, of course, compare your agents against our established [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
+You can, of course, compare your policies against our established [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
 
 ### Run in Dummy Mode for Debugging
 

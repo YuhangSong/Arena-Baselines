@@ -163,7 +163,7 @@ def inquire_checkpoints(local_dir, policy_ids):
     return checkpoints
 
 
-def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
+def run_result_matrix(checkpoint_paths, worker, policy_ids=None, policy_loading_status={}, checkpoint_path_abbreviated_to=68):
     """
     Arguments:
         checkpoint_paths:
@@ -178,10 +178,17 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
 
     if len(policy_ids) == 0:
 
+        print("============================= sampling... =============================")
+
         sampled = worker.sample()
         worker.env.reset()
 
         summarization = summarize_sample_batch(sampled)
+
+        print("policy_loading_status:")
+        print(summarize(policy_loading_status))
+        print("summarization:")
+        print(summarize(summarization))
 
         result_matrix = []
         for policy_id in summarization.keys():
@@ -197,7 +204,19 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
 
         result_matrix = []
 
-        for checkpoint_path in checkpoint_paths[policy_id]:
+        for checkpoint_path_i, checkpoint_path in enumerate(checkpoint_paths[policy_id]):
+
+            if checkpoint_path_abbreviated_to > 0:
+                checkpoint_path_abbreviated = "...{}".format(
+                    checkpoint_path[-checkpoint_path_abbreviated_to:]
+                )
+            else:
+                checkpoint_path_abbreviated = checkpoint_path
+
+            policy_loading_status[policy_id] = {
+                "checkpoint_path_i": checkpoint_path_i,
+                "checkpoint_path": checkpoint_path_abbreviated,
+            }
 
             worker.policy_map[policy_id].set_weights(
                 pickle.load(
@@ -214,6 +233,7 @@ def run_result_matrix(checkpoint_paths, worker, policy_ids=None):
                         checkpoint_paths=checkpoint_paths,
                         worker=worker,
                         policy_ids=policy_ids[1:],
+                        policy_loading_status=policy_loading_status,
                     )
                 )
             )
