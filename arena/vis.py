@@ -24,16 +24,20 @@ def vis_result_matrix(result_matrix, log_path):
             policy_id = policy_i2id(policy_i)
 
             fig = plt.figure()
+            ax = plt.axes()
             sns.heatmap(
                 pd.DataFrame(result_matrix[:, :, policy_i]),
             )
+            ax.set_title('result_matrix')
+            ax.set_xlabel('policy_0 checkpoints')
+            ax.set_ylabel('policy_1 checkpoints')
             plt.close()
 
             img = get_img_from_fig(fig)
 
             save_img(
                 img=img,
-                dir='{}/result_matrix-{}.jpg'.format(
+                dir='{}/result_matrix-{}_perspective.jpg'.format(
                     log_path,
                     policy_id,
                 ),
