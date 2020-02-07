@@ -134,13 +134,15 @@ def run(args, parser):
             policy=arena_exp["config"]["multiagent"]["policies"],
             policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],
             batch_mode="complete_episodes",
-            batch_steps=500,
+            batch_steps=10,
             num_envs=1,
             monitor_path=answers['eval_log_path'],
         )
 
         logger.info("Testing worker...")
+        sample_start = time.time()
         worker.sample()
+        sample_time = time.time() - sample_start
         logger.info("Finish testing worker.")
 
         policy_ids = list(worker.policy_map.keys())
@@ -151,6 +153,32 @@ def run(args, parser):
         )
 
         checkpoint_paths = checkpoints_2_checkpoint_paths(checkpoints)
+
+        num_checkpoint_paths = {}
+        for policy_id, checkpoint_paths_per_policy_id in checkpoint_paths.items():
+            num_checkpoint_paths[policy_id] = len(
+                checkpoint_paths_per_policy_id
+            )
+
+        num_sampling = np.prod(list(num_checkpoint_paths.values()))
+
+        is_continue = prompt(
+            [
+                {
+                    'type': 'confirm',
+                    'message': "You have scheduled {} sampling, each sampling will take {} minutes, which means {} hours in total, continue?".format(
+                        num_sampling,
+                        sample_time / 60.0,
+                        num_sampling * sample_time / 60.0 / 60.0,
+                    ),
+                    'name': 'continue',
+                    'default': True,
+                },
+            ],
+            style=custom_style_2,
+        )['continue']
+        if not is_continue:
+            os.exit()
 
         result_matrix = run_result_matrix(
             checkpoint_paths=checkpoint_paths,
