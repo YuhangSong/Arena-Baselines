@@ -283,6 +283,10 @@ when load ```policy_0``` with ```checkpoint_paths[policy_ids[0]][a]```
 and load ```policy_1``` with ```checkpoint_paths[policy_ids[1]][b]```, the episode_rewards_mean of ```policy_c```.
 
 Then, we will try to visualize ```result_matrix```, see ```vis_result_matrix``` in ```./arena/vis.py```.
+For examle, for 2TxP games, you will get a visualization as following:
+<img src="./images/result_matrix-2T.jpg" align="middle" width="1000"/>
+which shows how each match goes.
+Specifically, policy at later iterations beat those at earlier iterations, policies at similar iterations produce a tie, and etc.
 
 You can, of course, compare your policies against our established [Arena-Benchmark](https://github.com/YuhangSong/Arena-Benchmark).
 
