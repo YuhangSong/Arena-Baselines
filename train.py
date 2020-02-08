@@ -162,7 +162,7 @@ def run(args, parser):
 
         num_sampling = np.prod(list(num_checkpoint_paths.values()))
 
-        confirm = inquire_confirm("You have scheduled {} sampling, each sampling will take {} minutes, which means {} hours in total, continue?".format(
+        confirm = inquire_confirm("You have scheduled {} sampling, each sampling will take {} minutes, which means {} hours in total.".format(
             num_sampling,
             sample_time / 60.0,
             num_sampling * sample_time / 60.0 / 60.0,

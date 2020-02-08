@@ -255,7 +255,7 @@ def inquire_confirm(msg):
         [
             {
                 'type': 'confirm',
-                'message': msg,
+                'message': msg + ' Confirm?',
                 'name': 'confirm',
                 'default': True,
             },
