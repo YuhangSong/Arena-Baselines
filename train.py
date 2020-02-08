@@ -95,7 +95,7 @@ def run(args, parser):
 
             if len(arena_exps.keys()) > 1:
 
-                arena_exp_key = human_select(
+                arena_exp_key = inquire_select(
                     choices=list(arena_exps.keys()),
                     key="arena_exp_key",
                 )
@@ -134,7 +134,7 @@ def run(args, parser):
             policy=arena_exp["config"]["multiagent"]["policies"],
             policy_mapping_fn=arena_exp["config"]["multiagent"]["policy_mapping_fn"],
             batch_mode="complete_episodes",
-            batch_steps=10,
+            batch_steps=500,
             num_envs=1,
             monitor_path=answers['eval_log_path'],
         )
@@ -162,22 +162,12 @@ def run(args, parser):
 
         num_sampling = np.prod(list(num_checkpoint_paths.values()))
 
-        is_continue = prompt(
-            [
-                {
-                    'type': 'confirm',
-                    'message': "You have scheduled {} sampling, each sampling will take {} minutes, which means {} hours in total, continue?".format(
-                        num_sampling,
-                        sample_time / 60.0,
-                        num_sampling * sample_time / 60.0 / 60.0,
-                    ),
-                    'name': 'continue',
-                    'default': True,
-                },
-            ],
-            style=custom_style_2,
-        )['continue']
-        if not is_continue:
+        confirm = inquire_confirm("You have scheduled {} sampling, each sampling will take {} minutes, which means {} hours in total, continue?".format(
+            num_sampling,
+            sample_time / 60.0,
+            num_sampling * sample_time / 60.0 / 60.0,
+        ))
+        if not confirm:
             os.exit()
 
         result_matrix = run_result_matrix(

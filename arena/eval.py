@@ -56,7 +56,7 @@ def inquire_checkpoints(local_dir, policy_ids):
 
             checkpoints[policy_id] = {}
 
-            logdirs = human_select(
+            logdirs = inquire_select(
                 choices=get_possible_logdirs(local_dir),
                 prefix_msg=prefix_msg,
                 name="logdir",
@@ -90,7 +90,7 @@ def inquire_checkpoints(local_dir, policy_ids):
 
                     checkpoints[policy_id][logdir] = {}
 
-                    population_is = human_select(
+                    population_is = inquire_select(
                         choices=get_possible_populations(
                             logdir=logdir
                         ),
@@ -143,7 +143,7 @@ def inquire_checkpoints(local_dir, policy_ids):
                                 style=custom_style_2,
                             )
 
-                            iteration_indexes = human_select(
+                            iteration_indexes = inquire_select(
                                 choices=range(
                                     0,
                                     len(possible_iteration_indexes),

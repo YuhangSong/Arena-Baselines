@@ -218,7 +218,7 @@ def get_social_config(env):
     return all_list
 
 
-def human_select(choices, prefix_msg="", name="unamed", default_index=-1):
+def inquire_select(choices, prefix_msg="", name="unamed", default_index=-1):
 
     choices = list(choices)
 
@@ -248,6 +248,20 @@ def human_select(choices, prefix_msg="", name="unamed", default_index=-1):
     answers = prompt(questions, style=custom_style_2)
 
     return answers[name]
+
+
+def inquire_confirm(msg):
+    return prompt(
+        [
+            {
+                'type': 'confirm',
+                'message': msg,
+                'name': 'confirm',
+                'default': True,
+            },
+        ],
+        style=custom_style_2,
+    )['confirm']
 
 
 def list_to_selection_dict(list_):
