@@ -9,7 +9,7 @@ import random
 import gym
 import json
 
-from PyInquirer import style_from_dict, Token, prompt, Separator
+from PyInquirer import prompt
 from examples import custom_style_2
 
 import copy
