@@ -2,3 +2,6 @@ matplotlib
 PyInquirer
 seaborn
 imageio
+requests
+opencv-python
+psutil
