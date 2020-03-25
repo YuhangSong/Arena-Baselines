@@ -87,26 +87,26 @@ To contribute to the project, [joint us in  Slack](https://join.slack.com/t/aren
 
 To install above dependencies, run: (we are using specific versions of the dependencies)
 ```bash
-/* # Set conda source. Only for users behind the Great Wall of China, no need for other users */
+# Set conda source. Only for users behind the Great Wall of China, no need for other users
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
-/* # If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all */
+# If you accidentally did above, type: vim ~/.condarc, and reset conda source by removing the first two lines. Finally, run: conda update --all
 
-/* # Set pip source. Only for users behind the Great Wall of China, no need for other users. */
+# Set pip source. Only for users behind the Great Wall of China, no need for other users.
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-/* # If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple */
+# If you accidentally did above, reset pip source with: pip config set global.index-url https://pypi.org/simple
 
-/* # Create a virtual environment */
+# Create a virtual environment
 conda remove --name Arena-Baselines --all -y
 conda create -n Arena-Baselines python=3.6.9 -y
 source activate Arena-Baselines
 
-/* # Create dir */
+# Create dir
 mkdir Arena
 cd Arena
 
-/* # ML-Agents, only compatible with this checkpoint */
+# ML-Agents, only compatible with this checkpoint
 git clone https://github.com/Unity-Technologies/ml-agents.git
 cd ml-agents
 git checkout 9b1a39982fd03de8f40f85d61f903e6d972fd2cc
@@ -118,27 +118,27 @@ pip install -e .
 cd ..
 cd ..
 
-/* # clone code */
+# clone code
 git clone https://github.com/YuhangSong/Arena-Baselines.git
 cd Arena-Baselines
 
-/* # PyTorch */
+# PyTorch
 pip install --upgrade torch torchvision
 
-/* # TensorFlow GPU */
+# TensorFlow GPU
 pip install tensorflow-gpu==1.14
-/* # Or TensorFlow CPU */
-/* # pip install tensorflow==1.14 */
+# Or TensorFlow CPU
+# pip install tensorflow==1.14
 
-/* # Ray and RLlib */
+# Ray and RLlib
 pip install ray[rllib]
 pip install ray[debug]
 pip install ray==0.7.4
 
-/* # Other requirements */
+# Other requirements
 pip install -r requirements.txt
 
-/* # ffmpeg is needed for monitor */
+# ffmpeg is needed for monitor
 sudo apt-get install ffmpeg
 ```
 
