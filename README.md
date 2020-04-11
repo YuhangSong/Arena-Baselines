@@ -124,7 +124,7 @@ git clone https://github.com/YuhangSong/Arena-Baselines.git
 cd Arena-Baselines
 
 # Install required packages
-pip install -r requirements_pip.txt
+pip install -r requirements.txt
 
 ```
 
