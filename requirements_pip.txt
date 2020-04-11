@@ -1,0 +1,1 @@
+-e git+https://github.com/Unity-Technologies/ml-agents.git@9b1a39982fd03de8f40f85d61f903e6d972fd2cc#egg=mlagents&subdirectory=ml-agents
