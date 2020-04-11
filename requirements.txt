@@ -26,6 +26,7 @@ gast==0.3.2
 google-pasta==0.1.8
 grpcio==1.11.1
 gym==0.15.4
+-e git+https://github.com/Unity-Technologies/ml-agents.git@9b1a39982fd03de8f40f85d61f903e6d972fd2cc#egg=gym_unity&subdirectory=gym-unity
 h5py==2.10.0
 html5lib==0.9999999
 idna==2.8
@@ -52,6 +53,7 @@ Markdown==3.1.1
 MarkupSafe==1.1.1
 matplotlib==3.1.1
 mistune==0.8.4
+-e git+https://github.com/Unity-Technologies/ml-agents.git@9b1a39982fd03de8f40f85d61f903e6d972fd2cc#egg=mlagents&subdirectory=ml-agents
 mlagents-envs==0.8.2
 more-itertools==8.0.2
 nbconvert==5.6.1
