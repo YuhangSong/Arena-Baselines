@@ -51,6 +51,12 @@ Many research-oriented utilities, such as:
 We are currently open to any suggestions or pull requests from the community to make Arena better.
 To contribute to the project, [joint us in  Slack](https://join.slack.com/t/arena-ml/shared_invite/enQtNjc1NDE1MTY0MjU3LWMxMjZiMTYyNTE3OWIzM2QxZjU5YmI1NTM2YzYzZDZlNjY0NzllMDFlMjA3MGZiN2QxODA1NTJhZDkzOTI3Nzg), check [To Do list in Trello](https://trello.com/b/zDiljShz) as well as check [issues](https://github.com/YuhangSong/Arena-Baselines/issues) opened in the repo.
 
+We are re-benchmarking all games, currently, all games are available in [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit).
+We are building and testing them one by one.
+You can build and test it yourself if you urgently want to try some the games (we have played with the games and they are fine, it's just we have not have enough resources to train them yet).
+Before you build a game and train it, you can also play with it in [Arena-BuildingToolkit](https://github.com/YuhangSong/Arena-BuildingToolkit) so that you can make sure you are satisfied with the game.
+The env examples you are seeing in the ```arena-experiments/Arena-Benchmark.yaml``` are the ones we have built and trained.
+
 ## Table of Contents
 
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
