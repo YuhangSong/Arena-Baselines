@@ -317,11 +317,12 @@ ps aux | grep -ie Linux.x86_64 | awk '{print "kill -9 " $2}'
 
 If you use Arena to conduct research, we ask that you cite the following paper as a reference:
 ```
-@article{song2019arena,
-  title={Arena: A General Evaluation Platform and Building Toolkit for Multi-Agent Intelligence},
-  author={Song, Yuhang and Wang, Jianyi and Lukasiewicz, Thomas and Xu, Zhenghua and Xu, Mai and Ding, Zihan and Wu, Lianlong},
-  journal={arXiv preprint arXiv:1905.08085},
-  year={2019}
+@inproceedings{song2020arena,
+  title={Arena: A General Evaluation Platform and Building Toolkit for Multi-Agent Intelligence.},
+  author={Song, Yuhang and Wojcicki, Andrzej and Lukasiewicz, Thomas and Wang, Jianyi and Aryan, Abi and Xu, Zhenghua and Xu, Mai and Ding, Zihan and Wu, Lianlong},
+  booktitle={AAAI},
+  pages={7253--7260},
+  year={2020}
 }
 ```
 as well as the engine behind Arena, without which the platform would be impossible to create
