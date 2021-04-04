@@ -17,7 +17,6 @@ import numpy as np
 
 import ray
 from ray.tests.cluster_utils import Cluster
-from ray.tune.resources import resources_to_json
 from ray.tune.tune import _make_scheduler, run_experiments
 from ray.rllib.utils.debug import summarize
 
