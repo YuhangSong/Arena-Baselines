@@ -139,6 +139,7 @@ pip install PyInquirer==1.0.3
 pip install matplotlib==3.3.4
 pip install psutil==5.8.0
 pip install requests==2.25.1
+pip install lz4==3.1.3
 
 ```
 
