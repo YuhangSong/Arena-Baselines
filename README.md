@@ -130,6 +130,7 @@ conda create -n Arena-Baselines python=3.6.9 -y
 conda activate Arena-Baselines
 
 # Install required packages
+pip3 install -r requirements-from-source.txt
 pip3 install -r requirements.txt
 
 ```
