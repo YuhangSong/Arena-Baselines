@@ -80,7 +80,7 @@ The env examples you are seeing in the ```arena-experiments/Arena-Benchmark.yaml
 		- [Register New Games](#register-new-games)
 	- [Configs](#configs)
 	- [Common Problems](#common-problems)
-			- [Game threads still running](#game-threads-still-running)
+		- [Game threads still running](#game-threads-still-running)
 	- [Citation](#citation)
 	- [License](#license)
 	- [Acknowledgement](#acknowledgement)
@@ -130,8 +130,8 @@ conda create -n Arena-Baselines python=3.6.9 -y
 conda activate Arena-Baselines
 
 # Install required packages
-pip3 install -r requirements-from-source.txt
 pip3 install -r requirements.txt
+# There will be error messages when excuting this, simply ignore this
 
 ```
 
@@ -335,6 +335,12 @@ as well as the engine behind Arena, without which the platform would be impossib
   year={2018}
 }
 ```
+
+## Contribute
+
+### TODOs
+
+- Upgrade ml-agent and ray to recent versions
 
 ## License
 
