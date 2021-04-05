@@ -130,16 +130,7 @@ conda create -n Arena-Baselines python=3.6.9 -y
 conda activate Arena-Baselines
 
 # Install required packages
-pip install gym-unity==0.25.0
-pip install mlagents-envs==0.25.0
-pip install ray==0.7.2
-pip install pandas==1.1.5
-pip install opencv-python==4.5.1.48
-pip install PyInquirer==1.0.3
-pip install matplotlib==3.3.4
-pip install psutil==5.8.0
-pip install requests==2.25.1
-pip install lz4==3.1.3
+pip3 install -r requirements.txt
 
 ```
 
