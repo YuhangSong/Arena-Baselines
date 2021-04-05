@@ -131,7 +131,7 @@ conda activate Arena-Baselines
 
 # Install required packages
 pip3 install -r requirements.txt
-# There will be error messages when excuting this, simply ignore this
+# pip may search and resolve package dependencies, be patient here...
 
 ```
 
