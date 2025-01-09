@@ -1,6 +1,6 @@
 -e git+https://github.com/Unity-Technologies/ml-agents.git@a7c1fccd9a86045dece3206604fa93064aac58ea#egg=gym_unity&subdirectory=gym-unity
 -e git+https://github.com/Unity-Technologies/ml-agents.git@a7c1fccd9a86045dece3206604fa93064aac58ea#egg=mlagents&subdirectory=ml-agents
-ray==0.7.4
+ray==2.8.1
 pandas
 PyInquirer
 opencv-python
